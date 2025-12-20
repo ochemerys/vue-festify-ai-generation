@@ -1,0 +1,358 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================================
+// USER & AUTHENTICATION
+// ============================================================================
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  password  String
+  firstName String
+  lastName  String
+  role      UserRole   @default(STAFF)
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  // Relations
+  transactions InventoryTransaction[]
+  orders       Order[]
+  auditLogs    AuditLog[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  STAFF
+  VIEWER
+}
+
+// ============================================================================
+// PRODUCT MANAGEMENT
+// ============================================================================
+
+model Product {
+  id              String   @id @default(cuid())
+  sku             String   @unique
+  name            String
+  description     String?
+  category        String
+  price           Float
+  cost            Float
+  reorderLevel    Int      @default(10)
+  supplier        String
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  inventoryLevels InventoryLevel?
+  transactions    InventoryTransaction[]
+  orderItems      OrderItem[]
+  stockAlerts     StockAlert[]
+
+  @@index([category])
+  @@index([supplier])
+  @@index([sku])
+  @@map("products")
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  description String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("categories")
+}
+
+model Supplier {
+  id              String   @id @default(cuid())
+  name            String   @unique
+  email           String?
+  phone           String?
+  address         String?
+  city            String?
+  state           String?
+  zipCode         String?
+  country         String?
+  contactPerson   String?
+  paymentTerms    String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  purchaseOrders  PurchaseOrder[]
+
+  @@map("suppliers")
+}
+
+// ============================================================================
+// INVENTORY MANAGEMENT
+// ============================================================================
+
+model InventoryLevel {
+  id                String   @id @default(cuid())
+  productId         String   @unique
+  currentQuantity   Int      @default(0)
+  reservedQuantity  Int      @default(0)
+  availableQuantity Int      @default(0)
+  lastRestockDate   DateTime?
+  nextRestockDate   DateTime?
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("inventory_levels")
+}
+
+model InventoryTransaction {
+  id          String                    @id @default(cuid())
+  productId   String
+  type        InventoryTransactionType
+  quantity    Int
+  reference   String
+  notes       String?
+  createdBy   String
+  createdAt   DateTime                  @default(now())
+
+  // Relations
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [createdBy], references: [id])
+
+  @@index([productId])
+  @@index([createdBy])
+  @@index([createdAt])
+  @@index([type])
+  @@map("inventory_transactions")
+}
+
+enum InventoryTransactionType {
+  PURCHASE
+  SALE
+  ADJUSTMENT
+  RETURN
+  DAMAGE
+  TRANSFER
+}
+
+model StockAlert {
+  id              String   @id @default(cuid())
+  productId       String
+  alertType       AlertType
+  currentQuantity Int
+  reorderLevel    Int
+  isResolved      Boolean  @default(false)
+  resolvedAt      DateTime?
+  createdAt       DateTime @default(now())
+
+  // Relations
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([alertType])
+  @@index([isResolved])
+  @@map("stock_alerts")
+}
+
+enum AlertType {
+  LOW_STOCK
+  OUT_OF_STOCK
+  OVERSTOCK
+}
+
+// ============================================================================
+// ORDER MANAGEMENT
+// ============================================================================
+
+model Order {
+  id              String   @id @default(cuid())
+  orderNumber     String   @unique
+  customerId      String
+  customerName    String
+  customerEmail   String?
+  customerPhone   String?
+  status          OrderStatus @default(PENDING)
+  totalAmount     Float
+  shippingAddress String
+  notes           String?
+  createdBy       String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  shippedAt       DateTime?
+  deliveredAt     DateTime?
+
+  // Relations
+  items       OrderItem[]
+  user        User        @relation(fields: [createdBy], references: [id])
+  auditLogs   AuditLog[]
+
+  @@index([customerId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([createdBy])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int
+  unitPrice Float
+  subtotal  Float
+
+  // Relations
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  RETURNED
+}
+
+// ============================================================================
+// PURCHASE ORDER MANAGEMENT
+// ============================================================================
+
+model PurchaseOrder {
+  id              String   @id @default(cuid())
+  poNumber        String   @unique
+  supplierId      String
+  status          POStatus @default(DRAFT)
+  totalAmount     Float
+  expectedDate    DateTime
+  receivedDate    DateTime?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  supplier        Supplier          @relation(fields: [supplierId], references: [id])
+  items           PurchaseOrderItem[]
+  receipts        GoodsReceipt[]
+
+  @@index([supplierId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id              String @id @default(cuid())
+  purchaseOrderId String
+  productId       String
+  quantity        Int
+  unitPrice       Float
+  subtotal        Float
+  receivedQuantity Int @default(0)
+
+  // Relations
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+
+  @@index([purchaseOrderId])
+  @@map("purchase_order_items")
+}
+
+enum POStatus {
+  DRAFT
+  SUBMITTED
+  CONFIRMED
+  PARTIALLY_RECEIVED
+  RECEIVED
+  CANCELLED
+}
+
+model GoodsReceipt {
+  id              String   @id @default(cuid())
+  receiptNumber   String   @unique
+  purchaseOrderId String
+  receivedDate    DateTime @default(now())
+  notes           String?
+  createdAt       DateTime @default(now())
+
+  // Relations
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+
+  @@index([purchaseOrderId])
+  @@map("goods_receipts")
+}
+
+// ============================================================================
+// AUDIT & LOGGING
+// ============================================================================
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  entity    String
+  entityId  String
+  changes   Json?
+  orderId   String?
+  createdAt DateTime @default(now())
+
+  // Relations
+  user  User   @relation(fields: [userId], references: [id])
+  order Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([entity])
+  @@index([entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ============================================================================
+// REPORTS & ANALYTICS
+// ============================================================================
+
+model DailyInventorySummary {
+  id              String   @id @default(cuid())
+  date            DateTime @unique
+  totalProducts   Int
+  totalValue      Float
+  lowStockCount   Int
+  outOfStockCount Int
+  createdAt       DateTime @default(now())
+
+  @@map("daily_inventory_summaries")
+}
+
+model SalesReport {
+  id              String   @id @default(cuid())
+  date            DateTime
+  totalOrders     Int
+  totalRevenue    Float
+  averageOrderValue Float
+  topProduct      String?
+  createdAt       DateTime @default(now())
+
+  @@index([date])
+  @@map("sales_reports")
+}
