@@ -6,7 +6,7 @@ Create a root folder and a pnpm-workspace.yaml to manage your projects.
 
 ```bash
 
-mkdir my-app && cd my-app
+mkdir inventory-management && cd inventory-management
 touch pnpm-workspace.yaml
 ```
 
@@ -36,9 +36,13 @@ Note: In Vite, add the Tailwind plugin to vite.config.ts to enable the v4 engine
 Create a TypeScript-based API in apps/api.
 
 ```bash
-mkdir ../api && cd ../api
+mkdir ../backend && cd ../backend
+
+# Initialize and install dependencies
 pnpm init
-pnpm add express cors zod
-pnpm add -D typescript @types/node @types/express ts-node-dev
-npx tsc --init 3. Achieving End-to-End Type Safety
+pnpm add fastify @fastify/cors zod
+pnpm add -D typescript @types/node ts-node-dev
+
+# Initialize TypeScript
+npx tsc --init
 ```

@@ -100,8 +100,8 @@ This constrains:
 
 ```text
 apps/
-  web/              # Vue 3 + Tailwind
-  api/              # Fastify API
+  frontend/         # Vue 3 + Tailwind
+  backend/          # Fastify API
 packages/
   contracts/        # Zod schemas + types
   ui-contracts/     # Component contracts
