@@ -1,0 +1,42 @@
+{
+  "name": "@inventory/contracts",
+  "version": "1.0.0",
+  "description": "Shared type contracts for Inventory Management System",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./product": {
+      "import": "./dist/product.js",
+      "types": "./dist/product.d.ts"
+    },
+    "./inventory": {
+      "import": "./dist/inventory.js",
+      "types": "./dist/inventory.d.ts"
+    },
+    "./order": {
+      "import": "./dist/order.js",
+      "types": "./dist/order.d.ts"
+    },
+    "./api": {
+      "import": "./dist/api.js",
+      "types": "./dist/api.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3"
+  }
+}
