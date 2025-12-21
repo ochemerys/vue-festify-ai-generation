@@ -53,6 +53,7 @@ inventory-management/
    ```
 
 4. Set up the database:
+
    ```bash
    pnpm db:push
    pnpm db:seed
@@ -93,8 +94,11 @@ pnpm start
 - `pnpm build` - Build all packages
 - `pnpm start` - Start production backend
 - `pnpm test` - Run tests across all packages
+- `pnpm test:watch` - Run tests in watch mode
 - `pnpm lint` - Lint all packages
+- `pnpm lint:fix` - Auto-fix linting issues
 - `pnpm format` - Format code with Prettier
+- `pnpm format:check` - Check code formatting
 
 ### Database Scripts
 
@@ -133,6 +137,40 @@ Each package has its own scripts:
 - Frontend tests use jsdom environment
 - Backend tests use node environment
 - Run `pnpm test:watch` for continuous testing
+
+## API Documentation
+
+### Authentication
+
+The API uses session-based authentication. Include the session cookie in requests.
+
+### Endpoints
+
+#### Products
+
+- `GET /api/products` - List products with filtering and pagination
+- `GET /api/products/:id` - Get product by ID
+- `POST /api/products` - Create new product
+- `PUT /api/products/:id` - Update product
+- `DELETE /api/products/:id` - Deactivate product
+
+#### Orders
+
+- `GET /api/orders` - List orders with filtering
+- `GET /api/orders/:id` - Get order details
+- `POST /api/orders` - Create new order
+- `PUT /api/orders/:id/status` - Update order status
+
+#### Inventory
+
+- `GET /api/inventory` - Get inventory levels
+- `POST /api/inventory/transactions` - Record inventory transaction
+- `GET /api/inventory/alerts` - Get low stock alerts
+
+#### Analytics
+
+- `GET /api/analytics/summary` - Get dashboard summary
+- `GET /api/analytics/sales` - Get sales reports
 
 ## Contributing
 

@@ -1,39 +1,93 @@
 # Inventory Management Backend
 
-A simple Fastify API server for inventory management.
+Fastify REST API server for the Inventory Management System.
 
 ## Features
 
-- RESTful API endpoints for CRUD operations on inventory items
-- Input validation using Zod
-- CORS support
-- TypeScript support
-- In-memory storage (can be replaced with a database)
+- **RESTful API** - Full CRUD operations for products, orders, and inventory
+- **Type Safety** - TypeScript with Zod schema validation
+- **Database Integration** - PostgreSQL with Prisma ORM
+- **Authentication Ready** - Session-based auth infrastructure
+- **CORS Support** - Cross-origin resource sharing enabled
+- **Input Validation** - Runtime validation with Zod schemas
+- **Error Handling** - Structured error responses
+- **Audit Logging** - Track all data changes
+
+## Tech Stack
+
+- **Runtime**: Node.js 18+
+- **Framework**: Fastify
+- **Language**: TypeScript
+- **Database**: PostgreSQL + Prisma
+- **Validation**: Zod schemas from `@inventory/contracts`
+- **Testing**: Vitest
+- **Linting**: ESLint
 
 ## API Endpoints
-
-### Items
-
-- `GET /api/items` - Get all items
-- `GET /api/items/:id` - Get a specific item
-- `POST /api/items` - Create a new item
-- `PUT /api/items/:id` - Update an item
-- `DELETE /api/items/:id` - Delete an item
 
 ### Health Check
 
 - `GET /health` - Server health check
 
-## Item Schema
+### Products
 
-```json
-{
-  "id": 1,
-  "name": "Laptop",
-  "description": "Dell XPS 13",
-  "quantity": 5,
-  "price": 999.99
-}
+- `GET /api/products` - List products (with filtering/pagination)
+- `GET /api/products/:id` - Get product by ID
+- `POST /api/products` - Create new product
+- `PUT /api/products/:id` - Update product
+- `DELETE /api/products/:id` - Deactivate product
+
+### Orders
+
+- `GET /api/orders` - List orders (with filtering)
+- `GET /api/orders/:id` - Get order details
+- `POST /api/orders` - Create new order
+- `PUT /api/orders/:id/status` - Update order status
+
+### Inventory
+
+- `GET /api/inventory` - Get inventory levels
+- `POST /api/inventory/transactions` - Record inventory transaction
+- `GET /api/inventory/alerts` - Get low stock alerts
+
+### Analytics
+
+- `GET /api/analytics/summary` - Dashboard summary
+- `GET /api/analytics/sales` - Sales reports
+
+## Data Validation
+
+All API endpoints use Zod schemas for runtime validation:
+
+```typescript
+import { CreateProductRequestSchema } from '@inventory/contracts'
+
+app.post(
+  '/api/products',
+  {
+    schema: {
+      body: CreateProductRequestSchema,
+    },
+  },
+  async (request, reply) => {
+    // request.body is fully typed and validated
+    const product = await createProduct(request.body)
+    return reply.send(product)
+  }
+)
+```
+
+## Database Integration
+
+Uses Prisma ORM with type-safe database operations:
+
+```typescript
+import { prisma } from '@inventory/db'
+
+const products = await prisma.product.findMany({
+  where: { isActive: true },
+  include: { inventoryLevels: true },
+})
 ```
 
 ## Getting Started
@@ -58,42 +112,70 @@ pnpm build
 pnpm start
 ```
 
-## Example Requests
-
-### Get all items
+### Testing
 
 ```bash
-curl http://localhost:3000/api/items
+pnpm test
+pnpm test:watch
 ```
 
-### Create an item
+### Linting
 
 ```bash
-curl -X POST http://localhost:3000/api/items \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Monitor",
-    "description": "4K Monitor",
-    "quantity": 10,
-    "price": 399.99
-  }'
+pnpm lint
+pnpm lint:fix
 ```
 
-### Update an item
+## Environment Variables
 
 ```bash
-curl -X PUT http://localhost:3000/api/items/1 \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Laptop",
-    "description": "Dell XPS 15",
-    "quantity": 3,
-    "price": 1299.99
-  }'
+NODE_ENV=development
+PORT=3000
+DATABASE_URL=postgresql://user:password@localhost:5432/inventory_management
 ```
 
-### Delete an item
+## Project Structure
 
-```bash
-curl -X DELETE http://localhost:3000/api/items/1
 ```
+apps/backend/
+├── src/
+│   ├── routes/           # API route handlers
+│   ├── services/         # Business logic
+│   ├── middleware/       # Custom middleware
+│   ├── utils/           # Utility functions
+│   └── server.ts        # Fastify server setup
+├── package.json
+├── tsconfig.json
+└── README.md
+```
+
+## Error Handling
+
+The API returns structured error responses:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid input data",
+    "details": {
+      "field": "email",
+      "message": "Invalid email format"
+    }
+  },
+  "timestamp": "2024-01-01T00:00:00.000Z"
+}
+```
+
+## Contributing
+
+1. Add new routes in `src/routes/`
+2. Implement business logic in `src/services/`
+3. Use Zod schemas from `@inventory/contracts` for validation
+4. Add tests for new functionality
+5. Update this README for new endpoints
+
+## License
+
+See LICENSE in the root directory.
