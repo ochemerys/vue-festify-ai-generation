@@ -1,6 +1,6 @@
 /**
  * Prisma Configuration for Prisma 7
- * 
+ *
  * This file configures the database connection URL for Prisma Migrate.
  * The DATABASE_URL environment variable is read at runtime.
  */
