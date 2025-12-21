@@ -61,11 +61,13 @@ pnpm start
 ## Example Requests
 
 ### Get all items
+
 ```bash
 curl http://localhost:3000/api/items
 ```
 
 ### Create an item
+
 ```bash
 curl -X POST http://localhost:3000/api/items \
   -H "Content-Type: application/json" \
@@ -78,6 +80,7 @@ curl -X POST http://localhost:3000/api/items \
 ```
 
 ### Update an item
+
 ```bash
 curl -X PUT http://localhost:3000/api/items/1 \
   -H "Content-Type: application/json" \
@@ -90,6 +93,7 @@ curl -X PUT http://localhost:3000/api/items/1 \
 ```
 
 ### Delete an item
+
 ```bash
 curl -X DELETE http://localhost:3000/api/items/1
 ```

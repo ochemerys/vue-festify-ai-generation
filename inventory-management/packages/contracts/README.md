@@ -42,18 +42,14 @@ const order: Order = {
 ### In Backend (Node.js/Fastify)
 
 ```typescript
-import { 
-  CreateProductRequest, 
-  ProductResponse,
-  ApiResponse 
-} from '@inventory/contracts'
+import { CreateProductRequest, ProductResponse, ApiResponse } from '@inventory/contracts'
 
 // Use types in your route handlers
 app.post<{ Body: CreateProductRequest }>('/products', async (request, reply) => {
   const response: ApiResponse<Product> = {
     success: true,
     data: product,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   }
   return reply.send(response)
 })
@@ -62,24 +58,28 @@ app.post<{ Body: CreateProductRequest }>('/products', async (request, reply) => 
 ## Key Contracts
 
 ### Product Management
+
 - `Product` - Product entity
 - `CreateProductRequest` - Request to create a product
 - `UpdateProductRequest` - Request to update a product
 - `ProductFilters` - Filtering options for product queries
 
 ### Inventory Management
+
 - `InventoryTransaction` - Transaction record
 - `InventoryLevel` - Current inventory levels
 - `InventoryTransactionType` - Enum for transaction types
 - `LowStockAlert` - Alert for low stock items
 
 ### Order Management
+
 - `Order` - Order entity
 - `OrderItem` - Individual order item
 - `OrderStatus` - Enum for order statuses
 - `CreateOrderRequest` - Request to create an order
 
 ### API Utilities
+
 - `ApiResponse<T>` - Standard API response wrapper
 - `PaginatedResponse<T>` - Paginated API response
 - `ApiError` - Error response structure

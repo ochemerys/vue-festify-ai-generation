@@ -20,31 +20,37 @@ This package contains the Prisma schema, migrations, and database utilities for 
 ### Core Entities
 
 #### User Management
+
 - `User` - System users with roles (ADMIN, MANAGER, STAFF, VIEWER)
 - Tracks user activity and audit logs
 
 #### Product Management
+
 - `Product` - Product catalog with pricing and supplier info
 - `Category` - Product categories
 - `Supplier` - Supplier information and contact details
 
 #### Inventory Management
+
 - `InventoryLevel` - Current stock levels and reservations
 - `InventoryTransaction` - All stock movements (PURCHASE, SALE, ADJUSTMENT, RETURN, DAMAGE, TRANSFER)
 - `StockAlert` - Low stock and out-of-stock alerts
 
 #### Order Management
+
 - `Order` - Customer orders
 - `OrderItem` - Individual items in orders
 - `OrderStatus` - PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED, RETURNED
 
 #### Purchase Order Management
+
 - `PurchaseOrder` - Orders to suppliers
 - `PurchaseOrderItem` - Items in purchase orders
 - `GoodsReceipt` - Goods receipt tracking
 - `POStatus` - DRAFT, SUBMITTED, CONFIRMED, PARTIALLY_RECEIVED, RECEIVED, CANCELLED
 
 #### Audit & Analytics
+
 - `AuditLog` - Track all entity changes
 - `DailyInventorySummary` - Daily inventory snapshots
 - `SalesReport` - Sales analytics
@@ -79,6 +85,7 @@ DATABASE_URL="postgresql://user:password@localhost:5432/inventory_management"
 ```
 
 **Prisma 7 Configuration:**
+
 - The datasource URL is no longer defined in `schema.prisma`
 - Connection URLs are configured in `prisma/prisma.config.ts` for Migrate
 - The `DATABASE_URL` environment variable is read at runtime by Prisma
@@ -111,6 +118,7 @@ pnpm run db:seed
 ```
 
 This will populate the database with sample data including:
+
 - 3 users (admin, manager, staff)
 - 3 categories
 - 2 suppliers
@@ -128,7 +136,7 @@ import { prisma } from '@inventory/db'
 // Query products
 const products = await prisma.product.findMany({
   where: { isActive: true },
-  include: { inventoryLevels: true }
+  include: { inventoryLevels: true },
 })
 
 // Create order
@@ -147,12 +155,12 @@ const order = await prisma.order.create({
           productId: 'prod-1',
           quantity: 2,
           unitPrice: 49.99,
-          subtotal: 99.98
-        }
-      ]
-    }
+          subtotal: 99.98,
+        },
+      ],
+    },
   },
-  include: { items: true }
+  include: { items: true },
 })
 
 // Update inventory
@@ -160,8 +168,8 @@ await prisma.inventoryLevel.update({
   where: { productId: 'prod-1' },
   data: {
     currentQuantity: { increment: 10 },
-    availableQuantity: { increment: 10 }
-  }
+    availableQuantity: { increment: 10 },
+  },
 })
 
 // Create audit log
@@ -171,8 +179,8 @@ await prisma.auditLog.create({
     action: 'UPDATE',
     entity: 'Product',
     entityId: 'prod-1',
-    changes: { price: 29.99 }
-  }
+    changes: { price: 29.99 },
+  },
 })
 ```
 
@@ -286,6 +294,7 @@ pnpm run db:generate
 ### Indexes
 
 The schema includes indexes on:
+
 - Foreign keys
 - Frequently queried fields (status, dates, SKU)
 - Filter fields (category, supplier)
@@ -297,12 +306,12 @@ The schema includes indexes on:
 const orders = await prisma.order.findMany({
   include: { items: true },
   take: 10,
-  skip: 0
+  skip: 0,
 })
 
 // ❌ Avoid: Fetching unnecessary relations
 const orders = await prisma.order.findMany({
-  include: { items: true, user: true, auditLogs: true }
+  include: { items: true, user: true, auditLogs: true },
 })
 ```
 
