@@ -2,64 +2,80 @@
  * Product-related contracts for Inventory Management System
  */
 
-export interface Product {
-  id: string
-  sku: string
-  name: string
-  description: string
-  category: string
-  price: number
-  cost: number
-  quantity: number
-  reorderLevel: number
-  supplier: string
-  createdAt: Date
-  updatedAt: Date
-}
+import { z } from 'zod'
 
-export interface CreateProductRequest {
-  sku: string
-  name: string
-  description: string
-  category: string
-  price: number
-  cost: number
-  quantity: number
-  reorderLevel: number
-  supplier: string
-}
+// ============================================================================
+// ZOD SCHEMAS (Canonical)
+// ============================================================================
 
-export interface UpdateProductRequest {
-  name?: string
-  description?: string
-  category?: string
-  price?: number
-  cost?: number
-  reorderLevel?: number
-  supplier?: string
-}
+export const ProductSchema = z.object({
+  id: z.string().cuid(),
+  sku: z.string().min(1).max(50),
+  name: z.string().min(1).max(255),
+  description: z.string().max(1000).nullable(),
+  category: z.string().min(1).max(100),
+  price: z.number().positive(),
+  cost: z.number().positive(),
+  reorderLevel: z.number().int().nonnegative().default(10),
+  supplier: z.string().min(1).max(255),
+  isActive: z.boolean().default(true),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+})
 
-export interface ProductResponse {
-  success: boolean
-  data?: Product
-  error?: string
-}
+export const CreateProductRequestSchema = z.object({
+  sku: z.string().min(1).max(50),
+  name: z.string().min(1).max(255),
+  description: z.string().max(1000).optional(),
+  category: z.string().min(1).max(100),
+  price: z.number().positive(),
+  cost: z.number().positive(),
+  reorderLevel: z.number().int().nonnegative().default(10),
+  supplier: z.string().min(1).max(255),
+})
 
-export interface ProductListResponse {
-  success: boolean
-  data?: Product[]
-  total?: number
-  page?: number
-  pageSize?: number
-  error?: string
-}
+export const UpdateProductRequestSchema = z.object({
+  name: z.string().min(1).max(255).optional(),
+  description: z.string().max(1000).optional(),
+  category: z.string().min(1).max(100).optional(),
+  price: z.number().positive().optional(),
+  cost: z.number().positive().optional(),
+  reorderLevel: z.number().int().nonnegative().optional(),
+  supplier: z.string().min(1).max(255).optional(),
+})
 
-export interface ProductFilters {
-  category?: string
-  supplier?: string
-  minPrice?: number
-  maxPrice?: number
-  search?: string
-  page?: number
-  pageSize?: number
-}
+export const ProductFiltersSchema = z.object({
+  category: z.string().optional(),
+  supplier: z.string().optional(),
+  minPrice: z.number().nonnegative().optional(),
+  maxPrice: z.number().nonnegative().optional(),
+  search: z.string().optional(),
+  page: z.number().int().positive().default(1),
+  pageSize: z.number().int().positive().default(10),
+})
+
+export const ProductResponseSchema = z.object({
+  success: z.boolean(),
+  data: ProductSchema.optional(),
+  error: z.string().optional(),
+})
+
+export const ProductListResponseSchema = z.object({
+  success: z.boolean(),
+  data: z.array(ProductSchema).optional(),
+  total: z.number().int().nonnegative().optional(),
+  page: z.number().int().positive().optional(),
+  pageSize: z.number().int().positive().optional(),
+  error: z.string().optional(),
+})
+
+// ============================================================================
+// TYPE EXPORTS (Inferred from Zod schemas)
+// ============================================================================
+
+export type Product = z.infer<typeof ProductSchema>
+export type CreateProductRequest = z.infer<typeof CreateProductRequestSchema>
+export type UpdateProductRequest = z.infer<typeof UpdateProductRequestSchema>
+export type ProductFilters = z.infer<typeof ProductFiltersSchema>
+export type ProductResponse = z.infer<typeof ProductResponseSchema>
+export type ProductListResponse = z.infer<typeof ProductListResponseSchema>

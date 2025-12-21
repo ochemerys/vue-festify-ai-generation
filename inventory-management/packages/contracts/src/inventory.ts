@@ -2,6 +2,12 @@
  * Inventory-related contracts for Inventory Management System
  */
 
+import { z } from 'zod'
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
 export enum InventoryTransactionType {
   PURCHASE = 'PURCHASE',
   SALE = 'SALE',
@@ -11,74 +17,103 @@ export enum InventoryTransactionType {
   TRANSFER = 'TRANSFER',
 }
 
-export interface InventoryTransaction {
-  id: string
-  productId: string
-  type: InventoryTransactionType
-  quantity: number
-  reference: string
-  notes: string
-  createdAt: Date
-  createdBy: string
-}
+// ============================================================================
+// ZOD SCHEMAS (Canonical)
+// ============================================================================
 
-export interface InventoryLevel {
-  productId: string
-  currentQuantity: number
-  reservedQuantity: number
-  availableQuantity: number
-  reorderLevel: number
-  lastRestockDate: Date
-  nextRestockDate?: Date
-}
+export const InventoryTransactionTypeSchema = z.enum([
+  'PURCHASE',
+  'SALE',
+  'ADJUSTMENT',
+  'RETURN',
+  'DAMAGE',
+  'TRANSFER',
+])
 
-export interface CreateTransactionRequest {
-  productId: string
-  type: InventoryTransactionType
-  quantity: number
-  reference: string
-  notes?: string
-}
+export const InventoryTransactionSchema = z.object({
+  id: z.string().cuid(),
+  productId: z.string().cuid(),
+  type: InventoryTransactionTypeSchema,
+  quantity: z.number().int().positive(),
+  reference: z.string().min(1).max(255),
+  notes: z.string().max(1000).nullable(),
+  createdAt: z.date(),
+  createdBy: z.string().cuid(),
+})
 
-export interface InventoryAdjustmentRequest {
-  productId: string
-  newQuantity: number
-  reason: string
-  notes?: string
-}
+export const InventoryLevelSchema = z.object({
+  id: z.string().cuid(),
+  productId: z.string().cuid(),
+  currentQuantity: z.number().int().nonnegative(),
+  reservedQuantity: z.number().int().nonnegative(),
+  availableQuantity: z.number().int().nonnegative(),
+  reorderLevel: z.number().int().nonnegative(),
+  lastRestockDate: z.date().nullable(),
+  nextRestockDate: z.date().nullable().optional(),
+  updatedAt: z.date(),
+})
 
-export interface InventoryTransactionResponse {
-  success: boolean
-  data?: InventoryTransaction
-  error?: string
-}
+export const CreateTransactionRequestSchema = z.object({
+  productId: z.string().cuid(),
+  type: InventoryTransactionTypeSchema,
+  quantity: z.number().int().positive(),
+  reference: z.string().min(1).max(255),
+  notes: z.string().max(1000).optional(),
+})
 
-export interface InventoryLevelResponse {
-  success: boolean
-  data?: InventoryLevel
-  error?: string
-}
+export const InventoryAdjustmentRequestSchema = z.object({
+  productId: z.string().cuid(),
+  newQuantity: z.number().int().nonnegative(),
+  reason: z.string().min(1).max(255),
+  notes: z.string().max(1000).optional(),
+})
 
-export interface InventoryHistoryResponse {
-  success: boolean
-  data?: InventoryTransaction[]
-  total?: number
-  page?: number
-  pageSize?: number
-  error?: string
-}
+export const LowStockAlertSchema = z.object({
+  productId: z.string().cuid(),
+  productName: z.string().min(1).max(255),
+  currentQuantity: z.number().int().nonnegative(),
+  reorderLevel: z.number().int().nonnegative(),
+  sku: z.string().min(1).max(50),
+})
 
-export interface LowStockAlert {
-  productId: string
-  productName: string
-  currentQuantity: number
-  reorderLevel: number
-  sku: string
-}
+export const InventoryTransactionResponseSchema = z.object({
+  success: z.boolean(),
+  data: InventoryTransactionSchema.optional(),
+  error: z.string().optional(),
+})
 
-export interface LowStockAlertsResponse {
-  success: boolean
-  data?: LowStockAlert[]
-  total?: number
-  error?: string
-}
+export const InventoryLevelResponseSchema = z.object({
+  success: z.boolean(),
+  data: InventoryLevelSchema.optional(),
+  error: z.string().optional(),
+})
+
+export const InventoryHistoryResponseSchema = z.object({
+  success: z.boolean(),
+  data: z.array(InventoryTransactionSchema).optional(),
+  total: z.number().int().nonnegative().optional(),
+  page: z.number().int().positive().optional(),
+  pageSize: z.number().int().positive().optional(),
+  error: z.string().optional(),
+})
+
+export const LowStockAlertsResponseSchema = z.object({
+  success: z.boolean(),
+  data: z.array(LowStockAlertSchema).optional(),
+  total: z.number().int().nonnegative().optional(),
+  error: z.string().optional(),
+})
+
+// ============================================================================
+// TYPE EXPORTS (Inferred from Zod schemas)
+// ============================================================================
+
+export type InventoryTransaction = z.infer<typeof InventoryTransactionSchema>
+export type InventoryLevel = z.infer<typeof InventoryLevelSchema>
+export type CreateTransactionRequest = z.infer<typeof CreateTransactionRequestSchema>
+export type InventoryAdjustmentRequest = z.infer<typeof InventoryAdjustmentRequestSchema>
+export type LowStockAlert = z.infer<typeof LowStockAlertSchema>
+export type InventoryTransactionResponse = z.infer<typeof InventoryTransactionResponseSchema>
+export type InventoryLevelResponse = z.infer<typeof InventoryLevelResponseSchema>
+export type InventoryHistoryResponse = z.infer<typeof InventoryHistoryResponseSchema>
+export type LowStockAlertsResponse = z.infer<typeof LowStockAlertsResponseSchema>
