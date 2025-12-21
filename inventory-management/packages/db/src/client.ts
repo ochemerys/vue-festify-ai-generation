@@ -1,9 +1,9 @@
 /**
  * Prisma Client Singleton
- * 
+ *
  * This module exports a singleton instance of PrismaClient
  * to be used throughout the application.
- * 
+ *
  * For Prisma 7, the database connection is configured via:
  * - prisma/prisma.config.ts: Datasource configuration for Migrate
  * - DATABASE_URL: PostgreSQL connection string (environment variable)

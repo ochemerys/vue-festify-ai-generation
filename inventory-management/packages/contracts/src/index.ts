@@ -1,12 +1,12 @@
 /**
  * Inventory Management System - Shared Contracts
- * 
+ *
  * This package contains all shared type definitions and Zod schemas
  * used across the frontend and backend applications.
- * 
+ *
  * Zod schemas are the canonical source of truth for validation.
  * Types are inferred from schemas using z.infer<typeof Schema>.
- * 
+ *
  * Usage:
  * - Frontend: import { Product, ProductSchema } from '@inventory/contracts'
  * - Backend: import { CreateProductRequestSchema } from '@inventory/contracts'

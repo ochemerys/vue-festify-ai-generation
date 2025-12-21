@@ -1,6 +1,6 @@
 /**
  * Database Layer for Inventory Management System
- * 
+ *
  * This package provides Prisma ORM setup and database utilities
  * for the Inventory Management System.
  */

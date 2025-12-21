@@ -1,0 +1,36 @@
+{
+  "name": "inventory-management",
+  "version": "1.0.0",
+  "description": "Inventory Management System - Vue 3 + Fastify + PostgreSQL",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.13.1",
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "start": "pnpm --filter backend start",
+    "test": "pnpm -r test",
+    "test:watch": "pnpm -r --parallel test:watch",
+    "lint": "pnpm -r lint",
+    "lint:fix": "pnpm -r lint:fix",
+    "format": "prettier --write \"**/*.{ts,tsx,vue,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,vue,json,md}\"",
+    "db:push": "pnpm --filter @inventory/db db:push",
+    "db:migrate": "pnpm --filter @inventory/db db:migrate",
+    "db:seed": "pnpm --filter @inventory/db db:seed",
+    "db:studio": "pnpm --filter @inventory/db db:studio",
+    "clean": "pnpm -r exec rm -rf dist node_modules && rm -rf node_modules",
+    "install:clean": "pnpm clean && pnpm install"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@types/node": "^24.10.4",
+    "@typescript-eslint/eslint-plugin": "^8.18.1",
+    "@typescript-eslint/parser": "^8.18.1",
+    "eslint": "^9.17.0",
+    "eslint-plugin-vue": "^9.32.0",
+    "prettier": "^3.2.5",
+    "typescript": "~5.9.3",
+    "vitest": "^2.1.8"
+  }
+}
