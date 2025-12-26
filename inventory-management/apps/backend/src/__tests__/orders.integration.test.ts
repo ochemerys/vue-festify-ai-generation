@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vites
 import Fastify, { FastifyInstance } from 'fastify'
 import { orderRoutes } from '../routes/orders.js'
 import { prisma } from '@inventory/db'
+import { OrderStatus } from '@inventory/contracts'
 import './setup.js'
 
 /**
@@ -95,7 +96,7 @@ describe('Order API Integration Tests', () => {
         customerName: 'John Doe',
         customerEmail: 'john@example.com',
         customerPhone: '555-1234',
-        status: 'PENDING',
+        status: OrderStatus.PENDING,
         totalAmount: 72.97,
         shippingAddress: '123 Main St, Springfield',
         notes: 'Deliver before 5 PM',
@@ -338,7 +339,7 @@ describe('Order API Integration Tests', () => {
           customerName: 'John Doe',
           customerEmail: 'john@example.com',
           customerPhone: '555-1234',
-          status: 'PENDING',
+          status: OrderStatus.PENDING,
           totalAmount: 72.97,
           shippingAddress: '123 Main St, Springfield',
           notes: null,
@@ -356,7 +357,7 @@ describe('Order API Integration Tests', () => {
           customerName: 'Jane Smith',
           customerEmail: 'jane@example.com',
           customerPhone: '555-5678',
-          status: 'CONFIRMED',
+          status: OrderStatus.CONFIRMED,
           totalAmount: 100.00,
           shippingAddress: '456 Oak Ave, Springfield',
           notes: null,
@@ -396,7 +397,7 @@ describe('Order API Integration Tests', () => {
           customerName: 'John Doe',
           customerEmail: 'john@example.com',
           customerPhone: '555-1234',
-          status: 'PENDING',
+          status: OrderStatus.PENDING,
           totalAmount: 72.97,
           shippingAddress: '123 Main St, Springfield',
           notes: null,
@@ -414,7 +415,7 @@ describe('Order API Integration Tests', () => {
           customerName: 'Bob Johnson',
           customerEmail: 'bob@example.com',
           customerPhone: '555-9999',
-          status: 'PENDING',
+          status: OrderStatus.PENDING,
           totalAmount: 50.00,
           shippingAddress: '789 Pine Rd, Springfield',
           notes: null,
@@ -454,7 +455,7 @@ describe('Order API Integration Tests', () => {
           customerName: 'John Doe',
           customerEmail: 'john@example.com',
           customerPhone: '555-1234',
-          status: 'PENDING',
+          status: OrderStatus.PENDING,
           totalAmount: 72.97,
           shippingAddress: '123 Main St, Springfield',
           notes: null,
@@ -495,7 +496,7 @@ describe('Order API Integration Tests', () => {
         customerName: 'John Doe',
         customerEmail: 'john@example.com',
         customerPhone: '555-1234',
-        status: 'CONFIRMED',
+        status: OrderStatus.CONFIRMED,
         totalAmount: 72.97,
         shippingAddress: '123 Main St, Springfield',
         notes: null,
@@ -573,7 +574,7 @@ describe('Order API Integration Tests', () => {
         customerName: 'John Doe',
         customerEmail: 'john@example.com',
         customerPhone: '555-1234',
-        status: 'PENDING',
+        status: OrderStatus.PENDING,
         totalAmount: 72.97,
         shippingAddress: '123 Main St, Springfield',
         notes: null,
@@ -596,7 +597,7 @@ describe('Order API Integration Tests', () => {
 
       const mockUpdatedOrder = {
         ...mockOrder,
-        status: 'CONFIRMED',
+        status: OrderStatus.CONFIRMED,
       }
 
       vi.mocked(prisma.order.findUnique).mockResolvedValue(mockOrder)
@@ -607,7 +608,7 @@ describe('Order API Integration Tests', () => {
         method: 'PUT',
         url: '/api/orders/ord-001/status',
         payload: {
-          status: 'CONFIRMED',
+          status: OrderStatus.CONFIRMED,
         },
       })
 
@@ -627,7 +628,7 @@ describe('Order API Integration Tests', () => {
         customerName: 'John Doe',
         customerEmail: 'john@example.com',
         customerPhone: '555-1234',
-        status: 'CONFIRMED',
+        status: OrderStatus.CONFIRMED,
         totalAmount: 72.97,
         shippingAddress: '123 Main St, Springfield',
         notes: null,
@@ -650,7 +651,7 @@ describe('Order API Integration Tests', () => {
 
       const mockUpdatedOrder = {
         ...mockOrder,
-        status: 'SHIPPED',
+        status: OrderStatus.SHIPPED,
         shippedAt: new Date(),
       }
 
@@ -663,7 +664,7 @@ describe('Order API Integration Tests', () => {
         method: 'PUT',
         url: '/api/orders/ord-001/status',
         payload: {
-          status: 'SHIPPED',
+          status: OrderStatus.SHIPPED,
         },
       })
 
@@ -684,7 +685,7 @@ describe('Order API Integration Tests', () => {
         customerName: 'John Doe',
         customerEmail: 'john@example.com',
         customerPhone: '555-1234',
-        status: 'SHIPPED',
+        status: OrderStatus.SHIPPED,
         totalAmount: 72.97,
         shippingAddress: '123 Main St, Springfield',
         notes: null,
@@ -698,7 +699,7 @@ describe('Order API Integration Tests', () => {
 
       const mockUpdatedOrder = {
         ...mockOrder,
-        status: 'DELIVERED',
+        status: OrderStatus.DELIVERED,
         deliveredAt: new Date(),
       }
 
@@ -710,7 +711,7 @@ describe('Order API Integration Tests', () => {
         method: 'PUT',
         url: '/api/orders/ord-001/status',
         payload: {
-          status: 'DELIVERED',
+          status: OrderStatus.DELIVERED,
         },
       })
 
@@ -731,7 +732,7 @@ describe('Order API Integration Tests', () => {
         customerName: 'John Doe',
         customerEmail: 'john@example.com',
         customerPhone: '555-1234',
-        status: 'PENDING',
+        status: OrderStatus.PENDING,
         totalAmount: 72.97,
         shippingAddress: '123 Main St, Springfield',
         notes: null,
@@ -754,7 +755,7 @@ describe('Order API Integration Tests', () => {
 
       const mockUpdatedOrder = {
         ...mockOrder,
-        status: 'CANCELLED',
+        status: OrderStatus.CANCELLED,
       }
 
       vi.mocked(prisma.order.findUnique).mockResolvedValue(mockOrder)
@@ -766,7 +767,7 @@ describe('Order API Integration Tests', () => {
         method: 'PUT',
         url: '/api/orders/ord-001/status',
         payload: {
-          status: 'CANCELLED',
+          status: OrderStatus.CANCELLED,
         },
       })
 
@@ -786,7 +787,7 @@ describe('Order API Integration Tests', () => {
         customerName: 'John Doe',
         customerEmail: 'john@example.com',
         customerPhone: '555-1234',
-        status: 'DELIVERED',
+        status: OrderStatus.DELIVERED,
         totalAmount: 72.97,
         shippingAddress: '123 Main St, Springfield',
         notes: null,
@@ -809,7 +810,7 @@ describe('Order API Integration Tests', () => {
 
       const mockUpdatedOrder = {
         ...mockOrder,
-        status: 'RETURNED',
+        status: OrderStatus.RETURNED,
       }
 
       vi.mocked(prisma.order.findUnique).mockResolvedValue(mockOrder)
@@ -821,7 +822,7 @@ describe('Order API Integration Tests', () => {
         method: 'PUT',
         url: '/api/orders/ord-001/status',
         payload: {
-          status: 'RETURNED',
+          status: OrderStatus.RETURNED,
         },
       })
 
@@ -841,7 +842,7 @@ describe('Order API Integration Tests', () => {
         method: 'PUT',
         url: '/api/orders/non-existent/status',
         payload: {
-          status: 'CONFIRMED',
+          status: OrderStatus.CONFIRMED,
         },
       })
 
@@ -862,7 +863,7 @@ describe('Order API Integration Tests', () => {
         customerName: 'John Doe',
         customerEmail: 'john@example.com',
         customerPhone: '555-1234',
-        status: 'PENDING',
+        status: OrderStatus.PENDING,
         totalAmount: 59.98,
         shippingAddress: '123 Main St, Springfield',
         notes: null,
@@ -960,7 +961,7 @@ describe('Order API Integration Tests', () => {
         customerName: 'John Doe',
         customerEmail: 'john@example.com',
         customerPhone: '555-1234',
-        status: 'CONFIRMED',
+        status: OrderStatus.CONFIRMED,
         totalAmount: 59.98,
         shippingAddress: '123 Main St, Springfield',
         notes: null,
@@ -1001,7 +1002,7 @@ describe('Order API Integration Tests', () => {
         customerName: 'John Doe',
         customerEmail: 'john@example.com',
         customerPhone: '555-1234',
-        status: 'PENDING',
+        status: OrderStatus.PENDING,
         totalAmount: 59.98,
         shippingAddress: '123 Main St, Springfield',
         notes: null,
@@ -1070,7 +1071,7 @@ describe('Order API Integration Tests', () => {
         customerName: 'John Doe',
         customerEmail: 'john@example.com',
         customerPhone: '555-1234',
-        status: 'PENDING',
+        status: OrderStatus.PENDING,
         totalAmount: 72.97,
         shippingAddress: '123 Main St, Springfield',
         notes: null,
@@ -1135,7 +1136,7 @@ describe('Order API Integration Tests', () => {
         customerName: 'John Doe',
         customerEmail: 'john@example.com',
         customerPhone: '555-1234',
-        status: 'CONFIRMED',
+        status: OrderStatus.CONFIRMED,
         totalAmount: 72.97,
         shippingAddress: '123 Main St, Springfield',
         notes: null,
@@ -1187,7 +1188,7 @@ describe('Order API Integration Tests', () => {
         customerName: 'John Doe',
         customerEmail: 'john@example.com',
         customerPhone: '555-1234',
-        status: 'PENDING',
+        status: OrderStatus.PENDING,
         totalAmount: 59.98,
         shippingAddress: '123 Main St, Springfield',
         notes: null,
@@ -1228,12 +1229,12 @@ describe('Order API Integration Tests', () => {
       // Arrange
       vi.mocked(prisma.order.groupBy).mockResolvedValue([
         {
-          status: 'PENDING',
+          status: OrderStatus.PENDING,
           _count: { id: 1 },
           _sum: { totalAmount: 72.97 },
         },
         {
-          status: 'DELIVERED',
+          status: OrderStatus.DELIVERED,
           _count: { id: 2 },
           _sum: { totalAmount: 200.00 },
         },
