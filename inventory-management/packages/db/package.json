@@ -22,11 +22,11 @@
     "prisma"
   ],
   "scripts": {
-    "db:push": "prisma db push",
-    "db:migrate": "prisma migrate dev",
-    "db:migrate:deploy": "prisma migrate deploy",
-    "db:seed": "node --loader ts-node/esm prisma/seed.ts",
-    "db:studio": "prisma studio",
+    "db:push": "npx dotenv -e ../../../.env -- prisma db push --url %DATABASE_URL%",
+    "db:migrate": "npx dotenv -e ../../../.env -- prisma migrate dev --url %DATABASE_URL%",
+    "db:migrate:deploy": "npx dotenv -e ../../../.env -- prisma migrate deploy --url %DATABASE_URL%",
+    "db:seed": "npx dotenv -e ../../../.env -- node --loader ts-node/esm prisma/seed.ts",
+    "db:studio": "npx dotenv -e ../../../.env -- prisma studio --url %DATABASE_URL%",
     "db:generate": "prisma generate",
     "build": "tsc",
     "dev": "tsc --watch"
@@ -35,6 +35,11 @@
     "@prisma/client": "^7.2.0"
   },
   "devDependencies": {
+    "@prisma/adapter-pg": "^7.2.0",
+    "@types/pg": "^8.16.0",
+    "dotenv": "^17.2.3",
+    "dotenv-cli": "^8.0.0",
+    "pg": "^8.16.3",
     "prisma": "^7.2.0",
     "ts-node": "^10.9.2"
   }

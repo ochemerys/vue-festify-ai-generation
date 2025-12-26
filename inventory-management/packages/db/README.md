@@ -93,10 +93,10 @@ DATABASE_URL="postgresql://user:password@localhost:5432/inventory_management"
 
 ### Database Setup
 
-#### Create Database
+#### Create Database if not exists
 
 ```bash
-createdb inventory_management
+createdb org_inventory
 ```
 
 #### Run Migrations

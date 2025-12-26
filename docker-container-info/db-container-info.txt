@@ -1,0 +1,40 @@
+# PostgreSQL Docker Container
+
+## Login to Docker Hub
+
+```bash
+docker login dhi.io
+```
+
+## Create PostgreSQL Docker Container
+
+```bash
+docker run --name postgres-container \
+  -e POSTGRES_USER=root \
+  -e POSTGRES_PASSWORD=your_password_here \
+  -e POSTGRES_DB=org_inventory \
+  -p 5432:5432 \
+  -d postgres
+```
+
+### Verify server and created db
+
+```bash
+docker exec -it postgres-container psql -U root -l
+```
+
+## Work with database in terminal
+
+### Open database in terminal
+
+```bash
+docker exec -it postgres-container bash
+
+psql -U root -d org_inventory
+```
+
+### Run db queries
+
+```sql
+select * from users;
+```
