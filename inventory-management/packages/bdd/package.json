@@ -1,0 +1,27 @@
+{
+  "name": "@inventory/bdd",
+  "version": "1.0.0",
+  "description": "BDD tests for Inventory Management System",
+  "type": "module",
+  "scripts": {
+    "test": "cucumber-js",
+    "test:watch": "cucumber-js --watch",
+    "test:products": "cucumber-js features/products/*.feature",
+    "test:inventory": "cucumber-js features/inventory/*.feature",
+    "test:orders": "cucumber-js features/orders/*.feature",
+    "test:auth": "cucumber-js features/auth/*.feature",
+    "test:reporting": "cucumber-js features/reporting/*.feature"
+  },
+  "dependencies": {
+    "@cucumber/cucumber": "^11.1.0",
+    "@inventory/contracts": "workspace:*",
+    "axios": "^1.7.9",
+    "chai": "^5.1.2"
+  },
+  "devDependencies": {
+    "@types/chai": "^5.0.1",
+    "@types/node": "^24.10.4",
+    "tsx": "^4.19.2",
+    "typescript": "~5.9.3"
+  }
+}

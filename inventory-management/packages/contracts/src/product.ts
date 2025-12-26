@@ -47,12 +47,18 @@ export const UpdateProductRequestSchema = z.object({
 export const ProductFiltersSchema = z.object({
   category: z.string().optional(),
   supplier: z.string().optional(),
-  minPrice: z.number().nonnegative().optional(),
-  maxPrice: z.number().nonnegative().optional(),
+  minPrice: z.string().optional().transform(val => val ? parseFloat(val) : undefined),
+  maxPrice: z.string().optional().transform(val => val ? parseFloat(val) : undefined),
   search: z.string().optional(),
-  page: z.number().int().positive().default(1),
-  pageSize: z.number().int().positive().default(10),
-})
+  page: z.string().optional().transform(val => val ? parseInt(val) : 1),
+  pageSize: z.string().optional().transform(val => val ? parseInt(val) : 10),
+}).transform(data => ({
+  ...data,
+  minPrice: data.minPrice !== undefined ? Math.max(0, data.minPrice) : undefined,
+  maxPrice: data.maxPrice !== undefined ? Math.max(0, data.maxPrice) : undefined,
+  page: Math.max(1, data.page),
+  pageSize: Math.max(1, data.pageSize),
+}))
 
 export const ProductResponseSchema = z.object({
   success: z.boolean(),

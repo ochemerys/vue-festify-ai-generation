@@ -1,6 +1,11 @@
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
-import { z } from 'zod'
+import { authRoutes } from './routes/auth.js'
+import { productRoutes } from './routes/products.js'
+import { inventoryRoutes } from './routes/inventory.js'
+import { orderRoutes } from './routes/orders.js'
+import { purchaseOrderRoutes } from './routes/purchase-orders.js'
+import { reportRoutes } from './routes/reports.js'
 
 const app = Fastify({
   logger: true,
@@ -11,113 +16,22 @@ app.register(cors, {
   origin: true,
 })
 
-// Validation schemas
-const ItemSchema = z.object({
-  name: z.string().min(1),
-  description: z.string().optional(),
-  quantity: z.number().int().min(0),
-  price: z.number().positive(),
-})
-
-type ItemInput = z.infer<typeof ItemSchema>
-
-type Item = ItemInput & {
-  id: number
-}
-
-// In-memory storage (replace with database later)
-const items: Map<number, Item> = new Map([
-  [1, { id: 1, name: 'Laptop', description: 'Dell XPS 13', quantity: 5, price: 999.99 }],
-  [2, { id: 2, name: 'Mouse', description: 'Wireless Mouse', quantity: 50, price: 29.99 }],
-  [3, { id: 3, name: 'Keyboard', description: 'Mechanical Keyboard', quantity: 30, price: 149.99 }],
-])
-
-let nextId = 4
-
-// Routes
-
-// GET all items
-app.get('/api/items', async (request, reply) => {
-  return Array.from(items.values())
-})
-
-// GET single item
-app.get<{ Params: { id: string } }>('/api/items/:id', async (request, reply) => {
-  const id = parseInt(request.params.id)
-  const item = items.get(id)
-
-  if (!item) {
-    reply.status(404)
-    return { error: 'Item not found' }
-  }
-
-  return item
-})
-
-// POST create item
-app.post<{ Body: ItemInput }>('/api/items', async (request, reply) => {
-  try {
-    const validated = ItemSchema.parse(request.body)
-    const newItem: Item = {
-      id: nextId++,
-      ...validated,
-    }
-
-    items.set(newItem.id, newItem)
-    reply.status(201)
-    return newItem
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      reply.status(400)
-      return { error: 'Validation failed', details: error.issues }
-    }
-    throw error
-  }
-})
-
-// PUT update item
-app.put<{ Params: { id: string }; Body: ItemInput }>('/api/items/:id', async (request, reply) => {
-  const id = parseInt(request.params.id)
-
-  if (!items.has(id)) {
-    reply.status(404)
-    return { error: 'Item not found' }
-  }
-
-  try {
-    const validated = ItemSchema.parse(request.body)
-    const updatedItem: Item = {
-      id,
-      ...validated,
-    }
-
-    items.set(id, updatedItem)
-    return updatedItem
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      reply.status(400)
-      return { error: 'Validation failed', details: error.issues }
-    }
-    throw error
-  }
-})
-
-// DELETE item
-app.delete<{ Params: { id: string } }>('/api/items/:id', async (request, reply) => {
-  const id = parseInt(request.params.id)
-
-  if (!items.has(id)) {
-    reply.status(404)
-    return { error: 'Item not found' }
-  }
-
-  items.delete(id)
-  reply.status(204)
-})
+// Register route modules
+await app.register(authRoutes)
+await app.register(productRoutes)
+await app.register(inventoryRoutes)
+await app.register(orderRoutes)
+await app.register(purchaseOrderRoutes)
+await app.register(reportRoutes)
 
 // Health check
 app.get('/health', async (request, reply) => {
-  return { status: 'ok' }
+  return {
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0',
+    uptime: process.uptime(),
+  }
 })
 
 // Start server
