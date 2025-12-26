@@ -10,6 +10,42 @@ const OrderItemSchema = z.object({
 })
 
 export async function orderRoutes(app: FastifyInstance) {
+  // GET /api/orders/summary - Get order summary report (MUST be before parameterized routes)
+  app.get('/api/orders/summary', async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const summary = await prisma.order.groupBy({
+        by: ['status'],
+        _count: {
+          id: true,
+        },
+        _sum: {
+          totalAmount: true,
+        },
+      })
+
+      const totalOrders = summary.reduce((sum: number, s: any) => sum + s._count.id, 0)
+      const totalRevenue = summary.reduce((sum: number, s: any) => sum + (s._sum.totalAmount || 0), 0)
+      const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0
+
+      const pendingOrders = summary.find((s: any) => s.status === 'PENDING')?._count.id || 0
+      const deliveredOrders = summary.find((s: any) => s.status === 'DELIVERED')?._count.id || 0
+
+      return {
+        success: true,
+        data: {
+          totalOrders,
+          totalRevenue,
+          averageOrderValue,
+          pendingOrders,
+          deliveredOrders,
+        },
+      }
+    } catch (error) {
+      reply.status(500)
+      return { success: false, error: 'Internal server error' }
+    }
+  })
+
   // POST /api/orders - Create new order
   app.post('/api/orders', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
@@ -461,42 +497,6 @@ export async function orderRoutes(app: FastifyInstance) {
       })
 
       return { success: true, data: updatedOrder }
-    } catch (error) {
-      reply.status(500)
-      return { success: false, error: 'Internal server error' }
-    }
-  })
-
-  // GET /api/orders/summary - Get order summary report
-  app.get('/api/orders/summary', async (request: FastifyRequest, reply: FastifyReply) => {
-    try {
-      const summary = await prisma.order.groupBy({
-        by: ['status'],
-        _count: {
-          id: true,
-        },
-        _sum: {
-          totalAmount: true,
-        },
-      })
-
-      const totalOrders = summary.reduce((sum: number, s: any) => sum + s._count.id, 0)
-      const totalRevenue = summary.reduce((sum: number, s: any) => sum + (s._sum.totalAmount || 0), 0)
-      const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0
-
-      const pendingOrders = summary.find((s: any) => s.status === 'PENDING')?._count.id || 0
-      const deliveredOrders = summary.find((s: any) => s.status === 'DELIVERED')?._count.id || 0
-
-      return {
-        success: true,
-        data: {
-          totalOrders,
-          totalRevenue,
-          averageOrderValue,
-          pendingOrders,
-          deliveredOrders,
-        },
-      }
     } catch (error) {
       reply.status(500)
       return { success: false, error: 'Internal server error' }
