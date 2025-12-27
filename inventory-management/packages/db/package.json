@@ -29,7 +29,8 @@
     "db:studio": "npx dotenv -e ../../../.env -- prisma studio --url %DATABASE_URL%",
     "db:generate": "prisma generate",
     "build": "tsc",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "test": "echo 'No tests configured for db package' && exit 0"
   },
   "dependencies": {
     "@prisma/client": "^7.2.0"

@@ -95,6 +95,40 @@ export {
 } from './order'
 
 // ============================================================================
+// PURCHASE ORDER CONTRACTS
+// ============================================================================
+
+export type {
+  PurchaseOrder,
+  PurchaseOrderItem,
+  CreatePurchaseOrderRequest,
+  UpdatePurchaseOrderStatusRequest,
+  PurchaseOrderFilters,
+  GoodsReceiptRequest,
+  GoodsReceipt,
+  PurchaseOrderSummary,
+  PurchaseOrderResponse,
+  PurchaseOrderListResponse,
+  PurchaseOrderSummaryResponse,
+} from './purchase-order'
+
+export {
+  POStatus,
+  POStatusSchema,
+  PurchaseOrderItemSchema,
+  PurchaseOrderSchema,
+  CreatePurchaseOrderRequestSchema,
+  UpdatePurchaseOrderStatusRequestSchema,
+  PurchaseOrderFiltersSchema,
+  GoodsReceiptRequestSchema,
+  GoodsReceiptSchema,
+  PurchaseOrderSummarySchema,
+  PurchaseOrderResponseSchema,
+  PurchaseOrderListResponseSchema,
+  PurchaseOrderSummaryResponseSchema,
+} from './purchase-order'
+
+// ============================================================================
 // API CONTRACTS
 // ============================================================================
 

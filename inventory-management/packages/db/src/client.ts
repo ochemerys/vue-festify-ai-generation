@@ -16,12 +16,13 @@ import pg from 'pg'
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient }
 
-const databaseUrl = process.env.DATABASE_URL
+const databaseUrl = process.env.DATABASE_URL || process.env.DATABASE_TEST_URL
 
 if (!databaseUrl) {
   throw new Error(
-    'DATABASE_URL environment variable is not set. ' +
-    'Please ensure the root .env file exists with DATABASE_URL configured.'
+    'DATABASE_URL or DATABASE_TEST_URL environment variable is not set. ' +
+    'Please ensure the .env file exists with DATABASE_URL configured, ' +
+    'or .env.test with DATABASE_TEST_URL for testing.'
   )
 }
 

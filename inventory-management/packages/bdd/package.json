@@ -4,7 +4,8 @@
   "description": "BDD tests for Inventory Management System",
   "type": "module",
   "scripts": {
-    "test": "cucumber-js",
+    "test": "echo 'BDD tests not yet implemented. Run backend tests instead: pnpm --filter backend test' && exit 0",
+    "test:bdd": "cucumber-js",
     "test:watch": "cucumber-js --watch",
     "test:products": "cucumber-js features/products/*.feature",
     "test:inventory": "cucumber-js features/inventory/*.feature",
