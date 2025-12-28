@@ -34,7 +34,8 @@ inventory-management/
 
 - Node.js 18+
 - pnpm
-- PostgreSQL
+- Docker & Docker Compose (for running tests)
+- PostgreSQL (for development)
 
 ### Installation
 
@@ -58,6 +59,41 @@ inventory-management/
    pnpm db:push
    pnpm db:seed
    ```
+
+### Setting Up Tests (First Time After Clone)
+
+After cloning the project, follow these steps to prepare the test environment:
+
+```bash
+# 1. Start the test database (runs on port 5433)
+docker-compose -f docker-compose.test.yml up -d
+
+# 2. Install dependencies (if not already done)
+pnpm install
+
+# 3. Run database migrations for test database
+pnpm --filter @inventory/db prisma migrate deploy
+
+# 4. Run tests to verify setup
+pnpm test
+```
+
+**Test Database Details:**
+- Runs in Docker on port **5433** (separate from development database on 5432)
+- Connection string: `postgresql://postgres:postgres@localhost:5433/inventory_test`
+- Automatically isolated from production/development data
+
+**Stopping the test database:**
+```bash
+docker-compose -f docker-compose.test.yml down
+```
+
+**Resetting the test database (clean slate):**
+```bash
+docker-compose -f docker-compose.test.yml down -v
+docker-compose -f docker-compose.test.yml up -d
+pnpm --filter @inventory/db prisma migrate deploy
+```
 
 ### Development
 
@@ -133,10 +169,81 @@ Each package has its own scripts:
 
 ### Testing
 
-- Unit tests with Vitest
-- Frontend tests use jsdom environment
-- Backend tests use node environment
-- Run `pnpm test:watch` for continuous testing
+This project follows a **Gherkin-Driven TDD** approach with three distinct test layers:
+
+1. **Unit Tests** - Pure functions, no I/O, no database
+2. **Integration Tests** - API endpoints with real test database
+3. **Acceptance Tests (BDD)** - Executable Gherkin scenarios
+
+#### Running Tests
+
+```bash
+# Run all tests
+pnpm test
+
+# Run tests in watch mode (re-run on file changes)
+pnpm test:watch
+
+# Run specific test file
+pnpm test apps/backend/src/__tests__/products.integration.test.ts
+
+# Run tests matching a pattern
+pnpm test -- --grep "should create product"
+
+# Generate coverage report
+pnpm test:coverage
+```
+
+#### Test Structure
+
+- **Unit Tests**: `apps/backend/src/services/__tests__/*.unit.test.ts`
+  - Pure functions with zero external dependencies
+  - No database calls, no HTTP requests
+  - Fast execution (< 1ms per test)
+
+- **Integration Tests**: `apps/backend/src/routes/__tests__/*.integration.test.ts`
+  - API endpoints with real test database
+  - Validates HTTP status codes and response schemas
+  - Tests database side effects
+
+- **Contract Tests**: `packages/contracts/src/__tests__/*.contracts.test.ts`
+  - Validates Zod schema parsing and validation
+  - Tests data transformation logic
+
+#### Test Helpers
+
+The project provides test helpers for common operations:
+
+```typescript
+// Authentication
+import { createAuthHeaders } from './__tests__/helpers/auth'
+const headers = createAuthHeaders('ADMIN')
+
+// Test data factories
+import { createTestProduct, createTestOrder, cleanupTestData } from './__tests__/helpers/factories'
+const product = await createTestProduct({ name: 'Test Product' })
+await cleanupTestData() // Clean up after tests
+```
+
+#### Best Practices
+
+- Use **Arrange-Act-Assert** pattern for test structure
+- Write **descriptive test names** that explain what is being tested
+- Test both **happy paths** and **error scenarios**
+- Use **test-specific identifiers** (TEST- prefix) for easy cleanup
+- **Clean up test data** after each test with `beforeEach` and `afterEach`
+- Keep tests **isolated** - each test should be independent
+
+#### Common Issues
+
+| Issue | Solution |
+|-------|----------|
+| "Database not found" | Run `docker-compose -f docker-compose.test.yml up -d` |
+| "Port 5433 already in use" | Run `docker-compose -f docker-compose.test.yml down` first |
+| "Unauthorized" errors | Ensure you're using `createAuthHeaders()` in test requests |
+| Slow tests | Check that cleanup is working properly with `cleanupTestData()` |
+
+For detailed testing documentation, see [Testing Guide](../../_docs/testing-guide.md).
 
 ## API Documentation
 
