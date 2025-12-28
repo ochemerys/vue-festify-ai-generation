@@ -80,15 +80,65 @@ The main dashboard provides users with a high-level overview of their inventory 
 
 ## 5️⃣ Layout & Components
 
+### Application Shell Layout
+
+The application uses a **left-side navigation menu** with a top header bar, following modern SPA patterns and the frontend architecture guidelines.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ [Logo] Inventory Management System      [Notifications] [Profile] │
+├──────────────┬──────────────────────────────────────────────┤
+│              │                                              │
+│  [Dashboard] │                                              │
+│  [Products]  │                                              │
+│  [Inventory] │         Main Content Area                    │
+│  [Orders]    │         (Dashboard Metrics & Data)           │
+│  [Reports]   │                                              │
+│  [Settings]  │                                              │
+│              │                                              │
+│  [Logout]    │                                              │
+│              │                                              │
+└──────────────┴────────────────────────────────────────────��─┘
+```
+
 ### Header Section
 
 ```
-┌───────────────────────────────────────────────────────┐
-│ [Logo] Inventory Management          [Profile]        │
-├───────────────────────────────────────────────────────┤
-│ [Dashboard] [Products] [Orders] [Inventory] [Reports] │
-└───────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│ [Logo] Inventory Management System  [🔔] [👤 Profile] [⋮]  │
+└─────────────────────────────────────────────────────────────┘
 ```
+
+**Header Components:**
+- **Logo/Brand:** Left-aligned application logo and name
+- **Notifications:** Bell icon with unread count badge
+- **User Profile:** Current user name/avatar with dropdown menu
+- **Menu Toggle:** Hamburger menu for mobile (collapses sidebar)
+
+### Sidebar Navigation
+
+```
+┌──────────────────────┐
+│ [≡] Navigation       │
+├──────────────────────┤
+│ 📊 Dashboard         │
+│ 📦 Products          │
+│ 📋 Inventory         │
+│ 🛒 Orders            │
+│ 📥 Purchase Orders   │
+│ 📈 Reports           │
+│ ⚙️  Settings         │
+├──────────────────────┤
+│ 🚪 Logout            │
+└──────────────────────���
+```
+
+**Sidebar Features:**
+- **Collapsible:** Collapses to icon-only view on smaller screens
+- **Active State:** Highlights current route
+- **Icons:** Visual indicators for each section
+- **Responsive:** Converts to bottom navigation on mobile (<768px)
+- **Accessibility:** Semantic nav structure with ARIA labels
 
 ### Metrics Grid (4x2)
 
@@ -140,22 +190,113 @@ The main dashboard provides users with a high-level overview of their inventory 
 
 ### Desktop (>1024px)
 
-- Full 4-column metrics grid
-- Side-by-side content sections
-- Complete navigation bar
+- **Sidebar:** Full width (240px) with text labels and icons
+- **Header:** Full width with logo, notifications, and profile
+- **Content:** Full 4-column metrics grid
+- **Layout:** Side-by-side content sections
+- **Sidebar State:** Always visible, collapsible to icon-only (80px)
+
+```
+┌─────────────────────────────────────────────────���───────┐
+│ [Logo] System                    [🔔] [👤] [⋮]         │
+├──────────────┬────────────────────────────────────────┤
+│ 📊 Dashboard │ Metrics Grid (4 columns)                │
+│ 📦 Products  │ ┌──────┬──────┬──────┬──────┐           │
+│ 📋 Inventory │ │ Card │ Card │ Card │ Card │           │
+│ 🛒 Orders    │ └──────┴──────┴──────┴──────┘           │
+│ 📥 PO        │ Recent Orders Table                     │
+│ 📈 Reports   │ ┌──────────────────────────────────┐   │
+│ ⚙️  Settings │ │ Order │ Customer │ Status │ Date │   │
+│              │ └──────────────────────────────────┘   │
+│ 🚪 Logout    │                                        │
+└──────────────┴────────────────────────────────────────┘
+```
 
 ### Tablet (768px - 1024px)
 
-- 2-column metrics grid
-- Stacked content sections
-- Collapsible navigation menu
+- **Sidebar:** Collapsible (icon-only by default, 80px)
+- **Header:** Full width with hamburger menu toggle
+- **Content:** 2-column metrics grid
+- **Layout:** Stacked content sections
+- **Sidebar Toggle:** Hamburger icon in header expands sidebar
+
+```
+┌──────────────────────────────────────────────────────┐
+│ [≡] [Logo] System            [🔔] [👤] [⋮]         │
+├──────────────────────────────────────────────────────┤
+│ Metrics Grid (2 columns)                             │
+│ ┌──────────────┬──────────────┐                      │
+│ │ Card         │ Card         │                      │
+│ ├──────────────┼──────────────┤                      │
+│ │ Card         │ Card         │                      │
+│ └──────────────┴──────────────┘                      │
+│ Recent Orders Table (Full Width)                     │
+│ ┌────────────────────────────────────────────────┐  │
+│ │ Order │ Customer │ Status │ Total │ Date       │  │
+│ └────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────┘
+```
 
 ### Mobile (<768px)
 
-- Single column metrics stack
-- Card-based layout
-- Bottom navigation tabs
-- Swipe gestures for sections
+- **Sidebar:** Hidden by default, accessible via hamburger menu
+- **Header:** Compact with hamburger menu, notifications, profile
+- **Content:** Single column metrics stack
+- **Layout:** Card-based layout with full-width sections
+- **Navigation:** Drawer/modal sidebar or bottom navigation option
+
+```
+┌──────────────────────────────┐
+│ [≡] [Logo]  [🔔] [👤] [⋮]  │
+├──────────────────────────────┤
+│ Metrics (Single Column)       │
+│ ┌──────────────────────────┐ │
+│ │ Card                     │ │
+│ ├──────────────────────────┤ │
+│ │ Card                     │ │
+│ ├──────────────────────────┤ │
+│ │ Card                     │ │
+│ ├──────────────────────────┤ │
+│ │ Card                     │ │
+│ └──────────────────────────┘ │
+│ Recent Orders (Full Width)   │
+│ ┌──────────────────────────┐ │
+│ │ Order Card               │ │
+│ ├──────────────────────────┤ │
+│ │ Order Card               │ │
+│ └──────────────────────────┘ │
+└──────────────────────────────┘
+
+Sidebar (Drawer/Modal):
+┌──────────────────┐
+│ [✕] Navigation   │
+├──────────────────┤
+│ 📊 Dashboard     │
+│ 📦 Products      │
+│ 📋 Inventory     │
+│ 🛒 Orders        │
+│ 📥 PO            │
+│ 📈 Reports       │
+│ ⚙️  Settings     │
+├──────────────────┤
+│ 🚪 Logout        │
+└──────────────────┘
+```
+
+### Breakpoints & Sidebar Behavior
+
+| Breakpoint | Sidebar Width | Sidebar State | Toggle | Content Adjustment |
+|-----------|---------------|---------------|--------|-------------------|
+| Desktop (>1024px) | 240px (full) or 80px (collapsed) | Persistent | Manual collapse button | Margin-left adjustment |
+| Tablet (768px-1024px) | 80px (icon-only) | Collapsible | Hamburger menu | Margin-left adjustment |
+| Mobile (<768px) | 100% (drawer) | Hidden | Hamburger menu | Full width, drawer overlay |
+
+### Sidebar Collapse Animation
+
+- **Transition:** Smooth 300ms width transition
+- **Icon Visibility:** Icons always visible, labels fade on collapse
+- **Tooltip:** Show full label on hover when collapsed
+- **State Persistence:** Remember user's collapse preference in localStorage
 
 ---
 
@@ -239,32 +380,492 @@ The main dashboard provides users with a high-level overview of their inventory 
 
 ---
 
+## 1️⃣1️⃣ Component Architecture & Implementation
+
+### Component Hierarchy
+
+Following the frontend architecture guidelines, the dashboard uses a **Container/Presentational** component pattern:
+
+```
+App.vue
+└── AppLayout.vue (Container - manages sidebar state)
+    ├── AppHeader.vue (Presentational)
+    │   ├── Logo
+    │   ├── NotificationBell
+    │   └── UserMenu
+    ├── AppSidebar.vue (Presentational)
+    │   ├── NavItem (Presentational - repeated)
+    │   └── LogoutButton
+    └── RouterView
+        └── DashboardPage.vue (Container - fetches metrics)
+            ├── MetricsGrid.vue (Container)
+            │   └── MetricCard.vue (Presentational - repeated 8x)
+            ├── LowStockAlert.vue (Presentational)
+            ├── RecentOrdersSection.vue (Container)
+            │   └── OrderTable.vue (Presentational)
+            └── QuickActionsPanel.vue (Presentational)
+```
+
+### Layout Component Contracts
+
+#### `AppLayout.vue` (Container)
+
+**Responsibility:** Main application shell managing sidebar state and responsive behavior
+
+**Props:**
+```typescript
+interface AppLayoutProps {
+  // No props - reads from auth store
+}
+```
+
+**State:**
+```typescript
+{
+  sidebarOpen: boolean // Sidebar visibility on mobile
+  sidebarCollapsed: boolean // Sidebar collapse state on desktop
+}
+```
+
+**Slots:**
+```typescript
+{
+  default: void // Main content area (RouterView)
+}
+```
+
+**Features:**
+- Manages sidebar open/close state
+- Persists collapse preference to localStorage
+- Handles responsive breakpoint changes
+- Provides sidebar state to child components via provide/inject
+
+---
+
+#### `AppHeader.vue` (Presentational)
+
+**Responsibility:** Top navigation bar with branding and user controls
+
+**Props:**
+```typescript
+interface AppHeaderProps {
+  userName: string
+  notificationCount?: number
+  onSidebarToggle?: () => void
+}
+```
+
+**Emits:**
+```typescript
+{
+  'sidebar-toggle': void
+  'logout': void
+  'navigate-to-profile': void
+  'view-notifications': void
+}
+```
+
+**Slots:**
+```typescript
+{
+  logo?: void // Custom logo slot
+  actions?: void // Additional header actions
+}
+```
+
+---
+
+#### `AppSidebar.vue` (Presentational)
+
+**Responsibility:** Left navigation menu with route links
+
+**Props:**
+```typescript
+interface AppSidebarProps {
+  currentRoute: string
+  isCollapsed?: boolean
+  isOpen?: boolean // Mobile drawer state
+}
+```
+
+**Emits:**
+```typescript
+{
+  'navigate': { path: string }
+  'close': void // Mobile drawer close
+}
+```
+
+**Navigation Items:**
+```typescript
+interface NavItem {
+  label: string
+  icon: string // Icon name or component
+  path: string
+  badge?: number // For notifications/alerts
+  children?: NavItem[] // For nested menus (future)
+}
+
+const navItems: NavItem[] = [
+  { label: 'Dashboard', icon: 'dashboard', path: '/' },
+  { label: 'Products', icon: 'package', path: '/products' },
+  { label: 'Inventory', icon: 'inventory', path: '/inventory' },
+  { label: 'Orders', icon: 'shopping-cart', path: '/orders' },
+  { label: 'Purchase Orders', icon: 'inbox', path: '/purchase-orders' },
+  { label: 'Reports', icon: 'chart', path: '/reports' },
+  { label: 'Settings', icon: 'settings', path: '/settings' }
+]
+```
+
+---
+
+### Dashboard Page Components
+
+#### `DashboardPage.vue` (Container)
+
+**Responsibility:** Main dashboard page - fetches metrics and orchestrates child components
+
+**Data Dependencies:**
+```typescript
+{
+  useAuthStore: // Current user info
+  useProductStore: // Product count
+  useInventoryStore: // Low stock alerts
+  useOrderStore: // Order metrics
+  useDashboardMetrics: // Aggregated metrics
+}
+```
+
+**Local State:**
+```typescript
+{
+  loading: boolean
+  error: string | null
+  metrics: DashboardMetrics
+  recentOrders: Order[]
+}
+```
+
+**Lifecycle:**
+1. On mount: Fetch all metrics in parallel
+2. Set loading state during fetch
+3. Handle errors with retry option
+4. Display metrics or error state
+
+---
+
+#### `MetricsGrid.vue` (Container)
+
+**Responsibility:** Render 4x2 grid of metric cards with responsive layout
+
+**Props:**
+```typescript
+interface MetricsGridProps {
+  metrics: DashboardMetrics
+  loading?: boolean
+}
+```
+
+**Emits:**
+```typescript
+{
+  'metric-click': { metricKey: string }
+}
+```
+
+**Responsive Behavior:**
+- Desktop (>1024px): 4 columns
+- Tablet (768px-1024px): 2 columns
+- Mobile (<768px): 1 column
+
+---
+
+#### `MetricCard.vue` (Presentational)
+
+**Responsibility:** Display single metric with value, trend, and click action
+
+**Props:**
+```typescript
+interface MetricCardProps {
+  title: string
+  value: number | string
+  unit?: string
+  trend?: {
+    value: number
+    direction: 'up' | 'down' | 'neutral'
+    period: string // e.g., "vs last month"
+  }
+  icon?: string
+  loading?: boolean
+  clickable?: boolean
+}
+```
+
+**Emits:**
+```typescript
+{
+  'click': void
+}
+```
+
+**States:**
+- **Loading:** Skeleton loader animation
+- **Normal:** Display value with trend indicator
+- **Hover:** Show additional details or highlight
+
+---
+
+#### `LowStockAlert.vue` (Presentational)
+
+**Responsibility:** Display banner with low stock items
+
+**Props:**
+```typescript
+interface LowStockAlertProps {
+  alerts: LowStockAlert[]
+  dismissible?: boolean
+  loading?: boolean
+}
+```
+
+**Emits:**
+```typescript
+{
+  'dismiss': { productId: string }
+  'create-po': { productId: string }
+  'view-product': { productId: string }
+}
+```
+
+---
+
+#### `RecentOrdersSection.vue` (Container)
+
+**Responsibility:** Fetch and display recent orders
+
+**Props:**
+```typescript
+interface RecentOrdersSectionProps {
+  limit?: number // Default: 5
+}
+```
+
+**Data Dependencies:**
+```typescript
+{
+  useOrderStore: // Fetch recent orders
+}
+```
+
+---
+
+#### `QuickActionsPanel.vue` (Presentational)
+
+**Responsibility:** Display quick action buttons
+
+**Props:**
+```typescript
+interface QuickActionsPanelProps {
+  actions?: QuickAction[]
+}
+```
+
+**Default Actions:**
+```typescript
+interface QuickAction {
+  label: string
+  icon: string
+  action: () => void
+  badge?: number
+}
+
+const defaultActions: QuickAction[] = [
+  { label: 'Create New Order', icon: 'plus', action: () => router.push('/orders/new') },
+  { label: 'Add New Product', icon: 'plus', action: () => router.push('/products/new') },
+  { label: 'View Low Stock Alerts', icon: 'alert', action: () => router.push('/inventory?filter=low-stock') },
+  { label: 'Generate Report', icon: 'chart', action: () => router.push('/reports') }
+]
+```
+
+---
+
+### State Management
+
+#### `useDashboardMetrics()` Composable
+
+**Responsibility:** Aggregate metrics from multiple stores
+
+**Returns:**
+```typescript
+{
+  metrics: ComputedRef<{
+    totalProducts: number
+    totalOrders: number
+    pendingOrders: number
+    lowStockCount: number
+    monthlyRevenue: number
+    todayOrders: number
+    outOfStock: number
+    overdueOrders: number
+  }>
+  loading: Ref<boolean>
+  error: Ref<string | null>
+  refresh: () => Promise<void>
+}
+```
+
+**Implementation:**
+```typescript
+export function useDashboardMetrics() {
+  const productStore = useProductStore()
+  const inventoryStore = useInventoryStore()
+  const orderStore = useOrderStore()
+  
+  const loading = ref(false)
+  const error = ref<string | null>(null)
+
+  const metrics = computed(() => ({
+    totalProducts: productStore.productList.length,
+    lowStockCount: inventoryStore.lowStockCount,
+    pendingOrders: orderStore.pendingOrders.length,
+    // ... other metrics
+  }))
+
+  const refresh = async () => {
+    loading.value = true
+    try {
+      await Promise.all([
+        productStore.fetchProducts(),
+        inventoryStore.fetchInventoryLevels(),
+        orderStore.fetchOrders()
+      ])
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to load metrics'
+    } finally {
+      loading.value = false
+    }
+  }
+
+  onMounted(() => refresh())
+
+  return { metrics, loading, error, refresh }
+}
+```
+
+---
+
+### Accessibility Implementation
+
+#### Semantic Structure
+
+```html
+<div class="app-layout">
+  <header role="banner" aria-label="Application header">
+    <!-- Header content -->
+  </header>
+  
+  <nav role="navigation" aria-label="Main navigation">
+    <!-- Sidebar content -->
+  </nav>
+  
+  <main role="main" aria-label="Dashboard content">
+    <section aria-labelledby="metrics-heading">
+      <h1 id="metrics-heading">Key Metrics</h1>
+      <!-- Metrics grid -->
+    </section>
+    
+    <section aria-labelledby="alerts-heading">
+      <h2 id="alerts-heading">Low Stock Alerts</h2>
+      <!-- Alerts -->
+    </section>
+    
+    <section aria-labelledby="orders-heading">
+      <h2 id="orders-heading">Recent Orders</h2>
+      <!-- Orders table -->
+    </section>
+  </main>
+</div>
+```
+
+#### Keyboard Navigation
+
+- **Tab:** Navigate through header, sidebar, and main content
+- **Enter/Space:** Activate buttons and links
+- **Escape:** Close mobile sidebar drawer
+- **Arrow Keys:** Navigate within tables (if implemented)
+
+#### Screen Reader Support
+
+- All icons have `aria-label` or are wrapped in labeled elements
+- Metric cards have descriptive labels
+- Tables have proper `<thead>`, `<tbody>`, `<th>` structure
+- Loading states announced with `role="status"` and `aria-live="polite"`
+- Error messages announced with `role="alert"`
+
+---
+
 ## 📋 Implementation Checklist
 
-### Phase 1: Core Layout
+### Phase 1: Core Layout (Week 1)
 
-- [ ] Basic dashboard layout with header
-- [ ] Responsive grid system
-- [ ] Navigation component
-- [ ] Metric cards with loading states
+- [ ] Create `AppLayout.vue` with sidebar state management
+- [ ] Create `AppHeader.vue` with logo, notifications, user menu
+- [ ] Create `AppSidebar.vue` with navigation items
+- [ ] Implement responsive breakpoints and sidebar collapse
+- [ ] Add localStorage persistence for sidebar state
+- [ ] Test keyboard navigation and accessibility
 
-### Phase 2: Data Integration
+### Phase 2: Dashboard Metrics (Week 2)
 
-- [ ] API integration for metrics
-- [ ] Real-time data updates
-- [ ] Error handling and retry logic
-- [ ] Caching strategy implementation
+- [ ] Create `DashboardPage.vue` container
+- [ ] Create `MetricsGrid.vue` with responsive layout
+- [ ] Create `MetricCard.vue` with loading skeleton
+- [ ] Implement `useDashboardMetrics()` composable
+- [ ] Add metric click handlers for navigation
+- [ ] Write component tests with Vue Testing Library
 
-### Phase 3: Advanced Features
+### Phase 3: Alerts & Recent Activity (Week 3)
 
-- [ ] Interactive data tables
-- [ ] Advanced filtering and search
-- [ ] Export functionality
-- [ ] User preferences and customization
+- [ ] Create `LowStockAlert.vue` component
+- [ ] Create `RecentOrdersSection.vue` container
+- [ ] Integrate with `useOrderStore` for recent orders
+- [ ] Add dismiss functionality for alerts
+- [ ] Add "Create PO" quick action from alerts
+- [ ] Write integration tests
 
-### Phase 4: Polish & Optimization
+### Phase 4: Quick Actions & Polish (Week 4)
 
-- [ ] Performance optimization
-- [ ] Accessibility improvements
+- [ ] Create `QuickActionsPanel.vue`
+- [ ] Implement quick action handlers
+- [ ] Add loading states and error handling
+- [ ] Implement refresh functionality
+- [ ] Add toast notifications for actions
+- [ ] Performance optimization and code splitting
+- [ ] Accessibility audit and fixes
 - [ ] Cross-browser testing
-- [ ] Mobile app considerations
+
+### Phase 5: Mobile Optimization (Week 5)
+
+- [ ] Test responsive design on actual devices
+- [ ] Optimize touch interactions
+- [ ] Implement mobile-specific sidebar drawer
+- [ ] Test performance on slow networks
+- [ ] Optimize images and bundle size
+- [ ] Add PWA support (optional)
+
+---
+
+## 🎯 Success Criteria
+
+- ✅ Sidebar navigation works on all breakpoints
+- ✅ Metrics load and display correctly
+- ✅ All components are keyboard accessible
+- ✅ Screen reader announces all content properly
+- ✅ Mobile sidebar drawer opens/closes smoothly
+- ✅ Sidebar collapse state persists across sessions
+- ✅ All metrics are clickable and navigate correctly
+- ✅ Loading states show skeleton loaders
+- ✅ Error states show retry buttons
+- ✅ No prop drilling - uses stores/composables
+- ✅ Component tests cover all user interactions
+- ✅ Performance metrics meet targets (LCP <2.5s, FID <100ms)

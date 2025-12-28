@@ -2,6 +2,25 @@
 
 AI generation of Vue3+Typescript+Tailwind UI and Fastify + Typescript
 
+## 📚 Documentation
+
+**Start here:** [`ARCHITECTURE.md`](./ARCHITECTURE.md) - Canonical reference for all frontend architecture decisions.
+
+For navigation and guidance on which document to use, see [`DOCUMENTATION_GUIDE.md`](./DOCUMENTATION_GUIDE.md).
+
+### Key Documentation Files
+
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Canonical architecture reference (START HERE)
+- **[DOCUMENTATION_GUIDE.md](./DOCUMENTATION_GUIDE.md)** - Navigation guide for all documentation
+- **[REFACTORING_SUMMARY.md](./REFACTORING_SUMMARY.md)** - Summary of documentation refactoring
+- **[ai-prompts/frontend/bdd-tdd-frontend-architecture.md](./ai-prompts/frontend/bdd-tdd-frontend-architecture.md)** - Full system architecture for all modules
+- **[ai-prompts/frontend/frontend-design/generate-dashboard-components.md](./ai-prompts/frontend/frontend-design/generate-dashboard-components.md)** - Dashboard-specific component generation
+- **[_docs/frontend-architecture.md](./_docs/frontend-architecture.md)** - Detailed architecture with test examples
+- **[testing-guide.md](./testing-guide.md)** - Testing best practices and patterns
+- **[monorepo-implementation-guide.md](./monorepo-implementation-guide.md)** - Monorepo structure and setup
+
+---
+
 ## Core Recommendation (Executive Summary)
 
 Use TypeScript as the single source of truth across the stack, with:
