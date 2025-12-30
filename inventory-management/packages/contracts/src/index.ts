@@ -23,7 +23,7 @@ export type {
   ProductResponse,
   ProductListResponse,
   ProductFilters,
-} from './product'
+} from './product.js'
 
 export {
   ProductSchema,
@@ -32,7 +32,7 @@ export {
   ProductFiltersSchema,
   ProductResponseSchema,
   ProductListResponseSchema,
-} from './product'
+} from './product.js'
 
 // ============================================================================
 // INVENTORY CONTRACTS
@@ -48,7 +48,7 @@ export type {
   InventoryHistoryResponse,
   LowStockAlert,
   LowStockAlertsResponse,
-} from './inventory'
+} from './inventory.js'
 
 export {
   InventoryTransactionType,
@@ -62,7 +62,7 @@ export {
   InventoryLevelResponseSchema,
   InventoryHistoryResponseSchema,
   LowStockAlertsResponseSchema,
-} from './inventory'
+} from './inventory.js'
 
 // ============================================================================
 // ORDER CONTRACTS
@@ -78,7 +78,7 @@ export type {
   OrderFilters,
   OrderSummary,
   OrderSummaryResponse,
-} from './order'
+} from './order.js'
 
 export {
   OrderStatus,
@@ -92,7 +92,7 @@ export {
   OrderResponseSchema,
   OrderListResponseSchema,
   OrderSummaryResponseSchema,
-} from './order'
+} from './order.js'
 
 // ============================================================================
 // PURCHASE ORDER CONTRACTS
@@ -110,7 +110,7 @@ export type {
   PurchaseOrderResponse,
   PurchaseOrderListResponse,
   PurchaseOrderSummaryResponse,
-} from './purchase-order'
+} from './purchase-order.js'
 
 export {
   POStatus,
@@ -126,7 +126,7 @@ export {
   PurchaseOrderResponseSchema,
   PurchaseOrderListResponseSchema,
   PurchaseOrderSummaryResponseSchema,
-} from './purchase-order'
+} from './purchase-order.js'
 
 // ============================================================================
 // API CONTRACTS
@@ -142,7 +142,7 @@ export type {
   HealthCheckResponse,
   AuthToken,
   AuthResponse,
-} from './api'
+} from './api.js'
 
 export {
   ApiErrorCode,
@@ -156,4 +156,4 @@ export {
   ValidationErrorResponseSchema,
   createApiResponseSchema,
   createPaginatedResponseSchema,
-} from './api'
+} from './api.js'

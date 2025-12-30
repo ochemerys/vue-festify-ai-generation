@@ -268,9 +268,17 @@ export async function authRoutes(app: FastifyInstance) {
         updateData.password = await bcrypt.hash(updateData.password, 10)
       }
 
+      // Build Prisma update payload without undefined properties
+      const data: any = {}
+      if (updateData.firstName !== undefined) data.firstName = updateData.firstName
+      if (updateData.lastName !== undefined) data.lastName = updateData.lastName
+      if (updateData.password !== undefined) data.password = updateData.password
+      if (updateData.role !== undefined) data.role = updateData.role
+      if (updateData.isActive !== undefined) data.isActive = updateData.isActive
+
       const user = await prisma.user.update({
         where: { id: request.params.id },
-        data: updateData,
+        data,
         select: {
           id: true,
           email: true,

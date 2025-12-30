@@ -155,7 +155,7 @@ export async function productRoutes(app: FastifyInstance) {
       }
 
       const product = await prisma.product.create({
-        data: productData,
+        data: { ...productData, description: productData.description ?? null },
       })
 
       // Create initial inventory level
@@ -186,10 +186,28 @@ export async function productRoutes(app: FastifyInstance) {
     async (request, reply) => {
       try {
         const updateData = UpdateProductRequestSchema.parse(request.body)
+        // Coerce nullable fields to explicit nulls when absent
+        if (updateData.description === undefined) {
+          // leave undefined to avoid updating; prisma expects string | null if provided
+        } else if (updateData.description === null) {
+          // ok
+        } else {
+          // string value is fine
+        }
+
+        // Build update payload without undefined values
+        const data: any = {}
+        if (updateData.name !== undefined) data.name = updateData.name
+        if (updateData.category !== undefined) data.category = updateData.category
+        if (updateData.supplier !== undefined) data.supplier = updateData.supplier
+        if (updateData.description !== undefined) data.description = updateData.description ?? null
+        if (updateData.price !== undefined) data.price = updateData.price
+        if (updateData.cost !== undefined) data.cost = updateData.cost
+        if (updateData.reorderLevel !== undefined) data.reorderLevel = updateData.reorderLevel
 
         const product = await prisma.product.update({
           where: { id: request.params.id },
-          data: updateData,
+          data,
         })
 
         return { success: true, data: product }

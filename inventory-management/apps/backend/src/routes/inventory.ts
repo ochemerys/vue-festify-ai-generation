@@ -63,6 +63,7 @@ export async function inventoryRoutes(app: FastifyInstance) {
         prisma.inventoryTransaction.create({
           data: {
             ...transactionData,
+            notes: transactionData.notes ?? null,
             createdBy: 'system', // TODO: Get from auth context
           },
         }),

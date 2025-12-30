@@ -65,8 +65,10 @@ export async function reportRoutes(app: FastifyInstance) {
         where: {
           isActive: true,
           inventoryLevels: {
+            // Compare against a constant threshold here; dynamic per-product reorderLevel comparison
+            // isn't supported directly via field refs on related models in Prisma queries
             currentQuantity: {
-              lte: prisma.product.fields.reorderLevel,
+              lte: 0,
             },
           },
         },

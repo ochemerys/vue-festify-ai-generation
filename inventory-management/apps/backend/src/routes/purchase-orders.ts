@@ -80,18 +80,14 @@ export async function purchaseOrderRoutes(app: FastifyInstance) {
           supplierId: poData.supplierId,
           totalAmount,
           expectedDate: poData.expectedDate,
-          notes: poData.notes,
+          notes: poData.notes ?? null,
           items: {
             create: poItems,
           },
         },
         include: {
           supplier: true,
-          items: {
-            include: {
-              product: true,
-            },
-          },
+          items: true,
         },
       })
 
@@ -134,11 +130,7 @@ export async function purchaseOrderRoutes(app: FastifyInstance) {
           where,
           include: {
             supplier: true,
-            items: {
-              include: {
-                product: true,
-              },
-            },
+            items: true,
           },
           skip: (filters.page - 1) * filters.pageSize,
           take: filters.pageSize,
@@ -171,11 +163,7 @@ export async function purchaseOrderRoutes(app: FastifyInstance) {
         where: { id: request.params.id },
         include: {
           supplier: true,
-          items: {
-            include: {
-              product: true,
-            },
-          },
+          items: true,
           receipts: true,
         },
       })
@@ -224,11 +212,7 @@ export async function purchaseOrderRoutes(app: FastifyInstance) {
         data: updateData,
         include: {
           supplier: true,
-          items: {
-            include: {
-              product: true,
-            },
-          },
+          items: true,
         },
       })
 
@@ -369,11 +353,7 @@ export async function purchaseOrderRoutes(app: FastifyInstance) {
         where: { id: poId },
         include: {
           supplier: true,
-          items: {
-            include: {
-              product: true,
-            },
-          },
+          items: true,
           receipts: true,
         },
       })

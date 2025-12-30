@@ -1,9 +1,9 @@
 // IMPORTANT: Import env-setup FIRST to set environment variables
-import './env-setup'
+import './env-setup.js'
 
 import { beforeAll, afterAll, beforeEach, afterEach } from 'vitest'
 import { prisma } from '@inventory/db'
-import { cleanupTestData } from './helpers/factories'
+import { cleanupTestData } from './helpers/factories.js'
 
 // Database connection management - only for integration tests
 let isDatabaseAvailable = false

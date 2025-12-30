@@ -103,14 +103,14 @@ export async function createTestOrder(
     where: { id: { in: productIds } },
   })
 
-  const items = products.map((product, index) => ({
+  const items = products.map((product: any) => ({
     productId: product.id,
     quantity: 1,
     unitPrice: product.price,
     subtotal: product.price,
   }))
 
-  const totalAmount = items.reduce((sum, item) => sum + item.subtotal, 0)
+  const totalAmount = items.reduce((sum: number, item: any) => sum + item.subtotal, 0)
 
   return await prisma.order.create({
     data: {
@@ -182,14 +182,14 @@ export async function createTestPurchaseOrder(
     where: { id: { in: productIds } },
   })
 
-  const items = products.map(product => ({
+  const items = products.map((product: any) => ({
     productId: product.id,
     quantity: 10,
     unitPrice: product.cost,
     subtotal: product.cost * 10,
   }))
 
-  const totalAmount = items.reduce((sum, item) => sum + item.subtotal, 0)
+  const totalAmount = items.reduce((sum: number, item: any) => sum + item.subtotal, 0)
 
   return await prisma.purchaseOrder.create({
     data: {
@@ -198,7 +198,7 @@ export async function createTestPurchaseOrder(
       status: (overrides?.status as any) || 'DRAFT',
       totalAmount,
       expectedDate: overrides?.expectedDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      notes: overrides?.notes,
+      notes: overrides?.notes ?? null,
       items: {
         create: items,
       },
@@ -227,7 +227,7 @@ export async function cleanupTestData() {
       },
       select: { id: true },
     })
-    const testOrderIds = testOrders.map(o => o.id)
+    const testOrderIds = testOrders.map((o) => o.id)
 
     // Find test purchase orders
     const testPOs = await prisma.purchaseOrder.findMany({
@@ -238,7 +238,7 @@ export async function cleanupTestData() {
       },
       select: { id: true },
     })
-    const testPOIds = testPOs.map(po => po.id)
+    const testPOIds = testPOs.map((po) => po.id)
 
     // Find test products
     const testProducts = await prisma.product.findMany({
@@ -249,7 +249,7 @@ export async function cleanupTestData() {
       },
       select: { id: true },
     })
-    const testProductIds = testProducts.map(p => p.id)
+    const testProductIds = testProducts.map((p) => p.id)
 
     // Delete in order to respect foreign key constraints
     if (testOrderIds.length > 0) {

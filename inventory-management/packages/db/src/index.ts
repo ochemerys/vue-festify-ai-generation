@@ -5,7 +5,7 @@
  * for the Inventory Management System.
  */
 
-export { prisma, default } from './client'
+export { prisma, default } from './client.js'
 export type {
   User,
   Product,
