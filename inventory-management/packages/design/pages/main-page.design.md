@@ -82,23 +82,23 @@ The main dashboard provides users with a high-level overview of their inventory 
 
 ### Application Shell Layout
 
-The application uses a **left-side navigation menu** with a top header bar, following modern SPA patterns and the frontend architecture guidelines.
+The application uses a **left-side navigation menu** with a top header bar, following modern SPA patterns and the frontend architecture guidelines. The dashboard content uses a main area and a right-hand "Quick Actions" rail on desktop.
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│ [Logo] Inventory Management System      [Notifications] [Profile] │
-├──────────────┬──────────────────────────────────────────────┤
-│              │                                              │
-│  [Dashboard] │                                              │
-│  [Products]  │                                              │
-│  [Inventory] │         Main Content Area                    │
-│  [Orders]    │         (Dashboard Metrics & Data)           │
-│  [Reports]   │                                              │
-│  [Settings]  │                                              │
-│              │                                              │
-│  [Logout]    │                                              │
-│              │                                              │
-└──────────────┴────────────────────────────────────────────��─┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ [Logo] Inventory Management System                      [Notifications] [Profile] │
+├──────────────┬──────────────────────────────────────────┬───────────────────┤
+│              │                                          │                   │
+│  [Dashboard] │              Main Content Area           │  Quick Actions    │
+│  [Products]  │  (Dashboard Metrics & Recent Activity)   │  (Right Rail)     │
+│  [Inventory] │                                          │                   │
+│  [Orders]    │                                          │                   │
+│  [Reports]   │                                          │                   │
+│  [Settings]  │                                          │                   │
+│              │                                          │                   │
+│  [Logout]    │                                          │                   │
+│              │                                          │                   │
+└──────────────┴──────────────────────────────────────────┴───────────────────┘
 ```
 
 ### Header Section
@@ -130,7 +130,7 @@ The application uses a **left-side navigation menu** with a top header bar, foll
 │ ⚙️  Settings         │
 ├──────────────────────┤
 │ 🚪 Logout            │
-└──────────────────────���
+└──────────────────────┘
 ```
 
 **Sidebar Features:**
@@ -173,6 +173,8 @@ The application uses a **left-side navigation menu** with a top header bar, foll
 
 #### Quick Actions Panel
 
+Placement: Right-hand side rail on desktop; stacks below the main content on tablet and mobile.
+
 ```
 ┌─────────────────────────────┐
 │ Quick Actions               │
@@ -193,23 +195,23 @@ The application uses a **left-side navigation menu** with a top header bar, foll
 - **Sidebar:** Full width (240px) with text labels and icons
 - **Header:** Full width with logo, notifications, and profile
 - **Content:** Full 4-column metrics grid
-- **Layout:** Side-by-side content sections
+- **Layout:** Main content with a right-hand Quick Actions rail
 - **Sidebar State:** Always visible, collapsible to icon-only (80px)
 
 ```
-┌─────────────────────────────────────────────────���───────┐
-│ [Logo] System                    [🔔] [👤] [⋮]         │
-├──────────────┬────────────────────────────────────────┤
-│ 📊 Dashboard │ Metrics Grid (4 columns)                │
-│ 📦 Products  │ ┌──────┬──────┬──────┬──────┐           │
-│ 📋 Inventory │ │ Card │ Card │ Card │ Card │           │
-│ 🛒 Orders    │ └──────┴──────┴──────┴──────┘           │
-│ 📥 PO        │ Recent Orders Table                     │
-│ 📈 Reports   │ ┌──────────────────────────────────┐   │
-│ ⚙️  Settings │ │ Order │ Customer │ Status │ Date │   │
-│              │ └──────────────────────────────────┘   │
-│ 🚪 Logout    │                                        │
-└──────────────┴────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│ [Logo] System                                  [🔔] [👤] [⋮]  │
+├──────────────┬──────────────────────────────────┬────────────┤
+│ 📊 Dashboard │ Metrics Grid (4 columns)         │            │
+│ 📦 Products  │ ┌──────┬──────┬──────┬──────┐    │ Quick      │
+│ 📋 Inventory │ │ Card │ Card │ Card │ Card │    │ Actions    │
+│ 🛒 Orders    │ └──────┴──��───┴──────┴──────┘    │ (Right     │
+│ 📥 PO        │ Recent Orders Table (2/3 width)  │  Rail)     │
+│ 📈 Reports   │ ┌──────────────────────────────┐  │ ┌────────┐ │
+│ ⚙️  Settings │ │ Order │ Customer │ Status...│  │ │Buttons│ │
+│              │ └──────────────────────────────┘  │ └────────┘ │
+│ 🚪 Logout    │                                  │            │
+└──────────────┴──────────────────────────────────┴────────────┘
 ```
 
 ### Tablet (768px - 1024px)
@@ -217,7 +219,7 @@ The application uses a **left-side navigation menu** with a top header bar, foll
 - **Sidebar:** Collapsible (icon-only by default, 80px)
 - **Header:** Full width with hamburger menu toggle
 - **Content:** 2-column metrics grid
-- **Layout:** Stacked content sections
+- **Layout:** Stacked content sections; Quick Actions below Recent Orders
 - **Sidebar Toggle:** Hamburger icon in header expands sidebar
 
 ```
@@ -234,7 +236,11 @@ The application uses a **left-side navigation menu** with a top header bar, foll
 │ ┌────────────────────────────────────────────────┐  │
 │ │ Order │ Customer │ Status │ Total │ Date       │  │
 │ └────────────────────────────────────────────────┘  │
-└──────────────────────────────────────────────────────┘
+│ Quick Actions Panel (Full Width)                     │
+│ ┌────────────────────────────��───────────────────┐  │
+│ │ [+] Create | [+] Product | [⚠] Alerts | [📊] Report │
+│ └────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────���────────────┘
 ```
 
 ### Mobile (<768px)
@@ -242,7 +248,7 @@ The application uses a **left-side navigation menu** with a top header bar, foll
 - **Sidebar:** Hidden by default, accessible via hamburger menu
 - **Header:** Compact with hamburger menu, notifications, profile
 - **Content:** Single column metrics stack
-- **Layout:** Card-based layout with full-width sections
+- **Layout:** Card-based layout with full-width sections; Quick Actions below
 - **Navigation:** Drawer/modal sidebar or bottom navigation option
 
 ```
@@ -260,10 +266,14 @@ The application uses a **left-side navigation menu** with a top header bar, foll
 │ │ Card                     │ │
 │ └──────────────────────────┘ │
 │ Recent Orders (Full Width)   │
-│ ┌──────────────────────────┐ │
+│ ┌──���───────────────────────┐ │
 │ │ Order Card               │ │
 │ ├──────────────────────────┤ │
 │ │ Order Card               │ │
+│ └──────────────────────────┘ │
+│ Quick Actions (Full Width)   │
+│ ┌──────────────────────────┐ │
+│ │ Buttons                 │ │
 │ └──────────────────────────┘ │
 └──────────────────────────────┘
 
@@ -287,9 +297,9 @@ Sidebar (Drawer/Modal):
 
 | Breakpoint | Sidebar Width | Sidebar State | Toggle | Content Adjustment |
 |-----------|---------------|---------------|--------|-------------------|
-| Desktop (>1024px) | 240px (full) or 80px (collapsed) | Persistent | Manual collapse button | Margin-left adjustment |
-| Tablet (768px-1024px) | 80px (icon-only) | Collapsible | Hamburger menu | Margin-left adjustment |
-| Mobile (<768px) | 100% (drawer) | Hidden | Hamburger menu | Full width, drawer overlay |
+| Desktop (>1024px) | 240px (full) or 80px (collapsed) | Persistent | Manual collapse button | Margin-left adjustment, right rail visible |
+| Tablet (768px-1024px) | 80px (icon-only) | Collapsible | Hamburger menu | Margin-left adjustment, right rail stacks |
+| Mobile (<768px) | 100% (drawer) | Hidden | Hamburger menu | Full width, right rail stacks below |
 
 ### Sidebar Collapse Animation
 
@@ -384,7 +394,7 @@ Sidebar (Drawer/Modal):
 
 ### Component Hierarchy
 
-Following the frontend architecture guidelines, the dashboard uses a **Container/Presentational** component pattern:
+Following the frontend architecture guidelines, the dashboard uses a **Container/Presentational** component pattern with a right-hand Quick Actions rail on desktop:
 
 ```
 App.vue
@@ -403,7 +413,7 @@ App.vue
             ├── LowStockAlert.vue (Presentational)
             ├── RecentOrdersSection.vue (Container)
             │   └── OrderTable.vue (Presentational)
-            └── QuickActionsPanel.vue (Presentational)
+            └── QuickActionsPanel.vue (Presentational - right rail on desktop)
 ```
 
 ### Layout Component Contracts
@@ -661,7 +671,7 @@ interface RecentOrdersSectionProps {
 
 #### `QuickActionsPanel.vue` (Presentational)
 
-**Responsibility:** Display quick action buttons
+**Responsibility:** Display quick action buttons as a right-hand rail on desktop
 
 **Props:**
 ```typescript
@@ -768,28 +778,35 @@ export function useDashboardMetrics() {
     <!-- Sidebar content -->
   </nav>
   
-  <main role="main" aria-label="Dashboard content">
-    <section aria-labelledby="metrics-heading">
-      <h1 id="metrics-heading">Key Metrics</h1>
-      <!-- Metrics grid -->
-    </section>
-    
-    <section aria-labelledby="alerts-heading">
-      <h2 id="alerts-heading">Low Stock Alerts</h2>
-      <!-- Alerts -->
-    </section>
-    
-    <section aria-labelledby="orders-heading">
-      <h2 id="orders-heading">Recent Orders</h2>
-      <!-- Orders table -->
-    </section>
-  </main>
+  <div class="dashboard-container" role="presentation">
+    <main role="main" aria-label="Dashboard content">
+      <section aria-labelledby="metrics-heading">
+        <h1 id="metrics-heading">Key Metrics</h1>
+        <!-- Metrics grid -->
+      </section>
+      
+      <section aria-labelledby="alerts-heading">
+        <h2 id="alerts-heading">Low Stock Alerts</h2>
+        <!-- Alerts -->
+      </section>
+      
+      <section aria-labelledby="orders-heading">
+        <h2 id="orders-heading">Recent Orders</h2>
+        <!-- Orders table -->
+      </section>
+    </main>
+
+    <aside role="complementary" aria-labelledby="qa-heading">
+      <h2 id="qa-heading">Quick Actions</h2>
+      <!-- Quick actions content -->
+    </aside>
+  </div>
 </div>
 ```
 
 #### Keyboard Navigation
 
-- **Tab:** Navigate through header, sidebar, and main content
+- **Tab:** Navigate through header, sidebar, main content, and right rail
 - **Enter/Space:** Activate buttons and links
 - **Escape:** Close mobile sidebar drawer
 - **Arrow Keys:** Navigate within tables (if implemented)

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import AppHeader from './components/AppHeader.vue'
+import AppLayout from './components/layout/AppLayout.vue'
 </script>
 
 <template>
-  <AppHeader msg="Inventory Management System" />
+  <AppLayout />
 </template>
 
 <style scoped></style>

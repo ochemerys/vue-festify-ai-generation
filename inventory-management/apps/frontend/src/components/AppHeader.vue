@@ -1,9 +1,9 @@
 <script setup lang="ts">
-defineProps<{ msg: string }>()
+// Deprecated: header is now implemented inside AppLayout for Phase 1 scaffold.
 </script>
 
 <template>
-  <h1>{{ msg }}</h1>
+  <header class="p-4 border-b bg-white">Legacy Header</header>
 </template>
 
 <style scoped></style>
