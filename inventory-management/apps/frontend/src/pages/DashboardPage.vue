@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { AlertTriangle, TrendingUp, Package, ShoppingCart } from 'lucide-vue-next'
+import { AlertTriangle } from 'lucide-vue-next'
 import MetricsGrid from '../components/dashboard/MetricsGrid.vue'
 import RecentOrders from '../components/dashboard/RecentOrders.vue'
 import QuickActions from '../components/dashboard/QuickActions.vue'
@@ -203,12 +203,14 @@ const quickActions = ref<QuickAction[]>([
 // Computed
 const lowStockCount = computed(() => {
   const metric = metrics.value.find(m => m.id === 'low-stock-alerts')
-  return metric?.value || 0
+  const val = metric?.value
+  return typeof val === 'number' ? val : Number(val ?? 0)
 })
 
 const overdueOrdersCount = computed(() => {
   const metric = metrics.value.find(m => m.id === 'overdue-orders')
-  return metric?.value || 0
+  const val = metric?.value
+  return typeof val === 'number' ? val : Number(val ?? 0)
 })
 
 const hasAlerts = computed(() => {
