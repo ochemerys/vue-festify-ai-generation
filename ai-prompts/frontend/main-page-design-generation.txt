@@ -1,0 +1,62 @@
+You are an expert Senior Frontend Engineer specializing in Vue 3 (Composition API), TypeScript, and Tailwind CSS.
+
+I need you to generate a set of production-ready components for an Inventory Management Dashboard.
+1. Technical Stack Constraints
+
+    Framework: Vue 3 using <script setup lang="ts">.
+    Styling: Tailwind CSS (utility classes only, no custom CSS).
+    State: Architecture assumes Pinia stores (mock data fetching in composables for now).
+    Icons: Assume lucide-vue-next (e.g., <Package />, <AlertTriangle />). Do not use emojis.
+    Architecture: Strict Container/Presentational pattern.
+    Accessibility: WCAG AA compliance (semantic HTML, ARIA labels, focus management).
+
+2. Required Component Hierarchy
+
+Generate the following components. Do not change this structure.
+
+    AppLayout.vue (Container): Manages specific layout logic.
+    AppSidebar.vue (Presentational): Left navigation.
+    AppHeader.vue (Presentational): Top bar with user profile/toggle.
+    DashboardPage.vue (Container): Orchestrates data fetching.
+    MetricsGrid.vue (Presentational): Displays the 4x2 grid.
+    MetricCard.vue (Presentational): Reusable card for single stats.
+    RecentOrders.vue (Presentational): Table for recent activity.
+    QuickActions.vue (Presentational): Action buttons rail.
+
+3. Design & Behavior Specifications (Refined)
+
+A. Responsive Layout Behaviors
+
+    Desktop (>1280px): Fixed left Sidebar (240px). Main content center. Quick Actions rail fixed on right.
+    Laptop (1024px - 1280px): Fixed left Sidebar. Quick Actions rail disappears and moves to the top of the main content area (horizontal stack).
+    Tablet (768px - 1024px): Sidebar collapses to 80px (icons only).
+    Mobile (<768px): Sidebar is hidden (accessible via hamburger drawer). Content is single column.
+
+B. Consistency & Ergonomics Rules
+
+    Terminology: Use "Purchase Orders" (not PO) and "Low Stock Alerts" everywhere.
+    Metrics: Visually distinguish "Urgent" cards (Low Stock, Overdue) from "Info" cards (Total Products) using subtle Tailwind border colors (e.g., border-l-4 border-red-500 for urgent).
+    Skeleton Loading: All components must take a loading prop. When true, render a shimmering skeleton that matches the exact dimensions of the content to prevent layout shift.
+
+C. Component Contracts
+
+    AppHeader.vue:
+        Props: user: User, notificationCount: number.
+        Emits: toggle-sidebar.
+    AppSidebar.vue:
+        Props: navigation: NavItem[], isCollapsed: boolean, isMobileOpen: boolean.
+        Emits: update:isCollapsed, close-mobile.
+    QuickActions.vue:
+        Props: actions: { label: string, icon: string, id: string }[].
+        Emits: execute (payload: actionId). Do not pass functions as props.
+    MetricCard.vue:
+        Props: label, value, trend (number), trendDirection ('up'|'down'|'neutral'), isUrgent (boolean).
+
+4. Implementation Instructions
+
+Please generate the code for AppLayout.vue, AppSidebar.vue, and DashboardPage.vue first.
+
+    Use defineProps and defineEmits with TypeScript interfaces.
+    Implement the responsive logic in AppLayout using a useBreakpoints approach (or simple window listeners if keeping it dependency-free).
+    Add comments explaining accessible features (e.g., aria-expanded logic).
+
