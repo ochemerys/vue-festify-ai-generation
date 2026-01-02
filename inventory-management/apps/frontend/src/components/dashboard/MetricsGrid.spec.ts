@@ -277,12 +277,12 @@ describe('MetricsGrid.vue', () => {
       // Assert
       expect(cards).toHaveLength(8)
       // First 3 should have data
-      expect(cards[0].props('label')).toBe('Metric 1')
-      expect(cards[1].props('label')).toBe('Metric 2')
-      expect(cards[2].props('label')).toBe('Metric 3')
+      expect(cards[0]?.props('label')).toBe('Metric 1')
+      expect(cards[1]?.props('label')).toBe('Metric 2')
+      expect(cards[2]?.props('label')).toBe('Metric 3')
       // Remaining 5 should be empty
-      expect(cards[3].props('label')).toBe('')
-      expect(cards[4].props('label')).toBe('')
+      expect(cards[3]?.props('label')).toBe('')
+      expect(cards[4]?.props('label')).toBe('')
     })
 
     it('should use skeleton key for empty slots', () => {
@@ -325,8 +325,8 @@ describe('MetricsGrid.vue', () => {
 
       // Assert
       expect(cards).toHaveLength(8)
-      expect(cards[0].props('label')).toBe('Revenue')
-      expect(cards[7].props('label')).toBe('Delivered')
+      expect(cards[0]?.props('label')).toBe('Revenue')
+      expect(cards[7]?.props('label')).toBe('Delivered')
     })
 
     it('should pass all metric properties correctly', () => {

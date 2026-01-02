@@ -62,7 +62,7 @@ describe('MetricCard.vue', () => {
         label: 'Revenue',
         value: '$100,000',
         trend: 15,
-        trendDirection: 'up'
+        trendDirection: 'up' as const
       }
 
       // Act
@@ -79,7 +79,7 @@ describe('MetricCard.vue', () => {
         label: 'Inventory',
         value: '500',
         trend: 8,
-        trendDirection: 'down'
+        trendDirection: 'down' as const
       }
 
       // Act
@@ -96,7 +96,7 @@ describe('MetricCard.vue', () => {
         label: 'Metric',
         value: '100',
         trend: 0,
-        trendDirection: 'neutral'
+        trendDirection: 'neutral' as const
       }
 
       // Act
@@ -127,7 +127,7 @@ describe('MetricCard.vue', () => {
         label: 'Sales',
         value: '$50,000',
         trend: 25,
-        trendDirection: 'up'
+        trendDirection: 'up' as const
       }
 
       // Act
@@ -143,7 +143,7 @@ describe('MetricCard.vue', () => {
         label: 'Costs',
         value: '$10,000',
         trend: 5,
-        trendDirection: 'down'
+        trendDirection: 'down' as const
       }
 
       // Act
@@ -288,7 +288,7 @@ describe('MetricCard.vue', () => {
         label: 'Revenue',
         value: '$100,000',
         trend: 15,
-        trendDirection: 'up'
+        trendDirection: 'up' as const
       }
 
       // Act
@@ -305,7 +305,7 @@ describe('MetricCard.vue', () => {
         label: 'Inventory',
         value: '500',
         trend: 10,
-        trendDirection: 'down'
+        trendDirection: 'down' as const
       }
 
       // Act
@@ -321,7 +321,7 @@ describe('MetricCard.vue', () => {
         label: 'Sales',
         value: '$50,000',
         trend: 5,
-        trendDirection: 'up'
+        trendDirection: 'up' as const
       }
 
       // Act
@@ -401,7 +401,7 @@ describe('MetricCard.vue', () => {
         label: 'Metric',
         value: '100',
         trend: 0,
-        trendDirection: 'neutral'
+        trendDirection: 'neutral' as const
       }
 
       // Act

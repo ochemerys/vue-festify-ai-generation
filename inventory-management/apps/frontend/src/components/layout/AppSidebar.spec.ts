@@ -130,10 +130,10 @@ describe('AppSidebar.vue', () => {
       const links = wrapper.findAll('nav a')
 
       // Assert
-      expect(links[0].attributes('href')).toBe('/')
-      expect(links[1].attributes('href')).toBe('/products')
-      expect(links[2].attributes('href')).toBe('/inventory')
-      expect(links[3].attributes('href')).toBe('/orders')
+      expect(links[0]?.attributes('href')).toBe('/')
+      expect(links[1]?.attributes('href')).toBe('/products')
+      expect(links[2]?.attributes('href')).toBe('/inventory')
+      expect(links[3]?.attributes('href')).toBe('/orders')
     })
 
     it('should render icon for each navigation item', () => {
@@ -164,8 +164,8 @@ describe('AppSidebar.vue', () => {
 
       // Assert
       // First link (/) should be active by default
-      expect(links[0].html()).toContain('bg-blue-600')
-      expect(links[0].html()).toContain('text-white')
+      expect(links[0]?.html()).toContain('bg-blue-600')
+      expect(links[0]?.html()).toContain('text-white')
     })
 
     it('should set aria-current on active link', () => {
@@ -179,7 +179,7 @@ describe('AppSidebar.vue', () => {
       const links = wrapper.findAll('nav a')
 
       // Assert
-      expect(links[0].attributes('aria-current')).toBe('page')
+      expect(links[0]?.attributes('aria-current')).toBe('page')
     })
 
     it('should not set aria-current on inactive links', () => {
@@ -193,8 +193,8 @@ describe('AppSidebar.vue', () => {
       const links = wrapper.findAll('nav a')
 
       // Assert
-      expect(links[1].attributes('aria-current')).toBeUndefined()
-      expect(links[2].attributes('aria-current')).toBeUndefined()
+      expect(links[1]?.attributes('aria-current')).toBeUndefined()
+      expect(links[2]?.attributes('aria-current')).toBeUndefined()
     })
 
     it('should apply inactive styling to non-active links', () => {
@@ -208,8 +208,8 @@ describe('AppSidebar.vue', () => {
       const links = wrapper.findAll('nav a')
 
       // Assert
-      expect(links[1].html()).toContain('text-slate-300')
-      expect(links[1].html()).toContain('hover:bg-slate-800')
+      expect(links[1]?.html()).toContain('text-slate-300')
+      expect(links[1]?.html()).toContain('hover:bg-slate-800')
     })
   })
 
@@ -378,8 +378,6 @@ describe('AppSidebar.vue', () => {
 
       // Act
       const wrapper = mount(AppSidebar, { props })
-      const header = wrapper.find('div').element
-
       // Assert
       expect(wrapper.html()).toContain('whitespace-nowrap')
     })

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Menu, X } from 'lucide-vue-next'
 import AppHeader from '../AppHeader.vue'
 import AppSidebar from './AppSidebar.vue'
 
@@ -125,6 +124,15 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleWindowResize)
+})
+
+// Expose for tests
+defineExpose({
+  toggleMobileSidebar,
+  closeMobileSidebar,
+  isMobileSidebarOpen,
+  currentBreakpoint,
+  sidebarCollapsed
 })
 </script>
 

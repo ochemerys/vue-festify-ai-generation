@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import QuickActions from './QuickActions.vue'
 
@@ -235,9 +235,9 @@ describe('QuickActions.vue', () => {
       const buttons = wrapper.findAll('button')
 
       // Act
-      await buttons[0].trigger('click')
-      await buttons[1].trigger('click')
-      await buttons[2].trigger('click')
+      await buttons[0]?.trigger('click')
+      await buttons[1]?.trigger('click')
+      await buttons[2]?.trigger('click')
 
       // Assert
       const emitted = wrapper.emitted('execute')

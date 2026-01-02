@@ -714,9 +714,9 @@ describe('AppLayout.vue', () => {
       const navItems = sidebar.props('navigation')
 
       // Assert
-      expect(navItems[0].path).toBe('/')
-      expect(navItems[1].path).toBe('/products')
-      expect(navItems[2].path).toBe('/inventory')
+      expect(navItems[0]?.path).toBe('/')
+      expect(navItems[1]?.path).toBe('/products')
+      expect(navItems[2]?.path).toBe('/inventory')
     })
   })
 

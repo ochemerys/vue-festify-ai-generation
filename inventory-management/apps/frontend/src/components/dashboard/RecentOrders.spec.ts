@@ -424,8 +424,8 @@ describe('RecentOrders.vue', () => {
       const rows = wrapper.findAll('tbody tr')
 
       // Act
-      await rows[0].trigger('click')
-      await rows[1].trigger('click')
+      await rows[0]?.trigger('click')
+      await rows[1]?.trigger('click')
 
       // Assert
       const emitted = wrapper.emitted('view-order')
