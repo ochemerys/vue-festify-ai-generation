@@ -17,22 +17,22 @@ export class Order {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column()
+  @Column('varchar')
   orderNumber!: string;
 
-  @Column()
+  @Column('varchar')
   customerName!: string;
 
   @Column('uuid', { nullable: true })
   customerId?: string;
 
-  @Column({ nullable: true })
+  @Column('varchar', { nullable: true })
   customerEmail?: string;
 
-  @Column({ nullable: true })
+  @Column('varchar', { nullable: true })
   customerPhone?: string;
 
-  @Column({ nullable: true })
+  @Column('text', { nullable: true })
   shippingAddress?: string;
 
   @Column('decimal', { precision: 10, scale: 2 })
@@ -45,7 +45,7 @@ export class Order {
   })
   status!: OrderStatus;
 
-  @Column({ nullable: true })
+  @Column('text', { nullable: true })
   notes?: string;
 
   @Column({ type: 'timestamp', nullable: true })

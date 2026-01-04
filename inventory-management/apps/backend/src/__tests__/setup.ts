@@ -1,8 +1,11 @@
+// IMPORTANT: Import reflect-metadata FIRST for TypeORM decorators
+import 'reflect-metadata'
+
 // IMPORTANT: Import env-setup FIRST to set environment variables
 import './env-setup.js'
 
 import { beforeAll, afterAll, beforeEach, afterEach } from 'vitest'
-import { prisma } from '@inventory/db'
+import { AppDataSource } from '@inventory/db'
 import { cleanupTestData } from './helpers/factories.js'
 
 // Database connection management - only for integration tests
@@ -10,8 +13,10 @@ let isDatabaseAvailable = false
 
 beforeAll(async () => {
   try {
-    // Try to connect to test database
-    await prisma.$connect()
+    // Initialize TypeORM DataSource
+    if (!AppDataSource.isInitialized) {
+      await AppDataSource.initialize()
+    }
 
     // Verify we're using test database
     const dbUrl = process.env.DATABASE_URL || process.env.DATABASE_TEST_URL
@@ -27,8 +32,8 @@ beforeAll(async () => {
 
 afterAll(async () => {
   // Disconnect from database if connected
-  if (isDatabaseAvailable) {
-    await prisma.$disconnect()
+  if (isDatabaseAvailable && AppDataSource.isInitialized) {
+    await AppDataSource.destroy()
   }
 })
 

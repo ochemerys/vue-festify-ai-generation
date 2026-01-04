@@ -14,7 +14,7 @@ export class PurchaseOrderItem {
   @Column('uuid')
   productId!: string;
 
-  @Column()
+  @Column('int')
   quantity!: number;
 
   @Column('decimal', { precision: 10, scale: 2 })
@@ -23,7 +23,7 @@ export class PurchaseOrderItem {
   @Column('decimal', { precision: 10, scale: 2 })
   subtotal!: number;
 
-  @Column({ default: 0 })
+  @Column('int', { default: 0 })
   receivedQuantity!: number;
 
   @ManyToOne(() => PurchaseOrder, po => po.items)

@@ -11,13 +11,13 @@ export class GoodsReceipt {
   @Column('uuid')
   purchaseOrderId!: string;
 
-  @Column()
+  @Column('varchar')
   receiptNumber!: string;
 
   @Column('uuid')
   receivedBy!: string;
 
-  @Column({ nullable: true })
+  @Column('text', { nullable: true })
   notes?: string;
 
   @CreateDateColumn()

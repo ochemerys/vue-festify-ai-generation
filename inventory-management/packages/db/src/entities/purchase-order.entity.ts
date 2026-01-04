@@ -19,7 +19,7 @@ export class PurchaseOrder {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column()
+  @Column('varchar')
   poNumber!: string;
 
   @Column('uuid')
@@ -35,13 +35,13 @@ export class PurchaseOrder {
   })
   status!: PurchaseOrderStatus;
 
-  @Column({ nullable: true })
+  @Column('timestamp', { nullable: true })
   expectedDate?: Date;
 
-  @Column({ nullable: true })
+  @Column('timestamp', { nullable: true })
   receivedDate?: Date;
 
-  @Column({ nullable: true })
+  @Column('text', { nullable: true })
   notes?: string;
 
   @Column('uuid')

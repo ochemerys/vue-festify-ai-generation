@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto'
-import { AppDataSource, Product, Supplier, Order, OrderItem, PurchaseOrder, PurchaseOrderItem, InventoryLevel, InventoryTransaction, StockAlert, User } from '@inventory/db'
+import { AppDataSource, Product, Supplier, Order, OrderItem, PurchaseOrder, PurchaseOrderItem, InventoryLevel, InventoryTransaction, StockAlert, User, GoodsReceipt } from '@inventory/db'
 
 /**
  * Generate unique test identifier
@@ -100,10 +100,14 @@ export async function createTestOrder(
   }>
 ) {
   const testId = generateTestId()
-  
+
+  const productRepo = AppDataSource.getRepository(Product)
+  const orderRepo = AppDataSource.getRepository(Order)
+  const orderItemRepo = AppDataSource.getRepository(OrderItem)
+
   // Get products to calculate total
-  const products = await prisma.product.findMany({
-    where: { id: { in: productIds } },
+  const products = await productRepo.find({
+    where: { id: In(productIds) },
   })
 
   const items = products.map((product: any) => ({
@@ -115,24 +119,30 @@ export async function createTestOrder(
 
   const totalAmount = items.reduce((sum: number, item: any) => sum + item.subtotal, 0)
 
-  return await prisma.order.create({
-    data: {
-      orderNumber: `TEST-ORD-${testId}`,
-      customerId: overrides?.customerId || `cust-${testId}`,
-      customerName: overrides?.customerName || `Test Customer ${testId}`,
-      customerEmail: overrides?.customerEmail || `customer-${testId}@test.com`,
-      status: (overrides?.status as any) || 'PENDING',
-      totalAmount,
-      shippingAddress: overrides?.shippingAddress || '123 Test St, Test City',
-      createdBy: overrides?.createdBy || 'test-user',
-      items: {
-        create: items,
-      },
-    },
-    include: {
-      items: true,
-    },
+  const order = orderRepo.create({
+    orderNumber: `TEST-ORD-${testId}`,
+    customerId: overrides?.customerId || `cust-${testId}`,
+    customerName: overrides?.customerName || `Test Customer ${testId}`,
+    customerEmail: overrides?.customerEmail || `customer-${testId}@test.com`,
+    status: (overrides?.status as any) || 'PENDING',
+    totalAmount,
+    shippingAddress: overrides?.shippingAddress || '123 Test St, Test City',
+    createdBy: overrides?.createdBy || 'test-user',
   })
+
+  const savedOrder = await orderRepo.save(order)
+
+  // Create order items
+  const orderItems = items.map(item => orderItemRepo.create({
+    ...item,
+    orderId: savedOrder.id,
+  }))
+  await orderItemRepo.save(orderItems)
+
+  return {
+    ...savedOrder,
+    items: orderItems,
+  }
 }
 
 /**
@@ -150,20 +160,23 @@ export async function setInventoryLevel(
   const reservedQuantity = levels.reservedQuantity ?? 0
   const availableQuantity = levels.availableQuantity ?? (currentQuantity - reservedQuantity)
 
-  return await prisma.inventoryLevel.upsert({
-    where: { productId },
-    update: {
-      currentQuantity,
-      reservedQuantity,
-      availableQuantity,
-    },
-    create: {
+  const inventoryRepo = AppDataSource.getRepository(InventoryLevel)
+
+  const existing = await inventoryRepo.findOne({ where: { productId } })
+  if (existing) {
+    existing.currentQuantity = currentQuantity
+    existing.reservedQuantity = reservedQuantity
+    existing.availableQuantity = availableQuantity
+    return await inventoryRepo.save(existing)
+  } else {
+    const newLevel = inventoryRepo.create({
       productId,
       currentQuantity,
       reservedQuantity,
       availableQuantity,
-    },
-  })
+    })
+    return await inventoryRepo.save(newLevel)
+  }
 }
 
 /**
@@ -179,10 +192,15 @@ export async function createTestPurchaseOrder(
   }>
 ) {
   const testId = generateTestId()
-  
+
+  const productRepo = AppDataSource.getRepository(Product)
+  const poRepo = AppDataSource.getRepository(PurchaseOrder)
+  const poItemRepo = AppDataSource.getRepository(PurchaseOrderItem)
+  const supplierRepo = AppDataSource.getRepository(Supplier)
+
   // Get products to calculate total
-  const products = await prisma.product.findMany({
-    where: { id: { in: productIds } },
+  const products = await productRepo.find({
+    where: { id: In(productIds) },
   })
 
   const items = products.map((product: any) => ({
@@ -194,23 +212,32 @@ export async function createTestPurchaseOrder(
 
   const totalAmount = items.reduce((sum: number, item: any) => sum + item.subtotal, 0)
 
-  return await prisma.purchaseOrder.create({
-    data: {
-      poNumber: `TEST-PO-${testId}`,
-      supplierId,
-      status: (overrides?.status as any) || 'DRAFT',
-      totalAmount,
-      expectedDate: overrides?.expectedDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      notes: overrides?.notes ?? null,
-      items: {
-        create: items,
-      },
-    },
-    include: {
-      items: true,
-      supplier: true,
-    },
+  const po = poRepo.create({
+    poNumber: `TEST-PO-${testId}`,
+    supplierId,
+    status: (overrides?.status as any) || 'DRAFT',
+    totalAmount,
+    expectedDate: overrides?.expectedDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    notes: overrides?.notes ?? null,
   })
+
+  const savedPO = await poRepo.save(po)
+
+  // Create PO items
+  const poItems = items.map(item => poItemRepo.create({
+    ...item,
+    purchaseOrderId: savedPO.id,
+  }))
+  await poItemRepo.save(poItems)
+
+  // Get supplier
+  const supplier = await supplierRepo.findOne({ where: { id: supplierId } })
+
+  return {
+    ...savedPO,
+    items: poItems,
+    supplier,
+  }
 }
 
 /**
@@ -219,140 +246,86 @@ export async function createTestPurchaseOrder(
 export async function cleanupTestData() {
   try {
     // Try to check if database is available by attempting a simple query
-    await prisma.$queryRaw`SELECT 1`
+    await AppDataSource.query('SELECT 1')
+
+    const orderRepo = AppDataSource.getRepository(Order)
+    const orderItemRepo = AppDataSource.getRepository(OrderItem)
+    const poRepo = AppDataSource.getRepository(PurchaseOrder)
+    const poItemRepo = AppDataSource.getRepository(PurchaseOrderItem)
+    const goodsReceiptRepo = AppDataSource.getRepository(GoodsReceipt)
+    const inventoryTransactionRepo = AppDataSource.getRepository(InventoryTransaction)
+    const stockAlertRepo = AppDataSource.getRepository(StockAlert)
+    const inventoryLevelRepo = AppDataSource.getRepository(InventoryLevel)
+    const productRepo = AppDataSource.getRepository(Product)
+    const supplierRepo = AppDataSource.getRepository(Supplier)
+    const userRepo = AppDataSource.getRepository(User)
 
     // Find test orders first
-    const testOrders = await prisma.order.findMany({
-      where: {
-        orderNumber: {
-          startsWith: 'TEST-',
-        },
-      },
-      select: { id: true },
+    const testOrders = await orderRepo.find({
+      where: { orderNumber: { $like: 'TEST-%' } as any },
+      select: ['id'],
     })
     const testOrderIds = testOrders.map((o) => o.id)
 
     // Find test purchase orders
-    const testPOs = await prisma.purchaseOrder.findMany({
-      where: {
-        poNumber: {
-          startsWith: 'TEST-',
-        },
-      },
-      select: { id: true },
+    const testPOs = await poRepo.find({
+      where: { poNumber: { $like: 'TEST-%' } as any },
+      select: ['id'],
     })
     const testPOIds = testPOs.map((po) => po.id)
 
     // Find test products
-    const testProducts = await prisma.product.findMany({
-      where: {
-        sku: {
-          startsWith: 'TEST-',
-        },
-      },
-      select: { id: true },
+    const testProducts = await productRepo.find({
+      where: { sku: { $like: 'TEST-%' } as any },
+      select: ['id'],
     })
     const testProductIds = testProducts.map((p) => p.id)
 
     // Delete in order to respect foreign key constraints
     if (testOrderIds.length > 0) {
-      await prisma.orderItem.deleteMany({
-        where: {
-          orderId: {
-            in: testOrderIds,
-          },
-        },
-      })
-
-      await prisma.order.deleteMany({
-        where: {
-          id: {
-            in: testOrderIds,
-          },
-        },
-      })
+      await orderItemRepo.delete({ orderId: In(testOrderIds) })
+      await orderRepo.delete({ id: In(testOrderIds) })
     }
 
     if (testPOIds.length > 0) {
-      await prisma.purchaseOrderItem.deleteMany({
-        where: {
-          purchaseOrderId: {
-            in: testPOIds,
-          },
-        },
-      })
-
-      await prisma.goodsReceipt.deleteMany({
-        where: {
-          purchaseOrderId: {
-            in: testPOIds,
-          },
-        },
-      })
-
-      await prisma.purchaseOrder.deleteMany({
-        where: {
-          id: {
-            in: testPOIds,
-          },
-        },
-      })
+      await poItemRepo.delete({ purchaseOrderId: In(testPOIds) })
+      await goodsReceiptRepo.delete({ purchaseOrderId: In(testPOIds) })
+      await poRepo.delete({ id: In(testPOIds) })
     }
 
     // Delete inventory transactions
-    await prisma.inventoryTransaction.deleteMany({
-      where: {
-        reference: {
-          startsWith: 'TEST-',
-        },
-      },
-    })
+    await inventoryTransactionRepo.createQueryBuilder()
+      .delete()
+      .from(InventoryTransaction)
+      .where('reference LIKE :pattern', { pattern: 'TEST-%' })
+      .execute()
 
     // Delete stock alerts for test products
     if (testProductIds.length > 0) {
-      await prisma.stockAlert.deleteMany({
-        where: {
-          productId: {
-            in: testProductIds,
-          },
-        },
-      })
-
-      await prisma.inventoryLevel.deleteMany({
-        where: {
-          productId: {
-            in: testProductIds,
-          },
-        },
-      })
+      await stockAlertRepo.delete({ productId: In(testProductIds) })
+      await inventoryLevelRepo.delete({ productId: In(testProductIds) })
     }
 
     // Delete test products
-    await prisma.product.deleteMany({
-      where: {
-        sku: {
-          startsWith: 'TEST-',
-        },
-      },
-    })
+    await productRepo.createQueryBuilder()
+      .delete()
+      .from(Product)
+      .where('sku LIKE :pattern', { pattern: 'TEST-%' })
+      .execute()
 
     // Delete test suppliers
-    await prisma.supplier.deleteMany({
-      where: {
-        name: {
-          startsWith: 'Test Supplier',
-        },
-      },
-    })
+    await supplierRepo.createQueryBuilder()
+      .delete()
+      .from(Supplier)
+      .where('name LIKE :pattern', { pattern: 'Test Supplier%' })
+      .execute()
 
     // Delete test users
-    await prisma.user.deleteMany({
-      where: {
-        email: {
-          contains: 'test-',
-        },
-      },
-    })
+    await userRepo.createQueryBuilder()
+      .delete()
+      .from(User)
+      .where('email LIKE :pattern', { pattern: '%test-%' })
+      .execute()
   } catch (error) {
     // Database not available or connection failed - skip cleanup
     // This is expected for unit tests that don't need database

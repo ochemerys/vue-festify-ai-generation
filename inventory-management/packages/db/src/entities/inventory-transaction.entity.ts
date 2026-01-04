@@ -27,13 +27,13 @@ export class InventoryTransaction {
   })
   type!: TransactionType;
 
-  @Column()
+  @Column('int')
   quantity!: number;
 
-  @Column({ nullable: true })
+  @Column('varchar', { nullable: true })
   reference?: string;
 
-  @Column({ nullable: true })
+  @Column('text', { nullable: true })
   notes?: string;
 
   @Column('uuid', { nullable: true })

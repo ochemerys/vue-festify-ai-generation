@@ -5,15 +5,21 @@ export class User {
   @PrimaryColumn({ type: 'uuid', default: () => 'uuid_generate_v4()' })
   id!: string;
 
-  @Column({ unique: true })
+  @Column('varchar', { unique: true })
   email!: string;
 
-  @Column()
+  @Column('varchar')
   password!: string;
 
-  @Column()
+  @Column('varchar')
   firstName!: string;
 
-  @Column()
+  @Column('varchar')
   lastName!: string;
+
+  @Column('varchar')
+  role!: string;
+
+  @Column('boolean', { default: true })
+  isActive!: boolean;
 }

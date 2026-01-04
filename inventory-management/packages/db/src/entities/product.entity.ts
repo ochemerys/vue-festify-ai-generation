@@ -10,19 +10,19 @@ export class Product {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ unique: true })
+  @Column('varchar', { unique: true })
   sku!: string;
 
-  @Column()
+  @Column('varchar')
   name!: string;
 
-  @Column({ nullable: true })
+  @Column('text', { nullable: true })
   description?: string;
 
-  @Column()
+  @Column('varchar')
   category!: string;
 
-  @Column()
+  @Column('varchar')
   supplier!: string;
 
   @Column('decimal', { precision: 10, scale: 2 })
@@ -31,10 +31,10 @@ export class Product {
   @Column('decimal', { precision: 10, scale: 2, nullable: true })
   cost?: number;
 
-  @Column({ default: 0 })
+  @Column('int', { default: 0 })
   reorderLevel!: number;
 
-  @Column({ default: true })
+  @Column('boolean', { default: true })
   isActive!: boolean;
 
   @CreateDateColumn()

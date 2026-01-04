@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
-import { prisma } from '@inventory/db'
+import { AppDataSource } from '@inventory/db'
+import { User } from '@inventory/db/src/entities/user.entity'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-key'
 
@@ -52,20 +53,21 @@ export async function createTestUser(
     password: string
   }>
 ) {
+  const dataSource = AppDataSource.isInitialized ? AppDataSource : await AppDataSource.initialize()
+  const userRepo = dataSource.getRepository(User)
+
   const hashedPassword = await bcrypt.hash(overrides?.password || 'password123', 10)
-  
-  const user = await prisma.user.create({
-    data: {
-      email: overrides?.email || `test-${role.toLowerCase()}-${Date.now()}@example.com`,
-      password: hashedPassword,
-      firstName: overrides?.firstName || 'Test',
-      lastName: overrides?.lastName || 'User',
-      role,
-      isActive: true,
-    },
+
+  const user = userRepo.create({
+    email: overrides?.email || `test-${role.toLowerCase()}-${Date.now()}@example.com`,
+    password: hashedPassword,
+    firstName: overrides?.firstName || 'Test',
+    lastName: overrides?.lastName || 'User',
+    role: role as any,
+    isActive: true,
   })
 
-  return user
+  return await userRepo.save(user)
 }
 
 /**
@@ -76,9 +78,9 @@ export async function createTestUserWithAuth(
 ) {
   const user = await createTestUser(role)
   const token = generateTestToken({
-    userId: user.id,
-    email: user.email,
-    role: user.role as any,
+    userId: (user as any).id,
+    email: (user as any).email,
+    role: (user as any).role,
   })
 
   return {
@@ -94,11 +96,12 @@ export async function createTestUserWithAuth(
  * Clean up test users
  */
 export async function cleanupTestUsers() {
-  await prisma.user.deleteMany({
-    where: {
-      email: {
-        contains: 'test-',
-      },
-    },
-  })
+  const dataSource = AppDataSource.isInitialized ? AppDataSource : await AppDataSource.initialize()
+  const userRepo = dataSource.getRepository(User)
+  await userRepo.delete({ email: AppDataSource.driver.options.type === 'postgres' ? ("" as any) : (undefined as any) })
+  await userRepo.createQueryBuilder()
+    .delete()
+    .from(User)
+    .where('email LIKE :pattern', { pattern: '%test-%' })
+    .execute()
 }

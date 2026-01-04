@@ -7,22 +7,22 @@ export class Supplier {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column()
+  @Column('varchar')
   name!: string;
 
-  @Column({ nullable: true })
+  @Column('varchar', { nullable: true })
   contactName?: string;
 
-  @Column({ nullable: true })
+  @Column('varchar', { nullable: true })
   email?: string;
 
-  @Column({ nullable: true })
+  @Column('varchar', { nullable: true })
   phone?: string;
 
-  @Column({ nullable: true })
+  @Column('text', { nullable: true })
   address?: string;
 
-  @Column({ default: true })
+  @Column('boolean', { default: true })
   isActive!: boolean;
 
   @CreateDateColumn()

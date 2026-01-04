@@ -8,13 +8,13 @@ export class InventoryLevel {
   @PrimaryColumn('uuid')
   productId!: string;
 
-  @Column({ default: 0 })
+  @Column('int', { default: 0 })
   currentQuantity!: number;
 
-  @Column({ default: 0 })
+  @Column('int', { default: 0 })
   reservedQuantity!: number;
 
-  @Column({ default: 0 })
+  @Column('int', { default: 0 })
   availableQuantity!: number;
 
   @CreateDateColumn()
@@ -23,7 +23,7 @@ export class InventoryLevel {
   @UpdateDateColumn()
   updatedAt!: Date;
 
-  @Column({ nullable: true })
+  @Column('timestamp', { nullable: true })
   lastRestockDate?: Date;
 
   @ManyToOne('Product', (product: Product) => product.inventoryLevels)

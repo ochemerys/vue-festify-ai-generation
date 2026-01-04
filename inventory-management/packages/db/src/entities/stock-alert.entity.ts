@@ -10,16 +10,16 @@ export class StockAlert {
   @Column('uuid')
   productId!: string;
 
-  @Column()
+  @Column('varchar')
   alertType!: string; // 'LOW_STOCK', 'OUT_OF_STOCK', etc.
 
-  @Column()
+  @Column('int')
   currentStock!: number;
 
-  @Column()
+  @Column('int')
   threshold!: number;
 
-  @Column({ default: false })
+  @Column('boolean', { default: false })
   isResolved!: boolean;
 
   @CreateDateColumn()
