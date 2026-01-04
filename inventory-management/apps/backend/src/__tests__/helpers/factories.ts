@@ -1,4 +1,5 @@
 import { randomUUID } from 'crypto'
+import { In, Like } from 'typeorm'
 import { AppDataSource, Product, Supplier, Order, OrderItem, PurchaseOrder, PurchaseOrderItem, InventoryLevel, InventoryTransaction, StockAlert, User, GoodsReceipt } from '@inventory/db'
 
 /**
@@ -212,16 +213,23 @@ export async function createTestPurchaseOrder(
 
   const totalAmount = items.reduce((sum: number, item: any) => sum + item.subtotal, 0)
 
-  const po = poRepo.create({
+  const poData = {
     poNumber: `TEST-PO-${testId}`,
     supplierId,
     status: (overrides?.status as any) || 'DRAFT',
     totalAmount,
     expectedDate: overrides?.expectedDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    notes: overrides?.notes ?? null,
-  })
+    createdBy: 'test-user',
+  } as any
 
-  const savedPO = await poRepo.save(po)
+  if (overrides?.notes !== undefined) {
+    poData.notes = overrides.notes
+  }
+
+  const po = poRepo.create(poData)
+
+  const savedPOResult = await poRepo.save(po)
+  const savedPO = Array.isArray(savedPOResult) ? savedPOResult[0]! : savedPOResult
 
   // Create PO items
   const poItems = items.map(item => poItemRepo.create({
@@ -261,25 +269,25 @@ export async function cleanupTestData() {
     const userRepo = AppDataSource.getRepository(User)
 
     // Find test orders first
-    const testOrders = await orderRepo.find({
-      where: { orderNumber: { $like: 'TEST-%' } as any },
-      select: ['id'],
-    })
-    const testOrderIds = testOrders.map((o) => o.id)
+    const testOrders = await orderRepo.createQueryBuilder('order')
+      .select('order.id')
+      .where('order.orderNumber LIKE :pattern', { pattern: 'TEST-%' })
+      .getMany()
+    const testOrderIds = testOrders.map((o: any) => o.id)
 
     // Find test purchase orders
-    const testPOs = await poRepo.find({
-      where: { poNumber: { $like: 'TEST-%' } as any },
-      select: ['id'],
-    })
-    const testPOIds = testPOs.map((po) => po.id)
+    const testPOs = await poRepo.createQueryBuilder('po')
+      .select('po.id')
+      .where('po.poNumber LIKE :pattern', { pattern: 'TEST-%' })
+      .getMany()
+    const testPOIds = testPOs.map((po: any) => po.id)
 
     // Find test products
-    const testProducts = await productRepo.find({
-      where: { sku: { $like: 'TEST-%' } as any },
-      select: ['id'],
-    })
-    const testProductIds = testProducts.map((p) => p.id)
+    const testProducts = await productRepo.createQueryBuilder('product')
+      .select('product.id')
+      .where('product.sku LIKE :pattern', { pattern: 'TEST-%' })
+      .getMany()
+    const testProductIds = testProducts.map((p: any) => p.id)
 
     // Delete in order to respect foreign key constraints
     if (testOrderIds.length > 0) {
