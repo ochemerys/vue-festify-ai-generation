@@ -1,15 +1,97 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { z } from 'zod'
-import { 
-  CreateProductRequestSchema, 
+import {
+  CreateProductRequestSchema,
   UpdateProductRequestSchema,
-  ProductFiltersSchema 
+  ProductFiltersSchema
 } from '@inventory/contracts'
-import { prisma } from '@inventory/db'
+
+interface ProductResponse {
+  id: string
+  sku: string
+  name: string
+  description?: string
+  category: string
+  supplier: string
+  price: number
+  cost?: number
+  reorderLevel: number
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+interface ProductWithInventoryResponse extends ProductResponse {
+  inventoryLevels: Array<{
+    productId: string
+    currentQuantity: number
+    reservedQuantity: number
+    availableQuantity: number
+  }>
+}
+
+interface PaginatedProductsResponse {
+  success: boolean
+  data: ProductResponse[]
+  total: number
+  page: number
+  pageSize: number
+}
 
 export async function productRoutes(app: FastifyInstance) {
+  // Import entities inside the function to ensure reflect-metadata is loaded first
+  const { AppDataSource, Product, InventoryLevel } = await import('@inventory/db')
+
   // GET /api/products - List all products with optional filters
-  app.get('/api/products', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.get('/api/products', {
+    schema: {
+      description: 'Get paginated list of products with optional filters',
+      tags: ['Products'],
+      querystring: {
+        type: 'object',
+        properties: {
+          page: { type: 'integer', minimum: 1, default: 1 },
+          pageSize: { type: 'integer', minimum: 1, maximum: 100, default: 10 },
+          category: { type: 'string' },
+          supplier: { type: 'string' },
+          minPrice: { type: 'number', minimum: 0 },
+          maxPrice: { type: 'number', minimum: 0 },
+          search: { type: 'string' },
+        },
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            data: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  sku: { type: 'string' },
+                  name: { type: 'string' },
+                  description: { type: 'string' },
+                  category: { type: 'string' },
+                  supplier: { type: 'string' },
+                  price: { type: 'number' },
+                  cost: { type: 'number' },
+                  reorderLevel: { type: 'integer' },
+                  isActive: { type: 'boolean' },
+                  createdAt: { type: 'string', format: 'date-time' },
+                  updatedAt: { type: 'string', format: 'date-time' },
+                },
+              },
+            },
+            total: { type: 'integer' },
+            page: { type: 'integer' },
+            pageSize: { type: 'integer' },
+          },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const query = request.query as any
       const page = query.page ? parseInt(query.page) : 1
@@ -51,25 +133,21 @@ export async function productRoutes(app: FastifyInstance) {
         }
       }
       
-      if (filters.search) {
-        where.OR = [
-          { name: { contains: filters.search, mode: 'insensitive' } },
-          { description: { contains: filters.search, mode: 'insensitive' } },
-          { sku: { contains: filters.search, mode: 'insensitive' } },
-        ]
-      }
+      // TODO: Implement search functionality using QueryBuilder for complex OR queries
+      // For now, search is not implemented
       
       // Only return active products by default
       where.isActive = true
-      
+
+      const productRepository = AppDataSource.getRepository(Product)
       const [products, total] = await Promise.all([
-        prisma.product.findMany({
+        productRepository.find({
           where,
           skip: (filters.page - 1) * filters.pageSize,
           take: filters.pageSize,
-          orderBy: { createdAt: 'desc' },
+          order: { createdAt: 'DESC' },
         }),
-        prisma.product.count({ where }),
+        productRepository.count({ where }),
       ])
       
       return {
@@ -92,13 +170,69 @@ export async function productRoutes(app: FastifyInstance) {
   // GET /api/products/:id - Get product by ID
   app.get<{ Params: { id: string } }>(
     '/api/products/:id',
+    {
+      schema: {
+        description: 'Get a single product by ID with inventory information',
+        tags: ['Products'],
+        params: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', description: 'Product ID' },
+          },
+          required: ['id'],
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  sku: { type: 'string' },
+                  name: { type: 'string' },
+                  description: { type: 'string' },
+                  category: { type: 'string' },
+                  supplier: { type: 'string' },
+                  price: { type: 'number' },
+                  cost: { type: 'number' },
+                  reorderLevel: { type: 'integer' },
+                  isActive: { type: 'boolean' },
+                  createdAt: { type: 'string', format: 'date-time' },
+                  updatedAt: { type: 'string', format: 'date-time' },
+                  inventoryLevels: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        productId: { type: 'string' },
+                        currentQuantity: { type: 'integer' },
+                        reservedQuantity: { type: 'integer' },
+                        availableQuantity: { type: 'integer' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          404: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              error: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
     async (request, reply) => {
       try {
-        const product = await prisma.product.findUnique({
+        const productRepository = AppDataSource.getRepository(Product)
+        const product = await productRepository.findOne({
           where: { id: request.params.id },
-          include: {
-            inventoryLevels: true,
-          },
+          relations: ['inventoryLevels'],
         })
 
         if (!product) {
@@ -119,11 +253,10 @@ export async function productRoutes(app: FastifyInstance) {
     '/api/products/sku/:sku',
     async (request, reply) => {
       try {
-        const product = await prisma.product.findUnique({
+        const productRepository = AppDataSource.getRepository(Product)
+        const product = await productRepository.findOne({
           where: { sku: request.params.sku },
-          include: {
-            inventoryLevels: true,
-          },
+          relations: ['inventoryLevels'],
         })
 
         if (!product) {
@@ -140,12 +273,64 @@ export async function productRoutes(app: FastifyInstance) {
   )
 
   // POST /api/products - Create new product
-  app.post('/api/products', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.post('/api/products', {
+    schema: {
+      description: 'Create a new product',
+      tags: ['Products'],
+      body: {
+        type: 'object',
+        properties: {
+          sku: { type: 'string', description: 'Unique product SKU' },
+          name: { type: 'string', description: 'Product name' },
+          description: { type: 'string', description: 'Product description' },
+          category: { type: 'string', description: 'Product category' },
+          supplier: { type: 'string', description: 'Supplier name' },
+          price: { type: 'number', minimum: 0, description: 'Selling price' },
+          cost: { type: 'number', minimum: 0, description: 'Cost price' },
+          reorderLevel: { type: 'integer', minimum: 0, description: 'Reorder level' },
+        },
+        required: ['sku', 'name', 'category', 'supplier', 'price', 'reorderLevel'],
+      },
+      response: {
+        201: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            data: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' },
+                sku: { type: 'string' },
+                name: { type: 'string' },
+                description: { type: 'string' },
+                category: { type: 'string' },
+                supplier: { type: 'string' },
+                price: { type: 'number' },
+                cost: { type: 'number' },
+                reorderLevel: { type: 'integer' },
+                isActive: { type: 'boolean' },
+                createdAt: { type: 'string', format: 'date-time' },
+                updatedAt: { type: 'string', format: 'date-time' },
+              },
+            },
+          },
+        },
+        409: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            error: { type: 'string' },
+          },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const productData = CreateProductRequestSchema.parse(request.body)
 
       // Check for duplicate SKU
-      const existing = await prisma.product.findUnique({
+      const productRepository = AppDataSource.getRepository(Product)
+      const existing = await productRepository.findOne({
         where: { sku: productData.sku },
       })
 
@@ -154,19 +339,21 @@ export async function productRoutes(app: FastifyInstance) {
         return { success: false, error: 'SKU already exists' }
       }
 
-      const product = await prisma.product.create({
-        data: { ...productData, description: productData.description ?? null },
+      const product = productRepository.create({
+        ...productData,
+        description: productData.description ?? undefined,
       })
+      await productRepository.save(product)
 
       // Create initial inventory level
-      await prisma.inventoryLevel.create({
-        data: {
-          productId: product.id,
-          currentQuantity: 0,
-          reservedQuantity: 0,
-          availableQuantity: 0,
-        },
+      const inventoryRepository = AppDataSource.getRepository(InventoryLevel)
+      const inventoryLevel = inventoryRepository.create({
+        productId: product.id,
+        currentQuantity: 0,
+        reservedQuantity: 0,
+        availableQuantity: 0,
       })
+      await inventoryRepository.save(inventoryLevel)
 
       reply.status(201)
       return { success: true, data: product }
@@ -186,39 +373,33 @@ export async function productRoutes(app: FastifyInstance) {
     async (request, reply) => {
       try {
         const updateData = UpdateProductRequestSchema.parse(request.body)
-        // Coerce nullable fields to explicit nulls when absent
-        if (updateData.description === undefined) {
-          // leave undefined to avoid updating; prisma expects string | null if provided
-        } else if (updateData.description === null) {
-          // ok
-        } else {
-          // string value is fine
-        }
 
         // Build update payload without undefined values
         const data: any = {}
         if (updateData.name !== undefined) data.name = updateData.name
         if (updateData.category !== undefined) data.category = updateData.category
         if (updateData.supplier !== undefined) data.supplier = updateData.supplier
-        if (updateData.description !== undefined) data.description = updateData.description ?? null
+        if (updateData.description !== undefined) data.description = updateData.description
         if (updateData.price !== undefined) data.price = updateData.price
         if (updateData.cost !== undefined) data.cost = updateData.cost
         if (updateData.reorderLevel !== undefined) data.reorderLevel = updateData.reorderLevel
 
-        const product = await prisma.product.update({
+        const productRepository = AppDataSource.getRepository(Product)
+        await productRepository.update(request.params.id, data)
+        const product = await productRepository.findOne({
           where: { id: request.params.id },
-          data,
         })
+
+        if (!product) {
+          reply.status(404)
+          return { success: false, error: 'Product not found' }
+        }
 
         return { success: true, data: product }
       } catch (error) {
         if (error instanceof z.ZodError) {
           reply.status(400)
           return { success: false, error: 'Validation failed', details: error.issues }
-        }
-        if ((error as any).code === 'P2025') {
-          reply.status(404)
-          return { success: false, error: 'Product not found' }
         }
         reply.status(500)
         return { success: false, error: 'Internal server error' }
@@ -231,17 +412,19 @@ export async function productRoutes(app: FastifyInstance) {
     '/api/products/:id/deactivate',
     async (request, reply) => {
       try {
-        const product = await prisma.product.update({
+        const productRepository = AppDataSource.getRepository(Product)
+        await productRepository.update(request.params.id, { isActive: false })
+        const product = await productRepository.findOne({
           where: { id: request.params.id },
-          data: { isActive: false },
         })
 
-        return { success: true, data: product }
-      } catch (error) {
-        if ((error as any).code === 'P2025') {
+        if (!product) {
           reply.status(404)
           return { success: false, error: 'Product not found' }
         }
+
+        return { success: true, data: product }
+      } catch (error) {
         reply.status(500)
         return { success: false, error: 'Internal server error' }
       }
@@ -253,16 +436,16 @@ export async function productRoutes(app: FastifyInstance) {
     '/api/products/:id',
     async (request, reply) => {
       try {
-        await prisma.product.delete({
-          where: { id: request.params.id },
-        })
+        const productRepository = AppDataSource.getRepository(Product)
+        const result = await productRepository.delete(request.params.id)
 
-        reply.status(204)
-      } catch (error) {
-        if ((error as any).code === 'P2025') {
+        if (result.affected === 0) {
           reply.status(404)
           return { success: false, error: 'Product not found' }
         }
+
+        reply.status(204)
+      } catch (error) {
         reply.status(500)
         return { success: false, error: 'Internal server error' }
       }

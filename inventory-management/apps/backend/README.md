@@ -6,7 +6,7 @@ Fastify REST API server for the Inventory Management System.
 
 - **RESTful API** - Full CRUD operations for products, orders, and inventory
 - **Type Safety** - TypeScript with Zod schema validation
-- **Database Integration** - PostgreSQL with Prisma ORM
+- **Database Integration** - PostgreSQL with TypeORM
 - **Authentication Ready** - Session-based auth infrastructure
 - **CORS Support** - Cross-origin resource sharing enabled
 - **Input Validation** - Runtime validation with Zod schemas
@@ -18,7 +18,7 @@ Fastify REST API server for the Inventory Management System.
 - **Runtime**: Node.js 18+
 - **Framework**: Fastify
 - **Language**: TypeScript
-- **Database**: PostgreSQL + Prisma
+- **Database**: PostgreSQL + TypeORM
 - **Validation**: Zod schemas from `@inventory/contracts`
 - **Testing**: Vitest
 - **Linting**: ESLint
@@ -79,14 +79,15 @@ app.post(
 
 ## Database Integration
 
-Uses Prisma ORM with type-safe database operations:
+Uses TypeORM with type-safe database operations:
 
 ```typescript
-import { prisma } from '@inventory/db'
+import { AppDataSource } from '@inventory/db'
 
-const products = await prisma.product.findMany({
+const productRepository = AppDataSource.getRepository(Product)
+const products = await productRepository.find({
   where: { isActive: true },
-  include: { inventoryLevels: true },
+  relations: ['inventoryLevels'],
 })
 ```
 

@@ -1,7 +1,6 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { z } from 'zod'
-import { prisma } from '@inventory/db'
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 
 // JWT secret - in production this should come from environment variables
@@ -30,12 +29,15 @@ const UpdateUserRequestSchema = z.object({
 })
 
 export async function authRoutes(app: FastifyInstance) {
+  // Import entities inside the function to ensure reflect-metadata is loaded first
+  const { AppDataSource, User } = await import('@inventory/db')
   // POST /auth/login - User login
   app.post('/auth/login', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const { email, password } = LoginRequestSchema.parse(request.body)
 
-      const user = await prisma.user.findUnique({
+      const userRepository = AppDataSource.getRepository(User)
+      const user = await userRepository.findOne({
         where: { email },
       })
 
@@ -105,7 +107,8 @@ export async function authRoutes(app: FastifyInstance) {
       // Verify refresh token and issue new access token
       const decoded = jwt.verify(refreshToken, JWT_SECRET) as any
 
-      const user = await prisma.user.findUnique({
+      const userRepository = AppDataSource.getRepository(User)
+      const user = await userRepository.findOne({
         where: { id: decoded.userId },
       })
 
@@ -166,7 +169,8 @@ export async function authRoutes(app: FastifyInstance) {
       const userData = CreateUserRequestSchema.parse(request.body)
 
       // Check if email already exists
-      const existingUser = await prisma.user.findUnique({
+      const userRepository = AppDataSource.getRepository(User)
+      const existingUser = await userRepository.findOne({
         where: { email: userData.email },
       })
 
@@ -178,24 +182,17 @@ export async function authRoutes(app: FastifyInstance) {
       // Hash password
       const hashedPassword = await bcrypt.hash(userData.password, 10)
 
-      const user = await prisma.user.create({
-        data: {
-          ...userData,
-          password: hashedPassword,
-        },
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true,
-          role: true,
-          isActive: true,
-          createdAt: true,
-        },
+      const user = userRepository.create({
+        ...userData,
+        password: hashedPassword,
       })
+      await userRepository.save(user)
+
+      // Return user without password
+      const { password, ...userResponse } = user
 
       reply.status(201)
-      return { success: true, data: user }
+      return { success: true, data: userResponse }
     } catch (error) {
       if (error instanceof z.ZodError) {
         reply.status(400)
@@ -209,17 +206,10 @@ export async function authRoutes(app: FastifyInstance) {
   // GET /users - List all users
   app.get('/users', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const users = await prisma.user.findMany({
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true,
-          role: true,
-          isActive: true,
-          createdAt: true,
-        },
-        orderBy: { createdAt: 'desc' },
+      const userRepository = AppDataSource.getRepository(User)
+      const users = await userRepository.find({
+        select: ['id', 'email', 'firstName', 'lastName', 'role', 'isActive', 'createdAt'],
+        order: { createdAt: 'DESC' },
       })
 
       return { success: true, data: users }
@@ -232,18 +222,10 @@ export async function authRoutes(app: FastifyInstance) {
   // GET /users/:id - Get user by ID
   app.get<{ Params: { id: string } }>('/users/:id', async (request, reply) => {
     try {
-      const user = await prisma.user.findUnique({
+      const userRepository = AppDataSource.getRepository(User)
+      const user = await userRepository.findOne({
         where: { id: request.params.id },
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true,
-          role: true,
-          isActive: true,
-          createdAt: true,
-          updatedAt: true,
-        },
+        select: ['id', 'email', 'firstName', 'lastName', 'role', 'isActive', 'createdAt', 'updatedAt'],
       })
 
       if (!user) {
@@ -268,7 +250,7 @@ export async function authRoutes(app: FastifyInstance) {
         updateData.password = await bcrypt.hash(updateData.password, 10)
       }
 
-      // Build Prisma update payload without undefined properties
+      // Build update payload without undefined properties
       const data: any = {}
       if (updateData.firstName !== undefined) data.firstName = updateData.firstName
       if (updateData.lastName !== undefined) data.lastName = updateData.lastName
@@ -276,29 +258,24 @@ export async function authRoutes(app: FastifyInstance) {
       if (updateData.role !== undefined) data.role = updateData.role
       if (updateData.isActive !== undefined) data.isActive = updateData.isActive
 
-      const user = await prisma.user.update({
+      const userRepository = AppDataSource.getRepository(User)
+      await userRepository.update(request.params.id, data)
+
+      const user = await userRepository.findOne({
         where: { id: request.params.id },
-        data,
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true,
-          role: true,
-          isActive: true,
-          updatedAt: true,
-        },
+        select: ['id', 'email', 'firstName', 'lastName', 'role', 'isActive', 'updatedAt'],
       })
+
+      if (!user) {
+        reply.status(404)
+        return { success: false, error: 'User not found' }
+      }
 
       return { success: true, data: user }
     } catch (error) {
       if (error instanceof z.ZodError) {
         reply.status(400)
         return { success: false, error: 'Validation failed', details: error.issues }
-      }
-      if ((error as any).code === 'P2025') {
-        reply.status(404)
-        return { success: false, error: 'User not found' }
       }
       reply.status(500)
       return { success: false, error: 'Internal server error' }
@@ -308,26 +285,21 @@ export async function authRoutes(app: FastifyInstance) {
   // PATCH /users/:id/deactivate - Deactivate user
   app.patch<{ Params: { id: string } }>('/users/:id/deactivate', async (request, reply) => {
     try {
-      const user = await prisma.user.update({
+      const userRepository = AppDataSource.getRepository(User)
+      await userRepository.update(request.params.id, { isActive: false })
+
+      const user = await userRepository.findOne({
         where: { id: request.params.id },
-        data: { isActive: false },
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true,
-          role: true,
-          isActive: true,
-          updatedAt: true,
-        },
+        select: ['id', 'email', 'firstName', 'lastName', 'role', 'isActive', 'updatedAt'],
       })
 
-      return { success: true, data: user }
-    } catch (error) {
-      if ((error as any).code === 'P2025') {
+      if (!user) {
         reply.status(404)
         return { success: false, error: 'User not found' }
       }
+
+      return { success: true, data: user }
+    } catch (error) {
       reply.status(500)
       return { success: false, error: 'Internal server error' }
     }
@@ -336,26 +308,21 @@ export async function authRoutes(app: FastifyInstance) {
   // PATCH /users/:id/reactivate - Reactivate user
   app.patch<{ Params: { id: string } }>('/users/:id/reactivate', async (request, reply) => {
     try {
-      const user = await prisma.user.update({
+      const userRepository = AppDataSource.getRepository(User)
+      await userRepository.update(request.params.id, { isActive: true })
+
+      const user = await userRepository.findOne({
         where: { id: request.params.id },
-        data: { isActive: true },
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true,
-          role: true,
-          isActive: true,
-          updatedAt: true,
-        },
+        select: ['id', 'email', 'firstName', 'lastName', 'role', 'isActive', 'updatedAt'],
       })
 
-      return { success: true, data: user }
-    } catch (error) {
-      if ((error as any).code === 'P2025') {
+      if (!user) {
         reply.status(404)
         return { success: false, error: 'User not found' }
       }
+
+      return { success: true, data: user }
+    } catch (error) {
       reply.status(500)
       return { success: false, error: 'Internal server error' }
     }

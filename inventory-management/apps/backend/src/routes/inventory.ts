@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { z } from 'zod'
-import { prisma } from '@inventory/db'
+import { AppDataSource, InventoryLevel, InventoryTransaction, StockAlert, Product } from '@inventory/db'
 
 const TransactionSchema = z.object({
   productId: z.string(),
@@ -22,7 +22,8 @@ export async function inventoryRoutes(app: FastifyInstance) {
       const transactionData = TransactionSchema.parse(request.body)
 
       // Get current inventory level
-      const inventoryLevel = await prisma.inventoryLevel.findUnique({
+      const inventoryRepository = AppDataSource.getRepository(InventoryLevel)
+      const inventoryLevel = await inventoryRepository.findOne({
         where: { productId: transactionData.productId },
       })
 
@@ -59,25 +60,30 @@ export async function inventoryRoutes(app: FastifyInstance) {
       }
 
       // Create transaction and update inventory level in a transaction
-      const [transaction] = await prisma.$transaction([
-        prisma.inventoryTransaction.create({
-          data: {
-            ...transactionData,
-            notes: transactionData.notes ?? null,
-            createdBy: 'system', // TODO: Get from auth context
-          },
-        }),
-        prisma.inventoryLevel.update({
-          where: { productId: transactionData.productId },
-          data: {
+      await AppDataSource.transaction(async (manager) => {
+        const transactionRepository = manager.getRepository(InventoryTransaction)
+        const inventoryLevelRepository = manager.getRepository(InventoryLevel)
+
+        const transaction = transactionRepository.create({
+          ...transactionData,
+          notes: transactionData.notes ?? undefined,
+          createdBy: 'system', // TODO: Get from auth context
+        })
+        await transactionRepository.save(transaction)
+
+        await inventoryLevelRepository.update(
+          { productId: transactionData.productId },
+          {
             currentQuantity: newQuantity,
             availableQuantity: newQuantity - inventoryLevel.reservedQuantity,
-          },
-        }),
-      ])
+          }
+        )
+
+        return transaction
+      })
 
       reply.status(201)
-      return { success: true, data: transaction }
+      return { success: true, data: { message: 'Transaction recorded successfully' } }
     } catch (error) {
       if (error instanceof z.ZodError) {
         reply.status(400)
@@ -93,12 +99,11 @@ export async function inventoryRoutes(app: FastifyInstance) {
     '/api/inventory/transactions/product/:productId',
     async (request, reply) => {
       try {
-        const transactions = await prisma.inventoryTransaction.findMany({
+        const transactionRepository = AppDataSource.getRepository(InventoryTransaction)
+        const transactions = await transactionRepository.find({
           where: { productId: request.params.productId },
-          orderBy: { createdAt: 'asc' },
-          include: {
-            product: true,
-          },
+          order: { createdAt: 'ASC' },
+          relations: ['product'],
         })
 
         return { success: true, data: transactions }
@@ -114,11 +119,10 @@ export async function inventoryRoutes(app: FastifyInstance) {
     '/api/inventory/levels/:productId',
     async (request, reply) => {
       try {
-        const inventoryLevel = await prisma.inventoryLevel.findUnique({
+        const inventoryRepository = AppDataSource.getRepository(InventoryLevel)
+        const inventoryLevel = await inventoryRepository.findOne({
           where: { productId: request.params.productId },
-          include: {
-            product: true,
-          },
+          relations: ['product'],
         })
 
         if (!inventoryLevel) {
@@ -138,21 +142,36 @@ export async function inventoryRoutes(app: FastifyInstance) {
   app.post('/api/inventory/levels', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const data = request.body as any
+      const inventoryRepository = AppDataSource.getRepository(InventoryLevel)
 
-      const inventoryLevel = await prisma.inventoryLevel.upsert({
+      // Check if inventory level exists
+      let inventoryLevel = await inventoryRepository.findOne({
         where: { productId: data.productId },
-        update: {
-          currentQuantity: data.currentQuantity,
-          reservedQuantity: data.reservedQuantity,
-          availableQuantity: data.availableQuantity,
-        },
-        create: {
+      })
+
+      if (inventoryLevel) {
+        // Update existing
+        await inventoryRepository.update(
+          { productId: data.productId },
+          {
+            currentQuantity: data.currentQuantity ?? inventoryLevel.currentQuantity,
+            reservedQuantity: data.reservedQuantity ?? inventoryLevel.reservedQuantity,
+            availableQuantity: data.availableQuantity ?? inventoryLevel.availableQuantity,
+          }
+        )
+        inventoryLevel = await inventoryRepository.findOne({
+          where: { productId: data.productId },
+        })
+      } else {
+        // Create new
+        inventoryLevel = inventoryRepository.create({
           productId: data.productId,
           currentQuantity: data.currentQuantity || 0,
           reservedQuantity: data.reservedQuantity || 0,
           availableQuantity: data.availableQuantity || 0,
-        },
-      })
+        })
+        await inventoryRepository.save(inventoryLevel)
+      }
 
       return { success: true, data: inventoryLevel }
     } catch (error) {
@@ -166,7 +185,8 @@ export async function inventoryRoutes(app: FastifyInstance) {
     try {
       const { productId, quantity } = ReserveInventorySchema.parse(request.body)
 
-      const inventoryLevel = await prisma.inventoryLevel.findUnique({
+      const inventoryRepository = AppDataSource.getRepository(InventoryLevel)
+      const inventoryLevel = await inventoryRepository.findOne({
         where: { productId },
       })
 
@@ -181,12 +201,16 @@ export async function inventoryRoutes(app: FastifyInstance) {
         return { success: false, error: 'Insufficient available inventory' }
       }
 
-      const updated = await prisma.inventoryLevel.update({
-        where: { productId },
-        data: {
+      await inventoryRepository.update(
+        { productId },
+        {
           reservedQuantity: inventoryLevel.reservedQuantity + quantity,
           availableQuantity: availableQuantity - quantity,
-        },
+        }
+      )
+
+      const updated = await inventoryRepository.findOne({
+        where: { productId },
       })
 
       return { success: true, data: updated }

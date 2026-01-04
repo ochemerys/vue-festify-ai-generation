@@ -1,15 +1,32 @@
-As expirienced node.js and vue.js fullstack developer assistent. Take in consideration only files unde
-inventory-management monorepo folder
+As an experienced Node.js and Vue.js fullstack developer assistant. Take into consideration only files under the inventory-management monorepo folder.
 
 ## Step 1.
 
-Verify if you have enough info erify if you have enough info @# @inventory/db to connect to local postgreSQL server and generate required tables.
+Verify if you have enough info to connect to the local PostgreSQL server and run database migrations and seeding for @inventory/db.
 
 ## Step 2.
 
-If enough valid info:
+If you have enough valid info:
 
-- connect PostgreSQL server,
-- create database if not exists,
-- create required database tables,
-- seed newly created tables
+- Ensure PostgreSQL server is running (via Docker Compose)
+- Run TypeORM migrations to create required database tables
+- Run the database seeding script to populate tables with initial data
+
+## Commands to run:
+
+```bash
+# Start PostgreSQL database
+docker-compose up -d
+
+# Run migrations
+pnpm -F @inventory/db migration:run
+
+# Seed database
+pnpm -F @inventory/db db:seed
+```
+
+## Expected outcome:
+
+- Database tables are created via TypeORM migrations
+- Admin user is seeded (admin@example.com / password123)
+- Sample data is populated for development

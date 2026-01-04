@@ -1,33 +1,18 @@
-/**
- * Database Layer for Inventory Management System
- *
- * This package provides Prisma ORM setup and database utilities
- * for the Inventory Management System.
- */
+import "reflect-metadata"
+import { AppDataSource } from "./data-source.js"
 
-export { prisma, default } from './client.js'
-export type {
-  User,
-  Product,
-  Category,
-  Supplier,
-  InventoryLevel,
-  InventoryTransaction,
-  StockAlert,
-  Order,
-  OrderItem,
-  PurchaseOrder,
-  PurchaseOrderItem,
-  GoodsReceipt,
-  AuditLog,
-  DailyInventorySummary,
-  SalesReport,
-} from '@prisma/client'
+// Entities
+export { User } from "./entities/user.entity.js"
+export { Product } from "./entities/product.entity.js";
+export { InventoryLevel } from "./entities/inventory-level.entity.js";
+export { Order, OrderStatus } from "./entities/order.entity.js";
+export { OrderItem } from "./entities/order-item.entity.js";
+export { Supplier } from "./entities/supplier.entity.js";
+export { PurchaseOrder, PurchaseOrderStatus } from "./entities/purchase-order.entity.js";
+export { PurchaseOrderItem } from "./entities/purchase-order-item.entity.js";
+export { GoodsReceipt } from "./entities/goods-receipt.entity.js";
+export { InventoryTransaction, TransactionType } from "./entities/inventory-transaction.entity.js";
+export { StockAlert } from "./entities/stock-alert.entity.js";
 
-export {
-  UserRole,
-  InventoryTransactionType,
-  AlertType,
-  OrderStatus,
-  POStatus,
-} from '@prisma/client'
+// Data source
+export { AppDataSource };

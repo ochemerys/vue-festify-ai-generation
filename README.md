@@ -53,8 +53,8 @@ This avoids context switching, minimizes impedance mismatch, and dramatically im
 ### Database
 
 - PostgreSQL
-- Prisma ORM (Type-safe DB contract)
-- SQL migrations managed by Prisma
+- TypeORM (Type-safe DB access with decorators)
+- SQL migrations managed by TypeORM
 
 Contracts
 
@@ -124,7 +124,7 @@ apps/
 packages/
   contracts/        # Zod schemas + types
   ui-contracts/     # Component contracts
-  db/               # Prisma schema
+  db/               # TypeORM entities
   test-helpers/     # Gherkin step bindings
 ```
 
@@ -145,9 +145,9 @@ fastify.post(
     },
   },
   async (req, reply) => {
-    const order = await prisma.order.create({
-      data: req.body,
-    });
+    const orderRepository = AppDataSource.getRepository(Order);
+    const order = orderRepository.create(req.body);
+    await orderRepository.save(order);
     reply.code(201).send(order);
   }
 );
@@ -165,21 +165,27 @@ const form = useForm({
 
 Same contract. Same types. Same validation.
 
-## Database as a Contract (Prisma)
+## Database as a Contract (TypeORM)
 
-```prisma
-model Order {
-  id          String   @id @default(uuid())
-  customerId String
-  createdAt  DateTime @default(now())
+```typescript
+@Entity({ name: 'orders' })
+export class Order {
+  @PrimaryGeneratedColumn('uuid')
+  id!: string;
+
+  @Column()
+  customerId!: string;
+
+  @CreateDateColumn()
+  createdAt!: Date;
 }
 ```
 
-Prisma generates:
+TypeORM provides:
 
-- Type-safe DB client
+- Type-safe entity definitions
 - Migration scripts
-- Input/output types
+- Repository pattern for data access
 
 ## AI Generation Strategy (Very Important)
 
@@ -187,14 +193,14 @@ Prisma generates:
 
 1. Gherkin features
 2. Zod schemas
-3. Prisma models
+3. TypeORM entities
 4. Project conventions
 
 ### AI Outputs
 
 - Vue components
 - Fastify routes
-- Prisma access code
+- TypeORM repository code
 - Tests (Vitest + Playwright)
 
 ### Hard Rules for AI
@@ -211,7 +217,7 @@ Prisma generates:
 | Gherkin E2E | Playwright  |
 | API         | Vitest      |
 | Contracts   | Zod tests   |
-| DB Prisma   | test client |
+| DB TypeORM  | test client |
 
 ## Why This Works Exceptionally Well with AI
 
@@ -222,7 +228,7 @@ AI performs best when:
 - Conventions are enforced
 - Files are colocated
 
-A TS monorepo with Zod + Prisma is almost ideal AI substrate.
+A TS monorepo with Zod + TypeORM is almost ideal AI substrate.
 
 ## When to Consider Deviations
 

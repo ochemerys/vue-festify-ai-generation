@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { z } from 'zod'
-import { prisma } from '@inventory/db'
+import { AppDataSource, Product, Supplier, PurchaseOrder, PurchaseOrderItem, GoodsReceipt, InventoryLevel, InventoryTransaction, PurchaseOrderStatus, TransactionType } from '@inventory/db'
+import { Between, EntityManager } from 'typeorm'
 
 const CreatePurchaseOrderRequestSchema = z.object({
   supplierId: z.string(),
@@ -39,56 +40,59 @@ export async function purchaseOrderRoutes(app: FastifyInstance) {
       // Generate PO number
       const poNumber = `PO-${Date.now()}`
 
-      // Calculate total amount
-      let totalAmount = 0
-      const poItems = []
+      const purchaseOrder = await AppDataSource.transaction(async (manager: EntityManager) => {
+        // Calculate total amount
+        let totalAmount = 0
+        const poItems = []
 
-      for (const item of poData.items) {
-        const product = await prisma.product.findUnique({
-          where: { id: item.productId },
-        })
+        for (const item of poData.items) {
+          const product = await manager.findOne(Product, { where: { id: item.productId } })
 
-        if (!product || !product.isActive) {
-          reply.status(400)
-          return { success: false, error: `Product ${item.productId} not found or inactive` }
+          if (!product || !(product as any).isActive) {
+            reply.status(400)
+            throw new Error(`Product ${item.productId} not found or inactive`)
+          }
+
+          const subtotal = item.quantity * item.unitPrice
+          totalAmount += subtotal
+
+          poItems.push({
+            productId: item.productId,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            subtotal,
+          })
         }
 
-        const subtotal = item.quantity * item.unitPrice
-        totalAmount += subtotal
+        // Validate supplier exists
+        const supplier = await manager.findOne(Supplier, { where: { id: poData.supplierId } })
 
-        poItems.push({
-          productId: item.productId,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          subtotal,
-        })
-      }
+        if (!supplier || !(supplier as any).isActive) {
+          reply.status(400)
+          throw new Error('Supplier not found or inactive')
+        }
 
-      // Validate supplier exists
-      const supplier = await prisma.supplier.findUnique({
-        where: { id: poData.supplierId },
-      })
-
-      if (!supplier || !supplier.isActive) {
-        reply.status(400)
-        return { success: false, error: 'Supplier not found or inactive' }
-      }
-
-      const purchaseOrder = await prisma.purchaseOrder.create({
-        data: {
+        const createData: any = {
           poNumber,
           supplierId: poData.supplierId,
           totalAmount,
           expectedDate: poData.expectedDate,
-          notes: poData.notes ?? null,
-          items: {
-            create: poItems,
-          },
-        },
-        include: {
-          supplier: true,
-          items: true,
-        },
+        }
+        if (poData.notes) {
+          createData.notes = poData.notes
+        }
+        const po = manager.create(PurchaseOrder, createData)
+        await manager.save(po)
+
+        for (const item of poItems) {
+          const poItem = manager.create(PurchaseOrderItem, {
+            purchaseOrderId: (po as any).id,
+            ...item,
+          })
+          await manager.save(poItem)
+        }
+
+        return manager.findOne(PurchaseOrder, { where: { id: (po as any).id }, relations: ['supplier', 'items'] })
       })
 
       reply.status(201)
@@ -119,25 +123,29 @@ export async function purchaseOrderRoutes(app: FastifyInstance) {
       }
 
       if (filters.startDate && filters.endDate) {
-        where.createdAt = {
-          gte: filters.startDate,
-          lte: filters.endDate,
-        }
+        where.createdAt = Between(filters.startDate, filters.endDate)
       }
 
-      const [purchaseOrders, total] = await Promise.all([
-        prisma.purchaseOrder.findMany({
-          where,
-          include: {
-            supplier: true,
-            items: true,
-          },
-          skip: (filters.page - 1) * filters.pageSize,
-          take: filters.pageSize,
-          orderBy: { createdAt: 'desc' },
-        }),
-        prisma.purchaseOrder.count({ where }),
-      ])
+      const poRepo = AppDataSource.getRepository(PurchaseOrder)
+      const qb = poRepo.createQueryBuilder('po')
+        .leftJoinAndSelect('po.supplier', 'supplier')
+        .leftJoinAndSelect('po.items', 'items')
+        .orderBy('po.createdAt', 'DESC')
+
+      if (filters.status) {
+        qb.andWhere('po.status = :status', { status: filters.status })
+      }
+      if (filters.supplierId) {
+        qb.andWhere('po.supplierId = :supplierId', { supplierId: filters.supplierId })
+      }
+      if (filters.startDate && filters.endDate) {
+        qb.andWhere('po.createdAt BETWEEN :startDate AND :endDate', { startDate: filters.startDate, endDate: filters.endDate })
+      }
+
+      const [purchaseOrders, total] = await qb
+        .skip((filters.page - 1) * filters.pageSize)
+        .take(filters.pageSize)
+        .getManyAndCount()
 
       return {
         success: true,
@@ -159,13 +167,9 @@ export async function purchaseOrderRoutes(app: FastifyInstance) {
   // GET /api/purchase-orders/:id - Get purchase order by ID
   app.get<{ Params: { id: string } }>('/api/purchase-orders/:id', async (request, reply) => {
     try {
-      const purchaseOrder = await prisma.purchaseOrder.findUnique({
+      const purchaseOrder = await AppDataSource.getRepository(PurchaseOrder).findOne({
         where: { id: request.params.id },
-        include: {
-          supplier: true,
-          items: true,
-          receipts: true,
-        },
+        relations: ['supplier', 'items', 'receipts'],
       })
 
       if (!purchaseOrder) {
@@ -191,30 +195,23 @@ export async function purchaseOrderRoutes(app: FastifyInstance) {
         return { success: false, error: 'Invalid status' }
       }
 
-      const purchaseOrder = await prisma.purchaseOrder.findUnique({
-        where: { id: request.params.id },
-        include: { items: true },
-      })
+      const poRepo = AppDataSource.getRepository(PurchaseOrder)
+      const purchaseOrder = await poRepo.findOne({ where: { id: request.params.id }, relations: ['items'] })
 
       if (!purchaseOrder) {
         reply.status(404)
         return { success: false, error: 'Purchase order not found' }
       }
 
-      const updateData: any = { status }
+      const updateData: any = { status: status as PurchaseOrderStatus }
 
       if (status === 'RECEIVED') {
         updateData.receivedDate = new Date()
       }
 
-      const updatedPO = await prisma.purchaseOrder.update({
-        where: { id: request.params.id },
-        data: updateData,
-        include: {
-          supplier: true,
-          items: true,
-        },
-      })
+      await poRepo.update({ id: request.params.id }, updateData)
+
+      const updatedPO = await poRepo.findOne({ where: { id: request.params.id }, relations: ['supplier', 'items'] })
 
       return { success: true, data: updatedPO }
     } catch (error) {
@@ -228,21 +225,18 @@ export async function purchaseOrderRoutes(app: FastifyInstance) {
     try {
       const { expectedDate } = request.body as { expectedDate: string }
 
-      const updatedPO = await prisma.purchaseOrder.update({
-        where: { id: request.params.id },
-        data: { expectedDate: new Date(expectedDate) },
-        include: {
-          supplier: true,
-          items: true,
-        },
-      })
+      const poRepo = AppDataSource.getRepository(PurchaseOrder)
+      const result = await poRepo.update({ id: request.params.id }, { expectedDate: new Date(expectedDate) })
 
-      return { success: true, data: updatedPO }
-    } catch (error) {
-      if ((error as any).code === 'P2025') {
+      if (result.affected === 0) {
         reply.status(404)
         return { success: false, error: 'Purchase order not found' }
       }
+
+      const updatedPO = await poRepo.findOne({ where: { id: request.params.id }, relations: ['supplier', 'items'] })
+
+      return { success: true, data: updatedPO }
+    } catch (error) {
       reply.status(500)
       return { success: false, error: 'Internal server error' }
     }
@@ -254,109 +248,84 @@ export async function purchaseOrderRoutes(app: FastifyInstance) {
       const poId = request.params.id
       const receiptData = GoodsReceiptRequestSchema.parse(request.body)
 
-      const purchaseOrder = await prisma.purchaseOrder.findUnique({
-        where: { id: poId },
-        include: { items: true },
-      })
+      await AppDataSource.transaction(async (manager: EntityManager) => {
+        const poRepo = manager.getRepository(PurchaseOrder)
+        const purchaseOrder = await poRepo.findOne({ where: { id: poId }, relations: ['items'] })
 
-      if (!purchaseOrder) {
-        reply.status(404)
-        return { success: false, error: 'Purchase order not found' }
-      }
-
-      if (purchaseOrder.status === 'RECEIVED' || purchaseOrder.status === 'CANCELLED') {
-        reply.status(400)
-        return { success: false, error: 'Cannot receive goods for this purchase order' }
-      }
-
-      // Validate received quantities don't exceed ordered
-      for (const receivedItem of receiptData.items) {
-        const poItem = purchaseOrder.items.find((item: any) => item.productId === receivedItem.productId)
-        if (!poItem) {
-          reply.status(400)
-          return { success: false, error: `Product ${receivedItem.productId} not in purchase order` }
+        if (!purchaseOrder) {
+          reply.status(404)
+          throw new Error('Purchase order not found')
         }
 
-        if (poItem.receivedQuantity + receivedItem.quantity > poItem.quantity) {
+        if (purchaseOrder.status === PurchaseOrderStatus.RECEIVED || purchaseOrder.status === PurchaseOrderStatus.CANCELLED) {
           reply.status(400)
-          return { success: false, error: `Cannot receive more than ordered quantity for product ${receivedItem.productId}` }
+          throw new Error('Cannot receive goods for this purchase order')
         }
-      }
 
-      // Create goods receipt and update inventory
-      await prisma.$transaction(async (tx: any) => {
+        // Validate received quantities don't exceed ordered
+        for (const receivedItem of receiptData.items) {
+          const poItem = purchaseOrder.items.find((item) => item.productId === receivedItem.productId)
+          if (!poItem) {
+            reply.status(400)
+            throw new Error(`Product ${receivedItem.productId} not in purchase order`)
+          }
+
+          if (poItem.receivedQuantity + receivedItem.quantity > poItem.quantity) {
+            reply.status(400)
+            throw new Error(`Cannot receive more than ordered quantity for product ${receivedItem.productId}`)
+          }
+        }
+
         // Create goods receipt
-        const receipt = await tx.goodsReceipt.create({
-          data: {
-            purchaseOrderId: poId,
-            notes: receiptData.notes,
-          },
-        })
+        const receiptDataToCreate: any = { purchaseOrderId: poId }
+        if (receiptData.notes) {
+          receiptDataToCreate.notes = receiptData.notes
+        }
+        const receipt = manager.create(GoodsReceipt, receiptDataToCreate)
+        await manager.save(receipt)
 
         // Update received quantities and inventory
         for (const receivedItem of receiptData.items) {
-          const poItem = purchaseOrder.items.find((item: any) => item.productId === receivedItem.productId)!
+          const poItem = purchaseOrder.items.find((item) => item.productId === receivedItem.productId)!
 
           // Update PO item received quantity
-          await tx.purchaseOrderItem.update({
-            where: { id: poItem.id },
-            data: {
-              receivedQuantity: { increment: receivedItem.quantity },
-            },
-          })
+          await manager.update(PurchaseOrderItem, { id: (poItem as any).id }, { receivedQuantity: () => `receivedQuantity + ${receivedItem.quantity}` })
 
           // Update inventory
-          await tx.inventoryLevel.update({
-            where: { productId: receivedItem.productId },
-            data: {
-              currentQuantity: { increment: receivedItem.quantity },
-              availableQuantity: { increment: receivedItem.quantity },
-              lastRestockDate: new Date(),
-            },
+          await manager.update(InventoryLevel, { productId: receivedItem.productId }, {
+            currentQuantity: () => `currentQuantity + ${receivedItem.quantity}`,
+            availableQuantity: () => `availableQuantity + ${receivedItem.quantity}`,
+            lastRestockDate: new Date(),
           })
 
           // Record purchase transaction
-          await tx.inventoryTransaction.create({
-            data: {
-              productId: receivedItem.productId,
-              type: 'PURCHASE',
-              quantity: receivedItem.quantity,
-              reference: purchaseOrder.poNumber,
-              notes: `PO ${purchaseOrder.poNumber} - Receipt ${receipt.receiptNumber}`,
-              createdBy: 'system',
-            },
+          const invTx = manager.create(InventoryTransaction, {
+            productId: receivedItem.productId,
+            type: TransactionType.PURCHASE,
+            quantity: receivedItem.quantity,
+            reference: purchaseOrder.poNumber,
+            notes: `PO ${purchaseOrder.poNumber} - Receipt ${(receipt as any).id}`,
+            createdBy: 'system',
           })
+          await manager.save(invTx)
         }
 
         // Update PO status
-        const totalReceived = purchaseOrder.items.reduce((sum: number, item: any) => {
-          const receivedItem = receiptData.items.find((ri: any) => ri.productId === item.productId)
-          return sum + (receivedItem ? receivedItem.quantity : 0) + item.receivedQuantity
-        }, 0)
+        const updatedPoItems = await manager.find(PurchaseOrderItem, { where: { purchaseOrderId: poId } })
+        const totalReceived = updatedPoItems.reduce((sum, item) => sum + (item as any).receivedQuantity, 0)
+        const totalOrdered = updatedPoItems.reduce((sum, item) => sum + (item as any).quantity, 0)
 
-        const totalOrdered = purchaseOrder.items.reduce((sum: number, item: any) => sum + item.quantity, 0)
-
-        let newStatus = purchaseOrder.status
+        let newStatus: PurchaseOrderStatus = purchaseOrder.status
         if (totalReceived === totalOrdered) {
-          newStatus = 'RECEIVED'
+          newStatus = PurchaseOrderStatus.RECEIVED
         } else if (totalReceived > 0) {
-          newStatus = 'PARTIALLY_RECEIVED'
+          newStatus = PurchaseOrderStatus.PARTIALLY_RECEIVED
         }
 
-        await tx.purchaseOrder.update({
-          where: { id: poId },
-          data: { status: newStatus },
-        })
+        await poRepo.update({ id: poId }, { status: newStatus })
       })
 
-      const updatedPO = await prisma.purchaseOrder.findUnique({
-        where: { id: poId },
-        include: {
-          supplier: true,
-          items: true,
-          receipts: true,
-        },
-      })
+      const updatedPO = await AppDataSource.getRepository(PurchaseOrder).findOne({ where: { id: poId }, relations: ['supplier', 'items', 'receipts'] })
 
       return { success: true, data: updatedPO }
     } catch (error) {
@@ -372,23 +341,22 @@ export async function purchaseOrderRoutes(app: FastifyInstance) {
   // GET /api/purchase-orders/summary - Get PO summary report
   app.get('/api/purchase-orders/summary', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const summary = await prisma.purchaseOrder.groupBy({
-        by: ['status'],
-        _count: {
-          id: true,
-        },
-        _sum: {
-          totalAmount: true,
-        },
-      })
+      const poRepo = AppDataSource.getRepository(PurchaseOrder)
+      const summary = await poRepo.createQueryBuilder('po')
+        .select('po.status', 'status')
+        .addSelect('COUNT(po.id)', 'count')
+        .addSelect('SUM(po.totalAmount)', 'total')
+        .groupBy('po.status')
+        .getRawMany()
 
-      const totalPOs = summary.reduce((sum: number, s: any) => sum + s._count.id, 0)
-      const totalSpend = summary.reduce((sum: number, s: any) => sum + (s._sum.totalAmount || 0), 0)
+      const totalPOs = summary.reduce((sum, s) => sum + Number(s.count), 0)
+      const totalSpend = summary.reduce((sum, s) => sum + Number(s.total) || 0, 0)
       const averagePOValue = totalPOs > 0 ? totalSpend / totalPOs : 0
 
-      const receivedPOs = summary.find((s: any) => s.status === 'RECEIVED')?._count.id || 0
-      const pendingPOs = summary.filter((s: any) => ['DRAFT', 'SUBMITTED', 'CONFIRMED', 'PARTIALLY_RECEIVED'].includes(s.status))
-        .reduce((sum: number, s: any) => sum + s._count.id, 0)
+      const receivedPOs = Number(summary.find(s => s.status === 'RECEIVED')?.count || 0)
+      const pendingPOs = summary
+        .filter(s => ['DRAFT', 'SUBMITTED', 'CONFIRMED', 'PARTIALLY_RECEIVED'].includes(s.status))
+        .reduce((sum, s) => sum + Number(s.count), 0)
 
       return {
         success: true,
@@ -409,42 +377,18 @@ export async function purchaseOrderRoutes(app: FastifyInstance) {
   // GET /api/purchase-orders/supplier-performance - Get supplier performance report
   app.get('/api/purchase-orders/supplier-performance', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const supplierPerformance = await prisma.purchaseOrder.groupBy({
-        by: ['supplierId'],
-        where: {
-          status: 'RECEIVED',
-        },
-        _count: {
-          id: true,
-        },
-        _sum: {
-          totalAmount: true,
-        },
-        _avg: {
-          // Note: This would need a custom calculation for delivery days
-          // For now, we'll return basic metrics
-        },
-      })
+      const poRepo = AppDataSource.getRepository(PurchaseOrder)
+      const supplierPerformance = await poRepo.createQueryBuilder('po')
+        .select('po.supplierId', 'supplierId')
+        .addSelect('s.name', 'supplierName')
+        .addSelect('COUNT(po.id)', 'totalOrders')
+        .addSelect('SUM(po.totalAmount)', 'totalSpend')
+        .innerJoin(Supplier, 's', 's.id = po.supplierId')
+        .where('po.status = :status', { status: PurchaseOrderStatus.RECEIVED })
+        .groupBy('po.supplierId, s.name')
+        .getRawMany()
 
-      // Get supplier details
-      const performanceWithSuppliers = await Promise.all(
-        supplierPerformance.map(async (perf: any) => {
-          const supplier = await prisma.supplier.findUnique({
-            where: { id: perf.supplierId },
-            select: { name: true },
-          })
-
-          return {
-            supplierId: perf.supplierId,
-            supplierName: supplier?.name || 'Unknown',
-            totalOrders: perf._count.id,
-            totalSpend: perf._sum.totalAmount || 0,
-            // avgDeliveryDays would need additional calculation
-          }
-        })
-      )
-
-      return { success: true, data: performanceWithSuppliers }
+      return { success: true, data: supplierPerformance }
     } catch (error) {
       reply.status(500)
       return { success: false, error: 'Internal server error' }

@@ -22,26 +22,26 @@
     "prisma"
   ],
   "scripts": {
-    "db:push": "npx dotenv -e ../../../.env -- prisma db push --url %DATABASE_URL%",
-    "db:migrate": "npx dotenv -e ../../../.env -- prisma migrate dev --url %DATABASE_URL%",
-    "db:migrate:deploy": "npx dotenv -e ../../../.env -- prisma migrate deploy --url %DATABASE_URL%",
-    "db:seed": "npx dotenv -e ../../../.env -- node --loader ts-node/esm prisma/seed.ts",
-    "db:studio": "npx dotenv -e ../../../.env -- prisma studio --url %DATABASE_URL%",
-    "db:generate": "prisma generate",
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "echo 'No tests configured for db package' && exit 0"
+    "test": "echo 'No tests configured for db package' && exit 0",
+    "typeorm": "dotenv -- node ./node_modules/typeorm/cli.js",
+    "migration:create": "npm run typeorm -- migration:create src/migrations/NewMigration",
+    "migration:run": "npm run build && npm run typeorm -- -d dist/data-source.js migration:run",
+    "migration:revert": "npm run build && npm run typeorm -- -d dist/data-source.js migration:revert",
+    "db:seed": "npm run build && dotenv -- node dist/seed.js"
   },
   "dependencies": {
-    "@prisma/client": "^7.2.0"
+    "bcryptjs": "^3.0.3",
+    "pg": "^8.11.3",
+    "reflect-metadata": "^0.2.1",
+    "typeorm": "^0.3.17"
   },
   "devDependencies": {
-    "@prisma/adapter-pg": "^7.2.0",
-    "@types/pg": "^8.16.0",
-    "dotenv": "^17.2.3",
-    "dotenv-cli": "^8.0.0",
-    "pg": "^8.16.3",
-    "prisma": "^7.2.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/pg": "^8.10.9",
+    "dotenv": "^16.3.1",
+    "dotenv-cli": "^7.3.0",
     "ts-node": "^10.9.2"
   }
 }

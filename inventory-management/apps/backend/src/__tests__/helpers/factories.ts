@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto'
-import { prisma } from '@inventory/db'
+import { AppDataSource, Product, Supplier, Order, OrderItem, PurchaseOrder, PurchaseOrderItem, InventoryLevel, InventoryTransaction, StockAlert, User } from '@inventory/db'
 
 /**
  * Generate unique test identifier
@@ -31,30 +31,32 @@ export async function createTestProduct(overrides?: Partial<{
   isActive: boolean
 }>) {
   const testId = generateTestId()
-  
-  const product = await prisma.product.create({
-    data: {
-      sku: overrides?.sku || `TEST-PROD-${testId}`,
-      name: overrides?.name || `Test Product ${testId}`,
-      description: overrides?.description || 'Test product description',
-      category: overrides?.category || 'Electronics',
-      price: overrides?.price || 29.99,
-      cost: overrides?.cost || 12.50,
-      reorderLevel: overrides?.reorderLevel || 10,
-      supplier: overrides?.supplier || 'Test Supplier Inc',
-      isActive: overrides?.isActive !== undefined ? overrides.isActive : true,
-    },
+
+  const productRepository = AppDataSource.getRepository(Product)
+  const inventoryRepository = AppDataSource.getRepository(InventoryLevel)
+
+  const product = productRepository.create({
+    sku: overrides?.sku || `TEST-PROD-${testId}`,
+    name: overrides?.name || `Test Product ${testId}`,
+    description: overrides?.description || 'Test product description',
+    category: overrides?.category || 'Electronics',
+    price: overrides?.price || 29.99,
+    cost: overrides?.cost || 12.50,
+    reorderLevel: overrides?.reorderLevel || 10,
+    supplier: overrides?.supplier || 'Test Supplier Inc',
+    isActive: overrides?.isActive !== undefined ? overrides.isActive : true,
   })
 
+  await productRepository.save(product)
+
   // Create inventory level
-  await prisma.inventoryLevel.create({
-    data: {
-      productId: product.id,
-      currentQuantity: 0,
-      reservedQuantity: 0,
-      availableQuantity: 0,
-    },
+  const inventoryLevel = inventoryRepository.create({
+    productId: product.id,
+    currentQuantity: 0,
+    reservedQuantity: 0,
+    availableQuantity: 0,
   })
+  await inventoryRepository.save(inventoryLevel)
 
   return product
 }
@@ -66,20 +68,21 @@ export async function createTestSupplier(overrides?: Partial<{
   name: string
   email: string
   phone: string
-  contactPerson: string
+  contactName: string
   isActive: boolean
 }>) {
   const testId = generateTestId()
-  
-  return await prisma.supplier.create({
-    data: {
-      name: overrides?.name || `Test Supplier ${testId}`,
-      email: overrides?.email || `supplier-${testId}@test.com`,
-      phone: overrides?.phone || '555-0100',
-      contactPerson: overrides?.contactPerson || 'Test Contact',
-      isActive: overrides?.isActive !== undefined ? overrides.isActive : true,
-    },
+
+  const supplierRepository = AppDataSource.getRepository(Supplier)
+  const supplier = supplierRepository.create({
+    name: overrides?.name || `Test Supplier ${testId}`,
+    email: overrides?.email || `supplier-${testId}@test.com`,
+    phone: overrides?.phone || '555-0100',
+    contactName: overrides?.contactName || 'Test Contact',
+    isActive: overrides?.isActive !== undefined ? overrides.isActive : true,
   })
+
+  return await supplierRepository.save(supplier)
 }
 
 /**

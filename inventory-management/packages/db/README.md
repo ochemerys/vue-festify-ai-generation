@@ -1,14 +1,14 @@
 # @inventory/db
 
-Database layer for the Inventory Management System using Prisma ORM.
+Database layer for the Inventory Management System using TypeORM.
 
 ## Overview
 
-This package contains the Prisma schema, migrations, and database utilities for the Inventory Management System. It provides a type-safe database interface for all backend services.
+This package contains the TypeORM entities, migrations, data source configuration, and database utilities for the Inventory Management System. It provides a type-safe database interface for all backend services.
 
 ## Features
 
-- **Prisma ORM** - Type-safe database access
+- **TypeORM** - Type-safe database access with decorators
 - **PostgreSQL** - Robust relational database
 - **Migrations** - Version-controlled schema changes
 - **Seeding** - Sample data for development
@@ -21,7 +21,7 @@ This package contains the Prisma schema, migrations, and database utilities for 
 
 #### User Management
 
-- `User` - System users with roles (ADMIN, MANAGER, STAFF, VIEWER)
+- `User` - System users with authentication
 - Tracks user activity and audit logs
 
 #### Product Management
@@ -72,26 +72,26 @@ pnpm install
 
 ### Environment Setup
 
-Create a `.env` file in the root of the monorepo or in the `packages/db` directory:
+Create a `.env` file in the root of the monorepo:
 
 ```bash
-cp prisma/.env.example .env
+# Root .env file
+DB_HOST="localhost"
+DB_PORT="5432"
+DB_USERNAME="root"
+DB_PASSWORD="mysecretpassword"
+DB_DATABASE="org_inventory"
 ```
-
-Update the `DATABASE_URL` with your PostgreSQL connection string:
-
-```
-DATABASE_URL="postgresql://user:password@localhost:5432/inventory_management"
-```
-
-**Prisma 7 Configuration:**
-
-- The datasource URL is no longer defined in `schema.prisma`
-- Connection URLs are configured in `prisma/prisma.config.ts` for Migrate
-- The `DATABASE_URL` environment variable is read at runtime by Prisma
-- PrismaClient automatically uses the configured connection
 
 ### Database Setup
+
+#### Start PostgreSQL
+
+Ensure PostgreSQL is running. For Docker Compose:
+
+```bash
+docker-compose up -d
+```
 
 #### Create Database if not exists
 
@@ -102,100 +102,85 @@ createdb org_inventory
 #### Run Migrations
 
 ```bash
-pnpm run db:migrate
-```
-
-Or push schema directly (development only):
-
-```bash
-pnpm run db:push
+pnpm -F @inventory/db migration:run
 ```
 
 #### Seed Database
 
 ```bash
-pnpm run db:seed
+pnpm -F @inventory/db db:seed
 ```
 
 This will populate the database with sample data including:
 
-- 3 users (admin, manager, staff)
-- 3 categories
-- 2 suppliers
-- 4 products
-- Inventory levels and transactions
-- Sample orders and purchase orders
+- Admin user (admin@example.com / password123)
+- Sample products and inventory
 
 ## Usage
 
 ### In Backend Services
 
 ```typescript
-import { prisma } from '@inventory/db'
+import { AppDataSource } from '@inventory/db'
 
-// Query products
-const products = await prisma.product.findMany({
-  where: { isActive: true },
-  include: { inventoryLevels: true },
+// Initialize the data source
+await AppDataSource.initialize()
+
+// Get repositories
+const userRepository = AppDataSource.getRepository(User)
+const productRepository = AppDataSource.getRepository(Product)
+
+// Query users
+const users = await userRepository.find({
+  where: { email: 'admin@example.com' }
 })
 
-// Create order
-const order = await prisma.order.create({
-  data: {
+// Query products with relations
+const products = await productRepository.find({
+  relations: ['inventoryLevels'],
+  where: { isActive: true }
+})
+
+// Create user
+const user = userRepository.create({
+  email: 'newuser@example.com',
+  password: 'hashedpassword',
+  firstName: 'John',
+  lastName: 'Doe'
+})
+await userRepository.save(user)
+
+// Transactions
+await AppDataSource.transaction(async (manager) => {
+  // Perform multiple operations in a transaction
+  const order = manager.create(Order, {
     orderNumber: 'ORD-2024-001',
-    customerId: 'CUST-001',
     customerName: 'John Doe',
     status: 'PENDING',
-    totalAmount: 99.99,
-    shippingAddress: '123 Main St',
-    createdBy: userId,
-    items: {
-      create: [
-        {
-          productId: 'prod-1',
-          quantity: 2,
-          unitPrice: 49.99,
-          subtotal: 99.98,
-        },
-      ],
-    },
-  },
-  include: { items: true },
-})
+    totalAmount: 99.99
+  })
+  await manager.save(order)
 
-// Update inventory
-await prisma.inventoryLevel.update({
-  where: { productId: 'prod-1' },
-  data: {
-    currentQuantity: { increment: 10 },
-    availableQuantity: { increment: 10 },
-  },
-})
-
-// Create audit log
-await prisma.auditLog.create({
-  data: {
-    userId: 'user-1',
-    action: 'UPDATE',
-    entity: 'Product',
-    entityId: 'prod-1',
-    changes: { price: 29.99 },
-  },
+  // Update inventory
+  await manager.update(InventoryLevel, { productId: 'prod-1' }, {
+    currentQuantity: () => 'currentQuantity + 10'
+  })
 })
 ```
 
 ### Type Safety
 
-All database types are automatically generated and exported:
+All entity types are defined with decorators:
 
 ```typescript
-import type { Product, Order, User } from '@inventory/db'
+import { User, Product, Order } from '@inventory/db'
 
-const product: Product = {
-  id: '1',
-  sku: 'SKU-001',
-  name: 'Product Name',
-  // ... other properties
+const user: User = {
+  id: 'uuid',
+  email: 'user@example.com',
+  password: 'hashed',
+  firstName: 'John',
+  lastName: 'Doe'
 }
 ```
 
@@ -203,30 +188,48 @@ const product: Product = {
 
 ### View Database
 
-Open Prisma Studio:
+Connect to PostgreSQL directly:
 
 ```bash
-pnpm run db:studio
+psql postgresql://root:mysecretpassword@localhost:5432/org_inventory
 ```
 
 ### Create Migration
 
-After modifying `schema.prisma`:
+After modifying entities:
 
 ```bash
-pnpm run db:migrate
+# Generate migration (if using TypeORM CLI)
+typeorm migration:generate -d dist/data-source.js src/migrations/NewMigration
+
+# Or manually create migration file
+pnpm -F @inventory/db migration:create src/migrations/NewMigration
+```
+
+### Run Migrations
+
+```bash
+pnpm -F @inventory/db migration:run
+```
+
+### Revert Migration
+
+```bash
+pnpm -F @inventory/db migration:revert
 ```
 
 ### Reset Database (Development Only)
 
-```bash
-pnpm exec prisma migrate reset
-```
-
-### Generate Prisma Client
+Drop and recreate the database, then run migrations and seed:
 
 ```bash
-pnpm run db:generate
+# Stop containers
+docker-compose down -v
+
+# Restart and run setup
+docker-compose up -d
+pnpm -F @inventory/db migration:run
+pnpm -F @inventory/db db:seed
 ```
 
 ## Schema Relationships
@@ -272,46 +275,49 @@ PurchaseOrder
 
 ```bash
 # Test connection
-psql $DATABASE_URL -c "SELECT 1"
+psql postgresql://root:mysecretpassword@localhost:5432/org_inventory -c "SELECT 1"
 ```
 
-### Migration Conflicts
+### Migration Issues
 
 ```bash
-# Reset migrations (development only)
-pnpm exec prisma migrate reset
+# Check migration status
+psql postgresql://root:mysecretpassword@localhost:5432/org_inventory -c "SELECT * FROM migrations"
+
+# Reset if needed (development only)
+docker-compose down -v
+docker-compose up -d
+pnpm -F @inventory/db migration:run
 ```
 
-### Type Generation Issues
+### Type Issues
 
-```bash
-# Regenerate Prisma client
-pnpm run db:generate
-```
+Ensure entities are properly decorated and imported.
 
 ## Performance Optimization
 
 ### Indexes
 
-The schema includes indexes on:
+The entities include indexes on:
 
-- Foreign keys
-- Frequently queried fields (status, dates, SKU)
-- Filter fields (category, supplier)
+- Primary keys (automatic)
+- Foreign keys (automatic)
+- Unique constraints (email, SKU)
+- Frequently queried fields
 
 ### Query Optimization
 
 ```typescript
 // ✅ Good: Only fetch needed relations
-const orders = await prisma.order.findMany({
-  include: { items: true },
+const orders = await orderRepository.find({
+  relations: ['items'],
   take: 10,
-  skip: 0,
+  skip: 0
 })
 
 // ❌ Avoid: Fetching unnecessary relations
-const orders = await prisma.order.findMany({
-  include: { items: true, user: true, auditLogs: true },
+const orders = await orderRepository.find({
+  relations: ['items', 'user', 'auditLogs']
 })
 ```
 
@@ -319,11 +325,13 @@ const orders = await prisma.order.findMany({
 
 When modifying the schema:
 
-1. Update `prisma/schema.prisma`
-2. Create a migration: `pnpm run db:migrate`
-3. Update seed data if needed
-4. Test with `pnpm run db:seed`
-5. Commit migration files
+1. Update entity files in `src/entities/`
+2. Create a migration: `pnpm -F @inventory/db migration:create src/migrations/NewMigration`
+3. Implement the migration up/down methods
+4. Run migration: `pnpm -F @inventory/db migration:run`
+5. Update seed data if needed
+6. Test with `pnpm -F @inventory/db db:seed`
+7. Commit migration files
 
 ## License
 

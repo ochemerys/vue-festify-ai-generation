@@ -8,7 +8,9 @@
     // See also https://aka.ms/tsconfig/module
     "module": "nodenext",
     "target": "esnext",
-    "types": [],
+    "types": ["node"],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     // For nodejs:
     // "lib": ["esnext"],
     // "types": ["node"],
@@ -17,7 +19,7 @@
     // Path aliases to workspace source packages for type-checking without building
     "baseUrl": ".",
     "paths": {
-      "@inventory/db": ["../../packages/db/src/index.ts"],
+      "@inventory/db": ["../../packages/db/dist"],
       "@inventory/contracts": ["../../packages/contracts/src/index.ts"]
     },
 
@@ -49,8 +51,10 @@
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"],
+  "references": [{ "path": "../../packages/db" }],
   "ts-node": {
     "esm": true,
-    "experimentalEsm": true
+    "experimentalEsm": true,
+    "require": ["tsconfig-paths/register"]
   }
 }

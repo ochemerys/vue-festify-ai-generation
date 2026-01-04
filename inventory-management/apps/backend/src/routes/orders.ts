@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { z } from 'zod'
-import { prisma } from '@inventory/db'
+import { AppDataSource, Order, OrderItem, Product, InventoryLevel, InventoryTransaction, TransactionType } from '@inventory/db'
+import { Between, EntityManager } from 'typeorm'
 import { CreateOrderRequestSchema, UpdateOrderStatusRequestSchema, OrderFiltersSchema } from '@inventory/contracts'
 
 const OrderItemSchema = z.object({
@@ -13,22 +14,21 @@ export async function orderRoutes(app: FastifyInstance) {
   // GET /api/orders/summary - Get order summary report (MUST be before parameterized routes)
   app.get('/api/orders/summary', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const summary = await prisma.order.groupBy({
-        by: ['status'],
-        _count: {
-          id: true,
-        },
-        _sum: {
-          totalAmount: true,
-        },
-      })
+      const orderRepo = AppDataSource.getRepository(Order)
+      const raw = await orderRepo
+        .createQueryBuilder('order')
+        .select('order.status', 'status')
+        .addSelect('COUNT(order.id)', 'count')
+        .addSelect('COALESCE(SUM(order.totalAmount),0)', 'sum')
+        .groupBy('order.status')
+        .getRawMany<{ status: string; count: string; sum: string }>()
 
-      const totalOrders = summary.reduce((sum: number, s: any) => sum + s._count.id, 0)
-      const totalRevenue = summary.reduce((sum: number, s: any) => sum + (s._sum.totalAmount || 0), 0)
+      const totalOrders = raw.reduce((sum: number, s: any) => sum + Number(s.count), 0)
+      const totalRevenue = raw.reduce((sum: number, s: any) => sum + Number(s.sum || 0), 0)
       const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0
 
-      const pendingOrders = summary.find((s: any) => s.status === 'PENDING')?._count.id || 0
-      const deliveredOrders = summary.find((s: any) => s.status === 'DELIVERED')?._count.id || 0
+      const pendingOrders = Number(raw.find((s: any) => s.status === 'PENDING')?.count || 0)
+      const deliveredOrders = Number(raw.find((s: any) => s.status === 'DELIVERED')?.count || 0)
 
       return {
         success: true,
@@ -64,9 +64,9 @@ export async function orderRoutes(app: FastifyInstance) {
       }> = []
 
       for (const item of orderData.items) {
-        const product = await prisma.product.findUnique({
+        const product = await AppDataSource.getRepository(Product).findOne({
           where: { id: item.productId },
-          include: { inventoryLevels: true },
+          relations: { inventoryLevels: true },
         })
 
         if (!product || !product.isActive) {
@@ -74,7 +74,7 @@ export async function orderRoutes(app: FastifyInstance) {
           return { success: false, error: `Product ${item.productId} not found or inactive` }
         }
 
-        const inventoryLevel = product.inventoryLevels
+        const inventoryLevel = (product as any).inventoryLevels
         if (!inventoryLevel || inventoryLevel.availableQuantity < item.quantity) {
           reply.status(400)
           return { success: false, error: `Insufficient inventory for product ${product.sku}` }
@@ -92,48 +92,40 @@ export async function orderRoutes(app: FastifyInstance) {
       }
 
       // Create order in transaction
-      const order = await prisma.$transaction(async (tx: any) => {
-        // Create order
-        const newOrder = await tx.order.create({
-          data: {
-            orderNumber,
-            customerId: orderData.customerId,
-            customerName: orderData.customerName,
-            customerEmail: orderData.customerEmail,
-            customerPhone: orderData.customerPhone,
-            totalAmount,
-            shippingAddress: orderData.shippingAddress,
-            notes: orderData.notes,
-            createdBy: 'system', // TODO: Get from auth context
-            items: {
-              create: orderItems,
-            },
-          },
-          include: {
-            items: {
-              include: {
-                product: true,
-              },
-            },
-          },
-        })
-
-        // Reserve inventory for each item
-        for (const item of orderItems) {
-          await tx.inventoryLevel.update({
-            where: { productId: item.productId },
-            data: {
-              reservedQuantity: {
-                increment: item.quantity,
-              },
-              availableQuantity: {
-                decrement: item.quantity,
-              },
-            },
-          })
+      const order = await AppDataSource.transaction(async (manager: EntityManager) => {
+        const orderDataToCreate: any = {
+          orderNumber,
+          customerName: orderData.customerName,
+          totalAmount,
+          createdBy: 'system',
         }
 
-        return newOrder
+        if (orderData.customerId) orderDataToCreate.customerId = orderData.customerId
+        if (orderData.customerEmail) orderDataToCreate.customerEmail = orderData.customerEmail
+        if (orderData.customerPhone) orderDataToCreate.customerPhone = orderData.customerPhone
+        if (orderData.shippingAddress) orderDataToCreate.shippingAddress = orderData.shippingAddress
+        if (orderData.notes) orderDataToCreate.notes = orderData.notes
+
+        const newOrder = manager.create(Order, orderDataToCreate)
+        await manager.save(newOrder)
+
+        for (const it of orderItems) {
+          const oi = manager.create(OrderItem, { orderId: newOrder.id, productId: it.productId, quantity: it.quantity, unitPrice: it.unitPrice, subtotal: it.subtotal })
+          await manager.save(oi)
+
+          await manager
+            .getRepository(InventoryLevel)
+            .createQueryBuilder()
+            .update(InventoryLevel)
+            .set({
+              reservedQuantity: () => `reserved_quantity + ${it.quantity}`,
+              availableQuantity: () => `available_quantity - ${it.quantity}`,
+            })
+            .where('product_id = :pid', { pid: it.productId })
+            .execute()
+        }
+
+        return manager.findOne(Order, { where: { id: newOrder.id }, relations: { items: { product: true } } })
       })
 
       reply.status(201)
@@ -164,28 +156,24 @@ export async function orderRoutes(app: FastifyInstance) {
       }
 
       if (filters.startDate && filters.endDate) {
-        where.createdAt = {
-          gte: filters.startDate,
-          lte: filters.endDate,
-        }
+        where.createdAt = Between(filters.startDate, filters.endDate)
       }
 
-      const [orders, total] = await Promise.all([
-        prisma.order.findMany({
-          where,
-          include: {
-            items: {
-              include: {
-                product: true,
-              },
-            },
-          },
-          skip: (filters.page - 1) * filters.pageSize,
-          take: filters.pageSize,
-          orderBy: { createdAt: 'desc' },
-        }),
-        prisma.order.count({ where }),
-      ])
+      const orderRepo = AppDataSource.getRepository(Order)
+      const qb = orderRepo
+        .createQueryBuilder('order')
+        .leftJoinAndSelect('order.items', 'item')
+        .leftJoinAndSelect('item.product', 'product')
+        .orderBy('order.createdAt', 'DESC')
+
+      if (where.status) qb.andWhere('order.status = :status', { status: where.status })
+      if (where.customerId) qb.andWhere('order.customerId = :customerId', { customerId: where.customerId })
+      if (where.createdAt) qb.andWhere('order.createdAt BETWEEN :start AND :end', { start: (where.createdAt as any).gte, end: (where.createdAt as any).lte })
+
+      const [orders, total] = await qb
+        .skip((filters.page - 1) * filters.pageSize)
+        .take(filters.pageSize)
+        .getManyAndCount()
 
       return {
         success: true,
@@ -207,15 +195,9 @@ export async function orderRoutes(app: FastifyInstance) {
   // GET /api/orders/:id - Get order by ID
   app.get<{ Params: { id: string } }>('/api/orders/:id', async (request, reply) => {
     try {
-      const order = await prisma.order.findUnique({
+      const order = await AppDataSource.getRepository(Order).findOne({
         where: { id: request.params.id },
-        include: {
-          items: {
-            include: {
-              product: true,
-            },
-          },
-        },
+        relations: { items: { product: true } },
       })
 
       if (!order) {
@@ -235,10 +217,7 @@ export async function orderRoutes(app: FastifyInstance) {
     try {
       const { status, notes } = UpdateOrderStatusRequestSchema.parse(request.body)
 
-      const order = await prisma.order.findUnique({
-        where: { id: request.params.id },
-        include: { items: true },
-      })
+      const order = await AppDataSource.getRepository(Order).findOne({ where: { id: request.params.id }, relations: { items: true } })
 
       if (!order) {
         reply.status(404)
@@ -257,82 +236,78 @@ export async function orderRoutes(app: FastifyInstance) {
       } else if (status === 'SHIPPED' && order.status === 'CONFIRMED') {
         updateData.shippedAt = new Date()
         // Deduct from inventory
-        await prisma.$transaction(async (tx: any) => {
-          for (const item of order.items) {
-            await tx.inventoryLevel.update({
-              where: { productId: item.productId },
-              data: {
-                currentQuantity: { decrement: item.quantity },
-                reservedQuantity: { decrement: item.quantity },
-              },
-            })
+        await AppDataSource.transaction(async (manager: EntityManager) => {
+          for (const item of order.items as any[]) {
+            await manager
+              .getRepository(InventoryLevel)
+              .createQueryBuilder()
+              .update(InventoryLevel)
+              .set({
+                currentQuantity: () => `current_quantity - ${item.quantity}`,
+                reservedQuantity: () => `reserved_quantity - ${item.quantity}`,
+              })
+              .where('product_id = :pid', { pid: item.productId })
+              .execute()
 
-            // Record sale transaction
-            await tx.inventoryTransaction.create({
-              data: {
-                productId: item.productId,
-                type: 'SALE',
-                quantity: item.quantity,
-                reference: order.orderNumber,
-                notes: `Order ${order.orderNumber}`,
-                createdBy: 'system',
-              },
+            const invTx = manager.create(InventoryTransaction, {
+              productId: item.productId,
+              type: TransactionType.SALE,
+              quantity: item.quantity,
+              reference: order.orderNumber,
+              notes: `Order ${order.orderNumber}`,
+              createdBy: 'system',
             })
+            await manager.save(invTx)
           }
         })
       } else if (status === 'DELIVERED' && order.status === 'SHIPPED') {
         updateData.deliveredAt = new Date()
       } else if (status === 'CANCELLED') {
         // Release reserved inventory
-        await prisma.$transaction(async (tx: any) => {
-          for (const item of order.items) {
-            await tx.inventoryLevel.update({
-              where: { productId: item.productId },
-              data: {
-                reservedQuantity: { decrement: item.quantity },
-                availableQuantity: { increment: item.quantity },
-              },
-            })
+        await AppDataSource.transaction(async (manager: EntityManager) => {
+          for (const item of order.items as any[]) {
+            await manager
+              .getRepository(InventoryLevel)
+              .createQueryBuilder()
+              .update(InventoryLevel)
+              .set({
+                reservedQuantity: () => `reserved_quantity - ${item.quantity}`,
+                availableQuantity: () => `available_quantity + ${item.quantity}`,
+              })
+              .where('product_id = :pid', { pid: item.productId })
+              .execute()
           }
         })
       } else if (status === 'RETURNED') {
         // Restore inventory
-        await prisma.$transaction(async (tx: any) => {
-          for (const item of order.items) {
-            await tx.inventoryLevel.update({
-              where: { productId: item.productId },
-              data: {
-                currentQuantity: { increment: item.quantity },
-                availableQuantity: { increment: item.quantity },
-              },
-            })
+        await AppDataSource.transaction(async (manager: EntityManager) => {
+          for (const item of order.items as any[]) {
+            await manager
+              .getRepository(InventoryLevel)
+              .createQueryBuilder()
+              .update(InventoryLevel)
+              .set({
+                currentQuantity: () => `current_quantity + ${item.quantity}`,
+                availableQuantity: () => `available_quantity + ${item.quantity}`,
+              })
+              .where('product_id = :pid', { pid: item.productId })
+              .execute()
 
-            // Record return transaction
-            await tx.inventoryTransaction.create({
-              data: {
-                productId: item.productId,
-                type: 'RETURN',
-                quantity: item.quantity,
-                reference: order.orderNumber,
-                notes: `Return for order ${order.orderNumber}`,
-                createdBy: 'system',
-              },
+            const invTx = manager.create(InventoryTransaction, {
+              productId: item.productId,
+              type: TransactionType.RETURN,
+              quantity: item.quantity,
+              reference: order.orderNumber,
+              notes: `Return for order ${order.orderNumber}`,
+              createdBy: 'system',
             })
+            await manager.save(invTx)
           }
         })
       }
 
-      const updatedOrder = await prisma.order.update({
-        where: { id: request.params.id },
-        data: updateData,
-        include: {
-          items: {
-            include: {
-              product: true,
-            },
-          },
-        },
-      })
+      await AppDataSource.getRepository(Order).update({ id: request.params.id }, updateData as any)
+      const updatedOrder = await AppDataSource.getRepository(Order).findOne({ where: { id: request.params.id }, relations: { items: { product: true } } })
 
       return { success: true, data: updatedOrder }
     } catch (error) {
@@ -351,10 +326,7 @@ export async function orderRoutes(app: FastifyInstance) {
       const orderId = request.params.id
       const { productId, quantity, unitPrice } = OrderItemSchema.parse(request.body)
 
-      const order = await prisma.order.findUnique({
-        where: { id: orderId },
-        include: { items: true },
-      })
+      const order = await AppDataSource.getRepository(Order).findOne({ where: { id: orderId }, relations: { items: true } })
 
       if (!order) {
         reply.status(404)
@@ -367,17 +339,14 @@ export async function orderRoutes(app: FastifyInstance) {
       }
 
       // Validate product and inventory
-      const product = await prisma.product.findUnique({
-        where: { id: productId },
-        include: { inventoryLevels: true },
-      })
+      const product = await AppDataSource.getRepository(Product).findOne({ where: { id: productId }, relations: { inventoryLevels: true } })
 
       if (!product || !product.isActive) {
         reply.status(400)
         return { success: false, error: 'Product not found or inactive' }
       }
 
-      const inventoryLevel = product.inventoryLevels
+      const inventoryLevel = (product as any).inventoryLevels
       if (!inventoryLevel || inventoryLevel.availableQuantity < quantity) {
         reply.status(400)
         return { success: false, error: 'Insufficient inventory' }
@@ -386,44 +355,31 @@ export async function orderRoutes(app: FastifyInstance) {
       const subtotal = quantity * unitPrice
 
       // Add item and update order total
-      await prisma.$transaction(async (tx: any) => {
-        await tx.orderItem.create({
-          data: {
-            orderId,
-            productId,
-            quantity,
-            unitPrice,
-            subtotal,
-          },
-        })
+      await AppDataSource.transaction(async (manager: EntityManager) => {
+        const oi = manager.create(OrderItem, { orderId, productId, quantity, unitPrice, subtotal })
+        await manager.save(oi)
 
-        await tx.order.update({
-          where: { id: orderId },
-          data: {
-            totalAmount: { increment: subtotal },
-          },
-        })
+        await manager
+          .getRepository(Order)
+          .createQueryBuilder()
+          .update(Order)
+          .set({ totalAmount: () => `total_amount + ${subtotal}` })
+          .where('id = :id', { id: orderId })
+          .execute()
 
-        // Reserve inventory
-        await tx.inventoryLevel.update({
-          where: { productId },
-          data: {
-            reservedQuantity: { increment: quantity },
-            availableQuantity: { decrement: quantity },
-          },
-        })
+        await manager
+          .getRepository(InventoryLevel)
+          .createQueryBuilder()
+          .update(InventoryLevel)
+          .set({
+            reservedQuantity: () => `reserved_quantity + ${quantity}`,
+            availableQuantity: () => `available_quantity - ${quantity}`,
+          })
+          .where('product_id = :pid', { pid: productId })
+          .execute()
       })
 
-      const updatedOrder = await prisma.order.findUnique({
-        where: { id: orderId },
-        include: {
-          items: {
-            include: {
-              product: true,
-            },
-          },
-        },
-      })
+      const updatedOrder = await AppDataSource.getRepository(Order).findOne({ where: { id: orderId }, relations: { items: { product: true } } })
 
       return { success: true, data: updatedOrder }
     } catch (error) {
@@ -441,10 +397,7 @@ export async function orderRoutes(app: FastifyInstance) {
     try {
       const { id: orderId, itemId } = request.params
 
-      const order = await prisma.order.findUnique({
-        where: { id: orderId },
-        include: { items: true },
-      })
+      const order = await AppDataSource.getRepository(Order).findOne({ where: { id: orderId }, relations: { items: true } })
 
       if (!order) {
         reply.status(404)
@@ -456,45 +409,37 @@ export async function orderRoutes(app: FastifyInstance) {
         return { success: false, error: 'Can only remove items from pending orders' }
       }
 
-      const item = order.items.find((i: any) => i.id === itemId)
+      const item = (order.items as any[]).find((i: any) => i.id === itemId)
       if (!item) {
         reply.status(404)
         return { success: false, error: 'Order item not found' }
       }
 
       // Remove item and update order total
-      await prisma.$transaction(async (tx: any) => {
-        await tx.orderItem.delete({
-          where: { id: itemId },
-        })
+      await AppDataSource.transaction(async (manager: EntityManager) => {
+        await manager.delete(OrderItem, { id: itemId })
 
-        await tx.order.update({
-          where: { id: orderId },
-          data: {
-            totalAmount: { decrement: item.subtotal },
-          },
-        })
+        await manager
+          .getRepository(Order)
+          .createQueryBuilder()
+          .update(Order)
+          .set({ totalAmount: () => `total_amount - ${item.subtotal}` })
+          .where('id = :id', { id: orderId })
+          .execute()
 
-        // Release reserved inventory
-        await tx.inventoryLevel.update({
-          where: { productId: item.productId },
-          data: {
-            reservedQuantity: { decrement: item.quantity },
-            availableQuantity: { increment: item.quantity },
-          },
-        })
+        await manager
+          .getRepository(InventoryLevel)
+          .createQueryBuilder()
+          .update(InventoryLevel)
+          .set({
+            reservedQuantity: () => `reserved_quantity - ${item.quantity}`,
+            availableQuantity: () => `available_quantity + ${item.quantity}`,
+          })
+          .where('product_id = :pid', { pid: item.productId })
+          .execute()
       })
 
-      const updatedOrder = await prisma.order.findUnique({
-        where: { id: orderId },
-        include: {
-          items: {
-            include: {
-              product: true,
-            },
-          },
-        },
-      })
+      const updatedOrder = await AppDataSource.getRepository(Order).findOne({ where: { id: orderId }, relations: { items: { product: true } } })
 
       return { success: true, data: updatedOrder }
     } catch (error) {

@@ -6,7 +6,7 @@ A full-stack inventory management system built with Vue 3, Fastify, and PostgreS
 
 - **Frontend**: Vue 3 + TypeScript + Tailwind CSS + Vite
 - **Backend**: Node.js + Fastify + TypeScript
-- **Database**: PostgreSQL + Prisma ORM
+- **Database**: PostgreSQL + TypeORM
 - **Contracts**: Zod schemas for type-safe API contracts
 - **Testing**: Vitest for unit tests
 - **Linting**: ESLint with TypeScript support
@@ -21,7 +21,7 @@ inventory-management/
 │   └── backend/           # Fastify API server
 ├── packages/
 │   ├── contracts/         # Shared Zod schemas and types
-│   ├── db/               # Prisma database layer
+│   ├── db/               # TypeORM database layer
 │   └── bdd/              # Gherkin feature files
 ├── package.json          # Root package with workspace scripts
 ├── pnpm-workspace.yaml   # Workspace configuration
@@ -56,8 +56,8 @@ inventory-management/
 4. Set up the database:
 
    ```bash
-   pnpm db:push
-   pnpm db:seed
+   pnpm -F @inventory/db migration:run
+   pnpm -F @inventory/db db:seed
    ```
 
 ### Setting Up Tests (First Time After Clone)
@@ -72,7 +72,7 @@ docker-compose -f docker-compose.test.yml up -d
 pnpm install
 
 # 3. Run database migrations for test database
-pnpm --filter @inventory/db prisma migrate deploy
+pnpm --filter @inventory/db migration:run
 
 # 4. Run tests to verify setup
 pnpm test
@@ -92,7 +92,7 @@ docker-compose -f docker-compose.test.yml down
 ```bash
 docker-compose -f docker-compose.test.yml down -v
 docker-compose -f docker-compose.test.yml up -d
-pnpm --filter @inventory/db prisma migrate deploy
+pnpm --filter @inventory/db migration:run
 ```
 
 ### Development
@@ -138,10 +138,10 @@ pnpm start
 
 ### Database Scripts
 
-- `pnpm db:push` - Push schema to database
-- `pnpm db:migrate` - Create and run migrations
-- `pnpm db:seed` - Seed database with sample data
-- `pnpm db:studio` - Open Prisma Studio
+- `pnpm -F @inventory/db migration:run` - Run migrations
+- `pnpm -F @inventory/db migration:create` - Create new migration
+- `pnpm -F @inventory/db migration:revert` - Revert last migration
+- `pnpm -F @inventory/db db:seed` - Seed database with sample data
 
 ### Package Scripts
 
@@ -149,7 +149,7 @@ Each package has its own scripts:
 
 - `pnpm --filter frontend dev` - Start frontend dev server
 - `pnpm --filter backend dev` - Start backend dev server
-- `pnpm --filter @inventory/db db:studio` - Open Prisma Studio
+- `pnpm --filter @inventory/db db:seed` - Seed database
 
 ## Development Guidelines
 
@@ -165,7 +165,7 @@ Each package has its own scripts:
 - **Contracts First**: Define Zod schemas in `@inventory/contracts`
 - **Type Safety**: Use inferred types from Zod schemas
 - **Separation of Concerns**: Keep business logic in backend, UI in frontend
-- **Database Abstraction**: Use Prisma client through `@inventory/db`
+- **Database Abstraction**: Use TypeORM repositories through `@inventory/db`
 
 ### Testing
 

@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { z } from 'zod'
-import { prisma } from '@inventory/db'
+import { AppDataSource, Product, Order, InventoryTransaction, StockAlert } from '@inventory/db'
+import { Between } from 'typeorm'
 
 const DateRangeSchema = z.object({
   startDate: z.string().transform(str => new Date(str)).optional(),
@@ -11,24 +12,22 @@ export async function reportRoutes(app: FastifyInstance) {
   // GET /api/reports/inventory-summary - Inventory summary report
   app.get('/api/reports/inventory-summary', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const products = await prisma.product.findMany({
-        where: { isActive: true },
-        include: { inventoryLevels: true },
-      })
+      const productRepo = AppDataSource.getRepository(Product)
+      const products = await productRepo.find({ where: { isActive: true }, relations: ['inventoryLevels'] })
 
       const totalProducts = products.length
-      const totalQuantity = products.reduce((sum: number, p: any) => sum + (p.inventoryLevels?.currentQuantity || 0), 0)
-      const totalValue = products.reduce((sum: number, p: any) => sum + ((p.inventoryLevels?.currentQuantity || 0) * p.price), 0)
+      const totalQuantity = products.reduce((sum, p) => sum + (p.inventoryLevels?.currentQuantity || 0), 0)
+      const totalValue = products.reduce((sum, p) => sum + ((p.inventoryLevels?.currentQuantity || 0) * p.price), 0)
       const averageValue = totalProducts > 0 ? totalValue / totalProducts : 0
 
       // Low stock items (quantity <= reorder level)
-      const lowStockItems = products.filter((p: any) =>
-        p.inventoryLevels && p.inventoryLevels.currentQuantity <= p.reorderLevel
+      const lowStockItems = products.filter(
+        (p) => p.inventoryLevels && p.inventoryLevels.currentQuantity <= p.reorderLevel
       )
 
       // Out of stock items
-      const outOfStockItems = products.filter((p: any) =>
-        p.inventoryLevels && p.inventoryLevels.currentQuantity === 0
+      const outOfStockItems = products.filter(
+        (p) => p.inventoryLevels && p.inventoryLevels.currentQuantity === 0
       )
 
       return {
@@ -61,20 +60,13 @@ export async function reportRoutes(app: FastifyInstance) {
   // GET /api/reports/low-stock - Low stock report
   app.get('/api/reports/low-stock', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const lowStockProducts = await prisma.product.findMany({
-        where: {
-          isActive: true,
-          inventoryLevels: {
-            // Compare against a constant threshold here; dynamic per-product reorderLevel comparison
-            // isn't supported directly via field refs on related models in Prisma queries
-            currentQuantity: {
-              lte: 0,
-            },
-          },
-        },
-        include: { inventoryLevels: true },
-        orderBy: { inventoryLevels: { currentQuantity: 'asc' } },
-      })
+      const productRepo = AppDataSource.getRepository(Product)
+      const lowStockProducts = await productRepo.createQueryBuilder('product')
+        .leftJoinAndSelect('product.inventoryLevels', 'inventoryLevels')
+        .where('product.isActive = :isActive', { isActive: true })
+        .andWhere('inventoryLevels.currentQuantity <= product.reorderLevel')
+        .orderBy('inventoryLevels.currentQuantity', 'ASC')
+        .getMany()
 
       const reportData = lowStockProducts.map((product: any) => ({
         productId: product.id,
@@ -112,19 +104,21 @@ export async function reportRoutes(app: FastifyInstance) {
         }
       }
 
-      const orders = await prisma.order.findMany({
-        where,
-        include: { items: true },
+      const orderRepo = AppDataSource.getRepository(Order)
+      const orders = await orderRepo.find({
+        where: {
+          status: 'DELIVERED' as any,
+          ...(startDate && endDate && { createdAt: Between(startDate, endDate) }),
+        },
+        relations: ['items'],
       })
 
       const totalOrders = orders.length
-      const totalRevenue = orders.reduce((sum: number, order: any) => sum + order.totalAmount, 0)
+      const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0)
       const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0
 
       const completedOrders = orders.length
-      const pendingOrders = await prisma.order.count({
-        where: { status: 'PENDING' },
-      })
+      const pendingOrders = await orderRepo.count({ where: { status: 'PENDING' as any } })
 
       // Group by date for time series
       const ordersByDate = orders.reduce((acc: Record<string, { count: number; revenue: number }>, order: any) => {
@@ -172,9 +166,12 @@ export async function reportRoutes(app: FastifyInstance) {
         }
       }
 
-      const transactions = await prisma.inventoryTransaction.findMany({
-        where,
-        include: { product: true },
+      const transactionRepo = AppDataSource.getRepository(InventoryTransaction)
+      const transactions = await transactionRepo.find({
+        where: {
+          ...(startDate && endDate && { createdAt: Between(startDate, endDate) }),
+        },
+        relations: ['product'],
       })
 
       const summary = transactions.reduce((acc: any, transaction: any) => {
@@ -223,15 +220,10 @@ export async function reportRoutes(app: FastifyInstance) {
       const { startDate, endDate } = DateRangeSchema.parse(request.query)
 
       // Get all products with their sales data
-      const products = await prisma.product.findMany({
+      const productRepo = AppDataSource.getRepository(Product)
+      const products = await productRepo.find({
         where: { isActive: true },
-        include: {
-          orderItems: {
-            include: {
-              order: true,
-            },
-          },
-        },
+        relations: ['orderItems', 'orderItems.order'],
       })
 
       const productPerformance = products.map((product: any) => {
@@ -276,30 +268,25 @@ export async function reportRoutes(app: FastifyInstance) {
   app.get('/api/reports/dashboard', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       // Get inventory metrics
-      const products = await prisma.product.findMany({
-        where: { isActive: true },
-        include: { inventoryLevels: true },
-      })
+      const productRepo = AppDataSource.getRepository(Product)
+      const products = await productRepo.find({ where: { isActive: true }, relations: ['inventoryLevels'] })
 
       const totalProducts = products.length
-      const lowStockItems = products.filter((p: any) =>
-        p.inventoryLevels && p.inventoryLevels.currentQuantity <= p.reorderLevel
+      const lowStockItems = products.filter(
+        (p) => p.inventoryLevels && p.inventoryLevels.currentQuantity <= p.reorderLevel
       ).length
-      const outOfStockItems = products.filter((p: any) =>
-        p.inventoryLevels && p.inventoryLevels.currentQuantity === 0
+      const outOfStockItems = products.filter(
+        (p) => p.inventoryLevels && p.inventoryLevels.currentQuantity === 0
       ).length
-      const totalInventoryValue = products.reduce((sum: number, p: any) =>
-        sum + ((p.inventoryLevels?.currentQuantity || 0) * p.price), 0
-      )
+      const totalInventoryValue = products.reduce((sum, p) => sum + ((p.inventoryLevels?.currentQuantity || 0) * p.price), 0)
 
       // Get order metrics
-      const pendingOrders = await prisma.order.count({
-        where: { status: 'PENDING' },
-      })
+      const orderRepo = AppDataSource.getRepository(Order)
+      const pendingOrders = await orderRepo.count({ where: { status: 'PENDING' as any } })
 
-      const recentOrders = await prisma.order.findMany({
+      const recentOrders = await orderRepo.find({
         take: 5,
-        orderBy: { createdAt: 'desc' },
+        order: { createdAt: 'DESC' },
         select: {
           id: true,
           orderNumber: true,
@@ -311,11 +298,12 @@ export async function reportRoutes(app: FastifyInstance) {
       })
 
       // Get low stock alerts
-      const lowStockAlerts = await prisma.stockAlert.findMany({
+      const stockAlertRepo = AppDataSource.getRepository(StockAlert)
+      const lowStockAlerts = await stockAlertRepo.find({
         where: { isResolved: false },
-        include: { product: true },
+        relations: ['product'],
         take: 5,
-        orderBy: { createdAt: 'desc' },
+        order: { createdAt: 'DESC' },
       })
 
       return {
@@ -395,12 +383,10 @@ export async function reportRoutes(app: FastifyInstance) {
 
 // Helper functions for report data
 async function getInventorySummaryData() {
-  const products = await prisma.product.findMany({
-    where: { isActive: true },
-    include: { inventoryLevels: true },
-  })
+  const productRepo = AppDataSource.getRepository(Product)
+  const products = await productRepo.find({ where: { isActive: true }, relations: ['inventoryLevels'] })
 
-  return products.map((p: any) => ({
+  return products.map((p) => ({
     sku: p.sku,
     name: p.name,
     category: p.category,
@@ -413,23 +399,22 @@ async function getInventorySummaryData() {
 async function getSalesReportData(query: any) {
   const { startDate, endDate } = DateRangeSchema.parse(query)
 
-  const where: any = { status: 'DELIVERED' }
-  if (startDate && endDate) {
-    where.createdAt = { gte: startDate, lte: endDate }
-  }
-
-  const orders = await prisma.order.findMany({
-    where,
-    include: { items: { include: { product: true } } },
+  const orderRepo = AppDataSource.getRepository(Order)
+  const orders = await orderRepo.find({
+    where: {
+      status: 'DELIVERED' as any,
+      ...(startDate && endDate && { createdAt: Between(startDate, endDate) }),
+    },
+    relations: ['items', 'items.product'],
   })
 
-  return orders.map((order: any) => ({
+  return orders.map((order) => ({
     orderNumber: order.orderNumber,
     customerName: order.customerName,
     totalAmount: order.totalAmount,
     status: order.status,
     createdAt: order.createdAt,
-    items: order.items.map((item: any) => ({
+    items: order.items.map((item) => ({
       productName: item.product.name,
       sku: item.product.sku,
       quantity: item.quantity,
