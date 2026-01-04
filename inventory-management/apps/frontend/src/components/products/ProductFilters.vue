@@ -29,18 +29,20 @@ interface ProductFilters {
 }
 
 interface Props {
-  filters: ProductFilters
+  filters?: ProductFilters
 }
 
 interface Emits {
   (e: 'update:filters', filters: ProductFilters): void
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  filters: () => ({})
+})
 const emit = defineEmits<Emits>()
 
 // Local filter state
-const localFilters = ref<ProductFilters>({ ...props.filters })
+const localFilters = ref<ProductFilters>({ ...(props.filters || {}) })
 
 // Available filter options (mock data)
 const categories = ref<string[]>([

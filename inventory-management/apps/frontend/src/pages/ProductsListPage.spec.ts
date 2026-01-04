@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi, beforeAll, afterAll } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createRouter, createWebHistory } from 'vue-router'
 import ProductsListPage from './ProductsListPage.vue'
@@ -29,6 +29,15 @@ const router = createRouter({
 describe('ProductsListPage.vue', () => {
   let wrapper: any
 
+  // Mock timers to speed up tests
+  beforeAll(() => {
+    vi.useFakeTimers()
+  })
+
+  afterAll(() => {
+    vi.useRealTimers()
+  })
+
   beforeEach(async () => {
     // Mock window.confirm
     global.confirm = vi.fn(() => true)
@@ -39,8 +48,8 @@ describe('ProductsListPage.vue', () => {
       }
     })
 
-    // Wait for the component to finish loading
-    await new Promise(resolve => setTimeout(resolve, 900))
+    // Fast-forward through the loading timeout
+    vi.advanceTimersByTime(900)
     await wrapper.vm.$nextTick()
   })
 

@@ -40,7 +40,10 @@ vi.mock('lucide-vue-next', () => ({
   User: createMockIcon('User'),
   TrendingUp: createMockIcon('TrendingUp'),
   TrendingDown: createMockIcon('TrendingDown'),
-  Minus: createMockIcon('Minus')
+  Minus: createMockIcon('Minus'),
+  CheckCircle: createMockIcon('CheckCircle'),
+  XCircle: createMockIcon('XCircle'),
+  History: createMockIcon('History')
 }))
 
 // Mock Vue Router
