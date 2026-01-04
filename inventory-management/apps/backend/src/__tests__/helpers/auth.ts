@@ -1,7 +1,6 @@
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
-import { AppDataSource } from '@inventory/db'
-import { User } from '@inventory/db/src/entities/user.entity'
+import { AppDataSource, User } from '@inventory/db'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-key'
 

@@ -1,15 +1,55 @@
-import { beforeEach, vi } from 'vitest'
-import { mockDeep, mockReset } from 'vitest-mock-extended'
+// IMPORTANT: Import reflect-metadata FIRST for TypeORM decorators
+import 'reflect-metadata'
 
-// Create a mock Prisma client
-const prismaMock = mockDeep()
+// IMPORTANT: Import env-setup FIRST to set environment variables
+import '../../__tests__/env-setup.js'
 
-// Mock the @inventory/db module
-vi.mock('@inventory/db', () => ({
-  prisma: prismaMock,
-}))
+import { beforeAll, afterAll, beforeEach, afterEach } from 'vitest'
+import { AppDataSource } from '@inventory/db'
+import { cleanupTestData } from '../../__tests__/helpers/factories.js'
 
-beforeEach(() => {
-  // Reset mocks before each test
-  mockReset(prismaMock)
+// Database connection management - only for integration tests
+let isDatabaseAvailable = false
+
+beforeAll(async () => {
+  try {
+    // Initialize TypeORM DataSource
+    if (!AppDataSource.isInitialized) {
+      await AppDataSource.initialize()
+    }
+
+    // Verify we're using test database
+    const dbUrl = process.env.DATABASE_URL || process.env.DATABASE_TEST_URL
+    if (dbUrl?.includes('test')) {
+      isDatabaseAvailable = true
+    } else {
+      console.warn('Not using test database - skipping database operations')
+    }
+  } catch (error) {
+    console.warn('Database not available - running unit tests only')
+  }
+})
+
+afterAll(async () => {
+  // Disconnect from database if connected
+  if (isDatabaseAvailable && AppDataSource.isInitialized) {
+    await AppDataSource.destroy()
+  }
+})
+
+// Clean up test data before each test - only if database is available
+beforeEach(async () => {
+  if (isDatabaseAvailable) {
+    await cleanupTestData()
+  }
+})
+
+// Optional: Clean up after each test as well
+afterEach(async () => {
+  // You can add additional cleanup here if needed
+})
+
+// Global error handler for unhandled rejections in tests
+process.on('unhandledRejection', (error) => {
+  console.error('Unhandled rejection in test:', error)
 })
