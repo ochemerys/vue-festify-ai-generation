@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { h } from 'vue'
 import AppSidebar from './AppSidebar.vue'
 
 /**
@@ -9,6 +10,18 @@ import AppSidebar from './AppSidebar.vue'
  * badge support, collapse state, and accessibility features
  */
 
+// Global stubs for router-link
+const RouterLinkStub = {
+  name: 'RouterLink',
+  props: ['to'],
+  render() {
+    return h('a', {
+      href: typeof this.to === 'string' ? this.to : this.to?.path,
+      ...this.$attrs
+    }, this.$slots.default?.())
+  }
+}
+
 describe('AppSidebar.vue', () => {
   const defaultNavigation = [
     { id: 'dashboard', label: 'Dashboard', icon: 'LayoutDashboard', path: '/' },
@@ -16,6 +29,14 @@ describe('AppSidebar.vue', () => {
     { id: 'inventory', label: 'Inventory', icon: 'Boxes', path: '/inventory' },
     { id: 'orders', label: 'Orders', icon: 'ShoppingCart', path: '/orders' }
   ]
+
+  const mountOptions = {
+    global: {
+      stubs: {
+        RouterLink: RouterLinkStub
+      }
+    }
+  }
 
   describe('Rendering', () => {
     it('should render navigation items with correct labels', () => {
@@ -25,7 +46,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
 
       // Assert
       expect(wrapper.text()).toContain('Dashboard')
@@ -41,7 +62,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
       const links = wrapper.findAll('a')
 
       // Assert
@@ -55,7 +76,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
 
       // Assert
       expect(wrapper.text()).toContain('IM')
@@ -69,7 +90,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
 
       // Assert
       expect(wrapper.text()).toContain('User Name')
@@ -83,7 +104,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
 
       // Assert
       expect(wrapper.text()).toContain('Settings')
@@ -96,7 +117,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
       const nav = wrapper.find('nav')
 
       // Assert
@@ -112,7 +133,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
       const navLinks = wrapper.findAll('nav a')
 
       // Assert
@@ -126,7 +147,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
       const links = wrapper.findAll('nav a')
 
       // Assert
@@ -143,7 +164,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
       const svgs = wrapper.findAll('nav svg')
 
       // Assert
@@ -159,7 +180,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
       const links = wrapper.findAll('nav a')
 
       // Assert
@@ -175,7 +196,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
       const links = wrapper.findAll('nav a')
 
       // Assert
@@ -189,7 +210,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
       const links = wrapper.findAll('nav a')
 
       // Assert
@@ -204,7 +225,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
       const links = wrapper.findAll('nav a')
 
       // Assert
@@ -223,7 +244,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
 
       // Assert
       expect(wrapper.text()).toContain('5')
@@ -238,7 +259,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
       const badges = wrapper.findAll('span')
 
       // Assert
@@ -255,7 +276,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
 
       // Assert
       expect(wrapper.html()).toContain('bg-red-500')
@@ -270,7 +291,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
 
       // Assert
       expect(wrapper.html()).toContain('bg-blue-400')
@@ -286,7 +307,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
 
       // Assert
       expect(wrapper.text()).toContain('5')
@@ -303,7 +324,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
 
       // Assert
       expect(wrapper.text()).toContain('Dashboard')
@@ -318,7 +339,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
       const labels = wrapper.findAll('span')
 
       // Assert
@@ -335,7 +356,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
 
       // Assert
       expect(wrapper.html()).toContain('group-hover:opacity-100')
@@ -349,7 +370,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
 
       // Assert
       expect(wrapper.html()).toContain('opacity-0')
@@ -363,7 +384,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
 
       // Assert
       expect(wrapper.text()).toContain('Inventory')
@@ -377,7 +398,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
       // Assert
       expect(wrapper.html()).toContain('whitespace-nowrap')
     })
@@ -392,7 +413,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
       const closeButton = wrapper.find('button')
 
       // Assert
@@ -406,7 +427,7 @@ describe('AppSidebar.vue', () => {
         navigation: defaultNavigation,
         isMobileOpen: true
       }
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
       const closeButton = wrapper.find('button')
 
       // Act
@@ -424,7 +445,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
 
       // Assert
       expect(wrapper.html()).toContain('svg')
@@ -439,7 +460,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
 
       // Assert
       expect(wrapper.html()).toContain('bg-slate-900')
@@ -453,7 +474,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
 
       // Assert
       expect(wrapper.html()).toContain('flex')
@@ -467,7 +488,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
 
       // Assert
       expect(wrapper.html()).toContain('border')
@@ -481,7 +502,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
 
       // Assert
       expect(wrapper.html()).toContain('transition-colors')
@@ -496,7 +517,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
 
       // Assert
       expect(wrapper.html()).toContain('font-semibold')
@@ -509,7 +530,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
       const links = wrapper.findAll('nav a')
 
       // Assert
@@ -525,7 +546,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
       const svgs = wrapper.findAll('svg')
 
       // Assert
@@ -541,7 +562,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
       const profileButton = wrapper.find('[role="button"]')
 
       // Assert
@@ -558,7 +579,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
 
       // Assert
       expect(wrapper.html()).toContain('bg-slate-600')
@@ -572,7 +593,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
 
       // Assert
       expect(wrapper.text()).toContain('User Name')
@@ -587,7 +608,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
 
       // Assert
       expect(wrapper.text()).toContain('User Name')
@@ -603,7 +624,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
       const links = wrapper.findAll('nav a')
 
       // Assert
@@ -620,7 +641,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
       const links = wrapper.findAll('nav a')
 
       // Assert
@@ -636,7 +657,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
 
       // Assert
       expect(wrapper.html()).toContain('gap-3')
@@ -658,7 +679,7 @@ describe('AppSidebar.vue', () => {
       }
 
       // Act
-      const wrapper = mount(AppSidebar, { props })
+      const wrapper = mount(AppSidebar, { props, ...mountOptions })
       const links = wrapper.findAll('nav a')
 
       // Assert

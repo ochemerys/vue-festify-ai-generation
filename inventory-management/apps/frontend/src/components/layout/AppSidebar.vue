@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { useRoute } from 'vue-router'
 import {
   LayoutDashboard,
   Package,
@@ -12,13 +12,13 @@ import {
 
 /**
  * AppSidebar.vue - Left navigation sidebar
- * 
+ *
  * Features:
  * - Responsive: Full width on desktop/laptop, icons-only on tablet, hidden on mobile
  * - Active route highlighting
  * - Badge support for notifications
  * - Smooth transitions
- * 
+ *
  * Accessibility:
  * - Semantic nav element with aria-label
  * - Active link marked with aria-current="page"
@@ -48,8 +48,7 @@ interface Emits {
 defineProps<Props>()
 defineEmits<Emits>()
 
-// Use ref for current path (fallback when router is not available)
-const currentPath = ref('/')
+const route = useRoute()
 
 // Icon component map
 const iconMap: Record<string, any> = {
@@ -64,9 +63,9 @@ const iconMap: Record<string, any> = {
 // Check if route is active
 const isRouteActive = (path: string): boolean => {
   if (path === '/') {
-    return currentPath.value === '/'
+    return route.path === '/'
   }
-  return currentPath.value.startsWith(path)
+  return route.path.startsWith(path)
 }
 
 // Get icon component
@@ -99,10 +98,10 @@ const getIconComponent = (iconName: string) => {
 
     <!-- Navigation items -->
     <nav class="flex-1 overflow-y-auto py-4 px-2 space-y-1">
-      <a
+      <router-link
         v-for="item in navigation"
         :key="item.id"
-        :href="item.path"
+        :to="item.path"
         :aria-current="isRouteActive(item.path) ? 'page' : undefined"
         class="group relative flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200"
         :class="[
@@ -147,7 +146,7 @@ const getIconComponent = (iconName: string) => {
         >
           {{ item.label }}
         </div>
-      </a>
+      </router-link>
     </nav>
 
     <!-- Sidebar footer -->

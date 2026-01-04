@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { h } from 'vue'
 import AppLayout from './AppLayout.vue'
 import AppHeader from '../AppHeader.vue'
 import AppSidebar from './AppSidebar.vue'
@@ -10,6 +11,26 @@ import AppSidebar from './AppSidebar.vue'
  * Tests the main application shell with responsive layout,
  * mobile sidebar management, and breakpoint handling
  */
+
+// RouterLink stub
+const RouterLinkStub = {
+  name: 'RouterLink',
+  props: ['to'],
+  render() {
+    return h('a', {
+      href: typeof this.to === 'string' ? this.to : this.to?.path,
+      ...this.$attrs
+    }, this.$slots.default?.())
+  }
+}
+
+const mountOptions = {
+  global: {
+    stubs: {
+      RouterLink: RouterLinkStub
+    }
+  }
+}
 
 describe('AppLayout.vue', () => {
   beforeEach(() => {
@@ -28,7 +49,7 @@ describe('AppLayout.vue', () => {
   describe('Rendering', () => {
     it('should render header component', () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -40,7 +61,7 @@ describe('AppLayout.vue', () => {
 
     it('should render sidebar component', () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -52,7 +73,7 @@ describe('AppLayout.vue', () => {
 
     it('should render main content slot', () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div class="test-content">Test Content</div>'
         }
@@ -64,7 +85,7 @@ describe('AppLayout.vue', () => {
 
     it('should have semantic structure with header, aside, and main', () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -78,7 +99,7 @@ describe('AppLayout.vue', () => {
 
     it('should have navigation aria-label on aside', () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -90,7 +111,7 @@ describe('AppLayout.vue', () => {
 
     it('should have navigation role on aside', () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -112,7 +133,7 @@ describe('AppLayout.vue', () => {
 
     it('should apply desktop layout classes to main content', async () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -128,7 +149,7 @@ describe('AppLayout.vue', () => {
 
     it('should show full sidebar width on desktop', async () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -144,7 +165,7 @@ describe('AppLayout.vue', () => {
 
     it('should not show mobile overlay on desktop', async () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -170,7 +191,7 @@ describe('AppLayout.vue', () => {
 
     it('should apply laptop layout classes to main content', async () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -186,7 +207,7 @@ describe('AppLayout.vue', () => {
 
     it('should show full sidebar on laptop', async () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -212,7 +233,7 @@ describe('AppLayout.vue', () => {
 
     it('should apply tablet layout classes to main content', async () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -228,7 +249,7 @@ describe('AppLayout.vue', () => {
 
     it('should show collapsed sidebar on tablet', async () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -254,7 +275,7 @@ describe('AppLayout.vue', () => {
 
     it('should apply mobile layout classes to main content', async () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -270,7 +291,7 @@ describe('AppLayout.vue', () => {
 
     it('should hide sidebar by default on mobile', async () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -286,7 +307,7 @@ describe('AppLayout.vue', () => {
 
     it('should show sidebar when mobile menu is opened', async () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -305,7 +326,7 @@ describe('AppLayout.vue', () => {
 
     it('should show mobile overlay when sidebar is open', async () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -324,7 +345,7 @@ describe('AppLayout.vue', () => {
 
     it('should hide mobile overlay when sidebar is closed', async () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -351,7 +372,7 @@ describe('AppLayout.vue', () => {
 
     it('should toggle mobile sidebar when hamburger is clicked', async () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -369,7 +390,7 @@ describe('AppLayout.vue', () => {
 
     it('should close mobile sidebar when overlay is clicked', async () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -389,7 +410,7 @@ describe('AppLayout.vue', () => {
 
     it('should close mobile sidebar when close-mobile event is emitted', async () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -410,7 +431,7 @@ describe('AppLayout.vue', () => {
   describe('Window Resize Handling', () => {
     it('should update breakpoint on window resize', async () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -436,7 +457,7 @@ describe('AppLayout.vue', () => {
         configurable: true,
         value: 600
       })
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -465,7 +486,7 @@ describe('AppLayout.vue', () => {
       const addEventListenerSpy = vi.spyOn(window, 'addEventListener')
 
       // Act
-      mount(AppLayout, {
+      mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -480,7 +501,7 @@ describe('AppLayout.vue', () => {
       const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener')
 
       // Act
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -495,7 +516,7 @@ describe('AppLayout.vue', () => {
   describe('Header Integration', () => {
     it('should pass notification count to header', () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -510,7 +531,7 @@ describe('AppLayout.vue', () => {
 
     it('should handle toggle-sidebar event from header', async () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -529,7 +550,7 @@ describe('AppLayout.vue', () => {
   describe('Sidebar Integration', () => {
     it('should pass navigation items to sidebar', () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -545,7 +566,7 @@ describe('AppLayout.vue', () => {
 
     it('should pass isCollapsed prop to sidebar', () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -560,7 +581,7 @@ describe('AppLayout.vue', () => {
 
     it('should pass isMobileOpen prop to sidebar', () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -575,7 +596,7 @@ describe('AppLayout.vue', () => {
 
     it('should handle update:isCollapsed event from sidebar', async () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -597,7 +618,7 @@ describe('AppLayout.vue', () => {
         configurable: true,
         value: 600
       })
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -619,7 +640,7 @@ describe('AppLayout.vue', () => {
   describe('Layout Structure', () => {
     it('should have fixed header at top', () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -636,7 +657,7 @@ describe('AppLayout.vue', () => {
 
     it('should have fixed sidebar', () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -653,7 +674,7 @@ describe('AppLayout.vue', () => {
 
     it('should have scrollable main content', () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -668,7 +689,7 @@ describe('AppLayout.vue', () => {
 
     it('should apply padding-top to account for header', () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -685,7 +706,7 @@ describe('AppLayout.vue', () => {
   describe('Navigation Items', () => {
     it('should have correct navigation items', () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -703,7 +724,7 @@ describe('AppLayout.vue', () => {
 
     it('should have correct paths for navigation items', () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -723,7 +744,7 @@ describe('AppLayout.vue', () => {
   describe('Responsive Transitions', () => {
     it('should apply transition classes to main content', () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -739,7 +760,7 @@ describe('AppLayout.vue', () => {
 
     it('should apply transition classes to sidebar', () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
@@ -755,7 +776,7 @@ describe('AppLayout.vue', () => {
 
     it('should apply transition classes to overlay', () => {
       // Arrange
-      const wrapper = mount(AppLayout, {
+      const wrapper = mount(AppLayout, { ...mountOptions,
         slots: {
           default: '<div>Content</div>'
         }
