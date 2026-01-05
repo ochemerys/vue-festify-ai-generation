@@ -1,240 +1,184 @@
-# AI code generation
+# Vue Festify AI Generation Monorepo
 
-AI generation of Vue3+Typescript+Tailwind UI and Fastify + Typescript
+AI-assisted code generation for a full-stack Inventory Management example using:
+- Frontend: Vue 3 + TypeScript + Tailwind + Vite + Vitest/Playwright
+- Backend: Fastify + TypeScript + Vitest
+- Contracts: TypeScript-first shared types and API contracts
+- Database: TypeORM (PostgreSQL) for entities and migrations (package scaffolding present)
+- BDD: Cucumber (Gherkin) feature specs with step definitions
 
-## 📚 Documentation
-
-**Start here:** [`ARCHITECTURE.md`](./ARCHITECTURE.md) - Canonical reference for all frontend architecture decisions.
-
-For navigation and guidance on which document to use, see [`DOCUMENTATION_GUIDE.md`](./DOCUMENTATION_GUIDE.md).
-
-### Key Documentation Files
-
-- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Canonical architecture reference (START HERE)
-- **[DOCUMENTATION_GUIDE.md](./DOCUMENTATION_GUIDE.md)** - Navigation guide for all documentation
-- **[REFACTORING_SUMMARY.md](./REFACTORING_SUMMARY.md)** - Summary of documentation refactoring
-- **[ai-prompts/frontend/bdd-tdd-frontend-architecture.md](./ai-prompts/frontend/bdd-tdd-frontend-architecture.md)** - Full system architecture for all modules
-- **[ai-prompts/frontend/frontend-design/generate-dashboard-components.md](./ai-prompts/frontend/frontend-design/generate-dashboard-components.md)** - Dashboard-specific component generation
-- **[_docs/frontend-architecture.md](./_docs/frontend-architecture.md)** - Detailed architecture with test examples
-- **[testing-guide.md](./testing-guide.md)** - Testing best practices and patterns
-- **[monorepo-implementation-guide.md](./monorepo-implementation-guide.md)** - Monorepo structure and setup
+This repository is organized as a JavaScript/TypeScript monorepo targeting end-to-end type safety and AI-friendly conventions.
 
 ---
 
-## Core Recommendation (Executive Summary)
+## Repository Layout
 
-Use TypeScript as the single source of truth across the stack, with:
+Top-level notable files and directories:
+- README.md (this file)
+- docker-compose.yml (services orchestration where applicable)
+- pnpm-workspace.yaml (monorepo workspaces)
+- package.json (root tooling and scripts)
+- vitest.config.ts, eslint.config.js, .editorconfig, .prettierrc
+- .env.example, .env.test
+- _docs/ (curated documentation)
+- ai-prompts/ (prompt engineering and generation guides)
+- inventory-management/ (example application - apps and documentation)
+- packages/ (shared and service packages)
+- scripts/ (test setup and utility scripts)
 
-- Gherkin → behavioral intent
-- TypeScript contracts → structural truth
-- AI → code generation and glue
-- Monorepo → enforced consistency
+### Monorepo Workspaces
 
-This avoids context switching, minimizes impedance mismatch, and dramatically improves AI reliability.
+- inventory-management/
+  - apps/
+    - backend/: Fastify API service (TypeScript)
+    - frontend/: Vue 3 app (Vite + Tailwind)
+  - README.md: domain-level documentation
 
-## Recommended Stack (JS / TS Full Stack)
+- packages/
+  - bdd/: Gherkin features and step definitions (Cucumber + TS)
+  - contracts/: Shared API/domain contracts in TypeScript
+  - db/: TypeORM entities, data-source, and seed scaffolding
+  - design/: UI/UX design specs for pages and components
 
-### Frontend
+- _docs/: Architecture, testing, and monorepo guides (canonical docs)
+- ai-prompts/: Source prompts and guides used to generate code and designs
 
-- Vue 3
-- TypeScript
-- Tailwind
-- Vite
-- Vitest + Playwright
+---
 
-### Backend
+## Getting Started
 
-- Node.js
-- TypeScript
-- Fastify (preferred over Express for typing & performance)
-- Zod (runtime + compile-time validation)
-- OpenAPI-compatible REST
+Prerequisites:
+- Node.js 18+
+- pnpm (recommended for workspaces)
+- Docker (optional for DB and services via docker-compose)
 
-### Database
+Install dependencies for all workspaces:
+- pnpm install
 
-- PostgreSQL
-- TypeORM (Type-safe DB access with decorators)
-- SQL migrations managed by TypeORM
+Environment variables:
+- Copy .env.example to .env at the root and fill values when needed.
+- Some packages include their own .env.example files (e.g., packages/bdd).
 
-Contracts
+---
 
-- TypeScript interfaces
-- Zod schemas (canonical)
-- Generated types (UI/API/DB)
+## Running the Apps
 
-## Contract Strategy (Critical Design Choice)
+You can run services independently. Each app has its own README with details; below are common commands from the root using pnpm filters.
 
-### Use Zod as the Canonical Contract
+- Start frontend (Vite dev server):
+  - pnpm --filter "@inventory/frontend" dev
 
-Zod gives you:
+- Start backend (Fastify dev server):
+  - pnpm --filter "@inventory/backend" dev
 
-- Runtime validation
-- Type inference
-- OpenAPI generation
-- AI-friendly structure
+- Build frontend:
+  - pnpm --filter "@inventory/frontend" build
 
-```ts
-import { z } from "zod";
+- Run backend in production mode (after build when applicable):
+  - pnpm --filter "@inventory/backend" start
 
-export const CreateOrderSchema = z.object({
-  customerId: z.string().uuid(),
-  items: z
-    .array(
-      z.object({
-        productId: z.string(),
-        quantity: z.number().int().positive(),
-      })
-    )
-    .min(1),
-});
+Notes:
+- See inventory-management/apps/frontend/README.md and inventory-management/apps/backend/README.md for app-specific scripts and configuration.
 
-export type CreateOrder = z.infer<typeof CreateOrderSchema>;
-```
+---
 
-This single schema feeds:
+## Testing
 
-- UI form validation
-- API request validation
-- DB input constraints
-- AI code generation
+Unit and integration tests:
+- Frontend (Vitest):
+  - pnpm --filter "@inventory/frontend" test
 
-## Gherkin’s Role in a JS Full Stack
+- Backend (Vitest):
+  - pnpm --filter "@inventory/backend" test
 
-Gherkin defines **behavioral truth**, not structure.
+BDD (Cucumber):
+- Feature files live under packages/bdd/features
+- Step definitions under packages/bdd/steps
+- Run BDD tests:
+  - pnpm --filter "@inventory/bdd" test
 
-#### Scenario: Create order successfully
+Playwright (if configured in frontend project):
+- Refer to inventory-management/apps/frontend/__docs__ and frontend README for status and commands.
 
-- Given the user is authenticated
-- When the user submits a valid order
-- Then the order should be persisted
-- And the response status should be 201
+---
 
-This constrains:
+## Packages Overview
 
-- API semantics
-- UI behavior
-- DB side effects
+- packages/contracts
+  - Shared TypeScript contracts (API/domain) used by backend and frontend
+  - Tests located in src/__tests__
 
-## Monorepo Structure (Strongly Recommended)
+- packages/db
+  - TypeORM data-source, entities, and seeds
+  - Migrations directory scaffolded; see TYPEORM_SETUP.md and TYPEORM_FINAL_SETUP.md
 
-```text
-apps/
-  frontend/         # Vue 3 + Tailwind
-  backend/          # Fastify API
-packages/
-  contracts/        # Zod schemas + types
-  ui-contracts/     # Component contracts
-  db/               # TypeORM entities
-  test-helpers/     # Gherkin step bindings
-```
+- packages/bdd
+  - Gherkin feature files for auth, inventory, orders, products, reporting
+  - Cucumber configuration and TypeScript step definitions
 
-This structure:
+- packages/design
+  - Design documentation and page/component specs used to drive UI generation
 
-- Prevents drift
-- Makes AI generation deterministic
-- Enables end-to-end typing
+---
 
-## Backend Example (Fastify + Zod)
+## Documentation Map
 
-```ts
-fastify.post(
-  "/orders",
-  {
-    schema: {
-      body: CreateOrderSchema,
-    },
-  },
-  async (req, reply) => {
-    const orderRepository = AppDataSource.getRepository(Order);
-    const order = orderRepository.create(req.body);
-    await orderRepository.save(order);
-    reply.code(201).send(order);
-  }
-);
-```
+Canonical documentation is curated under _docs/:
+- _docs/ARCHITECTURE.md (start here for architecture decisions)
+- _docs/frontend-architecture.md
+- _docs/testing-guide.md
+- _docs/monorepo-implementation-guide.md
+- _docs/ai-generation-comparison.md
+- inventory-management/__docs__ (implementation status, checklists, lessons learned specific to the example app)
 
-No DTO duplication. No guessing.
+Prompt and generation guides:
+- ai-prompts/frontend/bdd-tdd-frontend-architecture.md
+- ai-prompts/frontend/frontend-design/
+- ai-prompts/backend and ai-prompts/db
 
-## Frontend Example (Vue + Zod)
+---
 
-```ts
-const form = useForm({
-  schema: CreateOrderSchema,
-});
-```
+## Inventory Management Example
 
-Same contract. Same types. Same validation.
+Key paths:
+- inventory-management/apps/frontend
+  - Vue 3 app with pages (Dashboard, Inventory, Products) and typed components
+  - Tailwind, Vite, Vitest setup; router and types under src/
 
-## Database as a Contract (TypeORM)
+- inventory-management/apps/backend
+  - Fastify routes for auth, inventory, orders, products, purchase orders, and reports
+  - Services, middleware, utils; Vitest setup (__tests__/)
 
-```typescript
-@Entity({ name: 'orders' })
-export class Order {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string;
+- packages/contracts
+  - Types for inventory, product, order, purchase-order, and API index
 
-  @Column()
-  customerId!: string;
+- packages/db
+  - Entities: inventory-level, inventory-transaction, goods-receipt
 
-  @CreateDateColumn()
-  createdAt!: Date;
-}
-```
+- packages/bdd
+  - Features: authentication, inventory tracking, product and order management, reporting analytics
 
-TypeORM provides:
+---
 
-- Type-safe entity definitions
-- Migration scripts
-- Repository pattern for data access
+## Development Conventions
 
-## AI Generation Strategy (Very Important)
+- TypeScript is the single source of truth for contracts. Avoid duplicating DTOs.
+- Align UI, API, and DB to shared contracts where possible.
+- Prefer runtime-safe validation (Zod) where applicable; some packages may stub this until integration.
+- Keep Gherkin features authoritative for behavior; tests should track these scenarios.
 
-### AI Inputs
+---
 
-1. Gherkin features
-2. Zod schemas
-3. TypeORM entities
-4. Project conventions
+## Scripts (root)
 
-### AI Outputs
+Common examples; check package.json files for authoritative scripts.
+- pnpm install                 # install all workspace dependencies
+- pnpm -r build                # build all packages/apps where applicable
+- pnpm -r test                 # run tests across workspaces
+- pnpm --filter <workspace> <script>  # run a script in a targeted workspace
 
-- Vue components
-- Fastify routes
-- TypeORM repository code
-- Tests (Vitest + Playwright)
+---
 
-### Hard Rules for AI
+## License
 
-- Never create fields outside Zod schemas
-- Never bypass validation
-- Never invent DB columns
-- Always satisfy Gherkin scenarios
-
-## Testing Pyramid (JS-Only)
-
-| Layer       | Tool        |
-| ----------- | ----------- |
-| Gherkin E2E | Playwright  |
-| API         | Vitest      |
-| Contracts   | Zod tests   |
-| DB TypeORM  | test client |
-
-## Why This Works Exceptionally Well with AI
-
-AI performs best when:
-
-- Types are explicit
-- Contracts are shared
-- Conventions are enforced
-- Files are colocated
-
-A TS monorepo with Zod + TypeORM is almost ideal AI substrate.
-
-## When to Consider Deviations
-
-| Requirement     | Adjustment                  |
-| --------------- | --------------------------- |
-| High throughput | Add gRPC or Redis           |
-| Real-time       | WebSockets / Socket.IO      |
-| Microservices   | Keep contracts package      |
-| Multi-team      | Enforce versioned contracts |
+MIT
