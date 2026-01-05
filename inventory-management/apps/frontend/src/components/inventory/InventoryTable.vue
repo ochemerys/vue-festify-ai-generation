@@ -59,7 +59,11 @@ const columns = [
 
 <template>
   <div class="overflow-x-auto">
-    <table class="w-full" role="table" aria-label="Inventory table">
+    <table
+      class="w-full"
+      role="table"
+      aria-label="Inventory table"
+    >
       <!-- Table Header -->
       <thead class="bg-slate-50 border-b border-slate-200">
         <tr>
@@ -79,37 +83,41 @@ const columns = [
       <!-- Table Body -->
       <tbody class="bg-white divide-y divide-slate-200">
         <!-- Loading skeleton rows -->
-        <tr v-if="loading" v-for="i in 5" :key="`skeleton-${i}`">
+        <tr
+          v-for="i in 5"
+          v-if="loading"
+          :key="`skeleton-${i}`"
+        >
           <td class="px-6 py-4">
-            <div class="h-4 bg-slate-200 rounded w-3/4 animate-pulse"></div>
+            <div class="h-4 bg-slate-200 rounded w-3/4 animate-pulse" />
           </td>
           <td class="px-6 py-4">
-            <div class="h-4 bg-slate-200 rounded w-1/2 animate-pulse"></div>
+            <div class="h-4 bg-slate-200 rounded w-1/2 animate-pulse" />
           </td>
           <td class="px-6 py-4">
-            <div class="h-4 bg-slate-200 rounded w-2/3 animate-pulse"></div>
+            <div class="h-4 bg-slate-200 rounded w-2/3 animate-pulse" />
           </td>
           <td class="px-6 py-4">
-            <div class="h-4 bg-slate-200 rounded w-1/3 animate-pulse"></div>
+            <div class="h-4 bg-slate-200 rounded w-1/3 animate-pulse" />
           </td>
           <td class="px-6 py-4">
-            <div class="h-4 bg-slate-200 rounded w-1/3 animate-pulse"></div>
+            <div class="h-4 bg-slate-200 rounded w-1/3 animate-pulse" />
           </td>
           <td class="px-6 py-4">
-            <div class="h-6 bg-slate-200 rounded-full w-20 animate-pulse"></div>
+            <div class="h-6 bg-slate-200 rounded-full w-20 animate-pulse" />
           </td>
           <td class="px-6 py-4">
             <div class="flex gap-2">
-              <div class="h-8 bg-slate-200 rounded w-16 animate-pulse"></div>
-              <div class="h-8 bg-slate-200 rounded w-16 animate-pulse"></div>
+              <div class="h-8 bg-slate-200 rounded w-16 animate-pulse" />
+              <div class="h-8 bg-slate-200 rounded w-16 animate-pulse" />
             </div>
           </td>
         </tr>
 
         <!-- Inventory rows -->
         <InventoryRow
-          v-else
           v-for="item in items"
+          v-else
           :key="item.id"
           :item="item"
           @adjust-stock="emit('adjust-stock', item.id)"
@@ -119,10 +127,23 @@ const columns = [
 
         <!-- Empty state row -->
         <tr v-if="!loading && items.length === 0">
-          <td :colspan="columns.length" class="px-6 py-12 text-center text-slate-500">
+          <td
+            :colspan="columns.length"
+            class="px-6 py-12 text-center text-slate-500"
+          >
             <div class="flex flex-col items-center gap-2">
-              <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-5.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+              <svg
+                class="w-8 h-8 text-slate-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-5.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                />
               </svg>
               <span>No inventory items to display</span>
             </div>

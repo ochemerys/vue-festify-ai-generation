@@ -128,11 +128,15 @@ const isPageClickable = (page: number | string): boolean => {
         <span>Show</span>
         <select
           :value="pageSize"
-          @change="(e) => changePageSize(Number((e.target as HTMLSelectElement).value))"
           class="px-2 py-1 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           aria-label="Items per page"
+          @change="(e) => changePageSize(Number((e.target as HTMLSelectElement).value))"
         >
-          <option v-for="size in pageSizeOptions" :key="size" :value="size">
+          <option
+            v-for="size in pageSizeOptions"
+            :key="size"
+            :value="size"
+          >
             {{ size }}
           </option>
         </select>
@@ -140,10 +144,12 @@ const isPageClickable = (page: number | string): boolean => {
       </div>
 
       <!-- Page navigation -->
-      <nav class="flex items-center gap-1" aria-label="Pagination">
+      <nav
+        class="flex items-center gap-1"
+        aria-label="Pagination"
+      >
         <!-- Previous button -->
         <button
-          @click="goToPrevious"
           :disabled="currentPage <= 1"
           :class="[
             'p-2 rounded-lg border transition-colors',
@@ -152,15 +158,18 @@ const isPageClickable = (page: number | string): boolean => {
               : 'border-slate-300 text-slate-500 hover:bg-slate-50 hover:text-slate-700'
           ]"
           aria-label="Previous page"
+          @click="goToPrevious"
         >
           <ChevronLeft :size="16" />
         </button>
 
         <!-- Page numbers -->
-        <template v-for="page in visiblePages" :key="page">
+        <template
+          v-for="page in visiblePages"
+          :key="page"
+        >
           <button
             v-if="isPageClickable(page)"
-            @click="goToPage(page as number)"
             :class="[
               'px-3 py-2 text-sm font-medium rounded-lg border transition-colors',
               isPageActive(page)
@@ -169,6 +178,7 @@ const isPageClickable = (page: number | string): boolean => {
             ]"
             :aria-label="`Page ${page}`"
             :aria-current="isPageActive(page) ? 'page' : undefined"
+            @click="goToPage(page as number)"
           >
             {{ page }}
           </button>
@@ -183,7 +193,6 @@ const isPageClickable = (page: number | string): boolean => {
 
         <!-- Next button -->
         <button
-          @click="goToNext"
           :disabled="currentPage >= totalPages"
           :class="[
             'p-2 rounded-lg border transition-colors',
@@ -192,6 +201,7 @@ const isPageClickable = (page: number | string): boolean => {
               : 'border-slate-300 text-slate-500 hover:bg-slate-50 hover:text-slate-700'
           ]"
           aria-label="Next page"
+          @click="goToNext"
         >
           <ChevronRight :size="16" />
         </button>

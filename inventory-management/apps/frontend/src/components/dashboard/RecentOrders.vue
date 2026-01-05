@@ -80,8 +80,15 @@ const formatDate = (dateString: string) => {
 <template>
   <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
     <!-- Skeleton loading state -->
-    <div v-if="loading" class="divide-y divide-slate-200">
-      <div v-for="i in 5" :key="`skeleton-${i}`" class="p-4 space-y-3">
+    <div
+      v-if="loading"
+      class="divide-y divide-slate-200"
+    >
+      <div
+        v-for="i in 5"
+        :key="`skeleton-${i}`"
+        class="p-4 space-y-3"
+      >
         <div class="flex items-center justify-between">
           <div class="h-4 bg-slate-200 rounded w-1/4 animate-pulse" />
           <div class="h-4 bg-slate-200 rounded w-1/6 animate-pulse" />
@@ -94,8 +101,14 @@ const formatDate = (dateString: string) => {
     </div>
 
     <!-- Table -->
-    <div v-else class="overflow-x-auto">
-      <table class="w-full" role="table">
+    <div
+      v-else
+      class="overflow-x-auto"
+    >
+      <table
+        class="w-full"
+        role="table"
+      >
         <thead class="bg-slate-50 border-b border-slate-200">
           <tr>
             <th
@@ -128,7 +141,10 @@ const formatDate = (dateString: string) => {
             >
               Date
             </th>
-            <th scope="col" class="relative px-6 py-3">
+            <th
+              scope="col"
+              class="relative px-6 py-3"
+            >
               <span class="sr-only">Actions</span>
             </th>
           </tr>
@@ -167,7 +183,11 @@ const formatDate = (dateString: string) => {
               </span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right">
-              <ChevronRight :size="16" class="text-slate-400" :aria-hidden="true" />
+              <ChevronRight
+                :size="16"
+                class="text-slate-400"
+                :aria-hidden="true"
+              />
             </td>
           </tr>
         </tbody>
@@ -180,11 +200,16 @@ const formatDate = (dateString: string) => {
       class="px-6 py-12 text-center"
       role="status"
     >
-      <p class="text-slate-600">No recent orders found.</p>
+      <p class="text-slate-600">
+        No recent orders found.
+      </p>
     </div>
 
     <!-- Footer -->
-    <div v-if="!loading && orders.length > 0" class="px-6 py-4 border-t border-slate-200 bg-slate-50">
+    <div
+      v-if="!loading && orders.length > 0"
+      class="px-6 py-4 border-t border-slate-200 bg-slate-50"
+    >
       <a
         href="/orders"
         class="text-sm font-medium text-blue-600 hover:text-blue-700 inline-flex items-center gap-1"

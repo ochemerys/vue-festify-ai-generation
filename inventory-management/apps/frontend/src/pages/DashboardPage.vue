@@ -7,13 +7,13 @@ import QuickActions from '../components/dashboard/QuickActions.vue'
 
 /**
  * DashboardPage.vue - Main dashboard container
- * 
+ *
  * Responsibilities:
  * - Orchestrates data fetching from stores
  * - Manages loading and error states
  * - Passes data to presentational components
  * - Handles user interactions (quick actions, navigation)
- * 
+ *
  * Data flow:
  * 1. Component mounts → fetch metrics from stores
  * 2. Stores return data → update local state
@@ -275,23 +275,35 @@ onMounted(() => {
     <!-- Page header -->
     <div class="bg-white border-b border-slate-200 px-6 py-6">
       <div class="max-w-7xl mx-auto">
-        <h1 class="text-3xl font-bold text-slate-900">Dashboard</h1>
-        <p class="text-slate-600 mt-1">Welcome back! Here's your inventory overview.</p>
+        <h1 class="text-3xl font-bold text-slate-900">
+          Dashboard
+        </h1>
+        <p class="text-slate-600 mt-1">
+          Welcome back! Here's your inventory overview.
+        </p>
       </div>
     </div>
 
     <!-- Main content -->
     <div class="max-w-7xl mx-auto px-6 py-8">
       <!-- Alerts section -->
-      <div v-if="hasAlerts" class="mb-8">
+      <div
+        v-if="hasAlerts"
+        class="mb-8"
+      >
         <div
           v-if="lowStockCount > 0"
           class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg flex items-start gap-4"
           role="alert"
         >
-          <AlertTriangle class="text-amber-600 flex-shrink-0 mt-0.5" :size="20" />
+          <AlertTriangle
+            class="text-amber-600 flex-shrink-0 mt-0.5"
+            :size="20"
+          />
           <div class="flex-1">
-            <h3 class="font-semibold text-amber-900">Low Stock Alerts</h3>
+            <h3 class="font-semibold text-amber-900">
+              Low Stock Alerts
+            </h3>
             <p class="text-sm text-amber-800 mt-1">
               {{ lowStockCount }} items are below their reorder level. Consider creating Purchase Orders.
             </p>
@@ -309,9 +321,14 @@ onMounted(() => {
           class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg flex items-start gap-4 mt-4"
           role="alert"
         >
-          <AlertTriangle class="text-red-600 flex-shrink-0 mt-0.5" :size="20" />
+          <AlertTriangle
+            class="text-red-600 flex-shrink-0 mt-0.5"
+            :size="20"
+          />
           <div class="flex-1">
-            <h3 class="font-semibold text-red-900">Overdue Orders</h3>
+            <h3 class="font-semibold text-red-900">
+              Overdue Orders
+            </h3>
             <p class="text-sm text-red-800 mt-1">
               {{ overdueOrdersCount }} orders are overdue. Immediate action required.
             </p>
@@ -327,7 +344,9 @@ onMounted(() => {
 
       <!-- Metrics grid -->
       <div class="mb-8">
-        <h2 class="text-lg font-semibold text-slate-900 mb-4">Key Metrics</h2>
+        <h2 class="text-lg font-semibold text-slate-900 mb-4">
+          Key Metrics
+        </h2>
         <MetricsGrid
           :metrics="metrics"
           :loading="isLoading"
@@ -338,7 +357,9 @@ onMounted(() => {
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Recent orders (2/3 width on desktop) -->
         <div class="lg:col-span-2">
-          <h2 class="text-lg font-semibold text-slate-900 mb-4">Recent Orders</h2>
+          <h2 class="text-lg font-semibold text-slate-900 mb-4">
+            Recent Orders
+          </h2>
           <RecentOrders
             :orders="recentOrders"
             :loading="isLoading"
@@ -348,7 +369,9 @@ onMounted(() => {
 
         <!-- Quick actions (1/3 width on desktop) -->
         <div>
-          <h2 class="text-lg font-semibold text-slate-900 mb-4">Quick Actions</h2>
+          <h2 class="text-lg font-semibold text-slate-900 mb-4">
+            Quick Actions
+          </h2>
           <QuickActions
             :actions="quickActions"
             @execute="handleQuickAction"
@@ -362,10 +385,12 @@ onMounted(() => {
         class="mt-8 bg-red-50 border border-red-200 rounded-lg p-4"
         role="alert"
       >
-        <p class="text-red-800">{{ error }}</p>
+        <p class="text-red-800">
+          {{ error }}
+        </p>
         <button
-          @click="fetchDashboardData"
           class="mt-2 text-sm font-medium text-red-600 hover:text-red-700"
+          @click="fetchDashboardData"
         >
           Try again
         </button>

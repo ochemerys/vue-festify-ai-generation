@@ -82,7 +82,10 @@ const getIconComponent = (iconName: string) => {
         <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center font-bold text-sm">
           IM
         </div>
-        <span v-if="!isCollapsed" class="font-semibold text-sm whitespace-nowrap">
+        <span
+          v-if="!isCollapsed"
+          class="font-semibold text-sm whitespace-nowrap"
+        >
           Inventory
         </span>
       </div>
@@ -158,9 +161,16 @@ const getIconComponent = (iconName: string) => {
         tabindex="0"
       >
         <div class="w-8 h-8 bg-slate-600 rounded-full flex-shrink-0" />
-        <div v-if="!isCollapsed" class="flex-1 min-w-0">
-          <p class="text-sm font-medium truncate">User Name</p>
-          <p class="text-xs text-slate-400 truncate">user@example.com</p>
+        <div
+          v-if="!isCollapsed"
+          class="flex-1 min-w-0"
+        >
+          <p class="text-sm font-medium truncate">
+            User Name
+          </p>
+          <p class="text-xs text-slate-400 truncate">
+            user@example.com
+          </p>
         </div>
       </div>
 
@@ -188,7 +198,10 @@ const getIconComponent = (iconName: string) => {
             d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
           />
         </svg>
-        <span v-if="!isCollapsed" class="text-sm">Settings</span>
+        <span
+          v-if="!isCollapsed"
+          class="text-sm"
+        >Settings</span>
       </a>
     </div>
   </div>

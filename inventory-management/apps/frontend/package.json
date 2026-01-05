@@ -33,6 +33,7 @@
     "tailwindcss": "^4.1.18",
     "vite": "^7.2.4",
     "vitest": "^2.1.8",
+    "vue-eslint-parser": "^10.2.0",
     "vue-tsc": "^3.1.4"
   }
 }

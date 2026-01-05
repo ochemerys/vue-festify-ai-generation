@@ -75,7 +75,10 @@ watch(localFilters, (newFilters) => {
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
     <!-- Category Filter -->
     <div>
-      <label for="category-filter" class="block text-sm font-medium text-slate-700 mb-2">
+      <label
+        for="category-filter"
+        class="block text-sm font-medium text-slate-700 mb-2"
+      >
         Category
       </label>
       <select
@@ -83,8 +86,14 @@ watch(localFilters, (newFilters) => {
         v-model="localFilters.category"
         class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
       >
-        <option :value="undefined">All Categories</option>
-        <option v-for="category in categories" :key="category" :value="category">
+        <option :value="undefined">
+          All Categories
+        </option>
+        <option
+          v-for="category in categories"
+          :key="category"
+          :value="category"
+        >
           {{ category }}
         </option>
       </select>
@@ -92,7 +101,10 @@ watch(localFilters, (newFilters) => {
 
     <!-- Supplier Filter -->
     <div>
-      <label for="supplier-filter" class="block text-sm font-medium text-slate-700 mb-2">
+      <label
+        for="supplier-filter"
+        class="block text-sm font-medium text-slate-700 mb-2"
+      >
         Supplier
       </label>
       <select
@@ -100,8 +112,14 @@ watch(localFilters, (newFilters) => {
         v-model="localFilters.supplier"
         class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
       >
-        <option :value="undefined">All Suppliers</option>
-        <option v-for="supplier in suppliers" :key="supplier" :value="supplier">
+        <option :value="undefined">
+          All Suppliers
+        </option>
+        <option
+          v-for="supplier in suppliers"
+          :key="supplier"
+          :value="supplier"
+        >
           {{ supplier }}
         </option>
       </select>
@@ -109,7 +127,10 @@ watch(localFilters, (newFilters) => {
 
     <!-- Stock Status Filter -->
     <div>
-      <label for="status-filter" class="block text-sm font-medium text-slate-700 mb-2">
+      <label
+        for="status-filter"
+        class="block text-sm font-medium text-slate-700 mb-2"
+      >
         Stock Status
       </label>
       <select
@@ -117,8 +138,14 @@ watch(localFilters, (newFilters) => {
         v-model="localFilters.status"
         class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
       >
-        <option :value="undefined">All Statuses</option>
-        <option v-for="status in stockStatuses" :key="status.value" :value="status.value">
+        <option :value="undefined">
+          All Statuses
+        </option>
+        <option
+          v-for="status in stockStatuses"
+          :key="status.value"
+          :value="status.value"
+        >
           {{ status.label }}
         </option>
       </select>
@@ -135,7 +162,7 @@ watch(localFilters, (newFilters) => {
             v-model="localFilters.lowStockOnly"
             type="checkbox"
             class="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-          />
+          >
           <span class="ml-2 text-sm text-slate-700">Low Stock Only</span>
         </label>
       </div>

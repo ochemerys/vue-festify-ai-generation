@@ -435,20 +435,24 @@ onMounted(() => {
       <div class="max-w-7xl mx-auto">
         <div class="flex items-center justify-between">
           <div>
-            <h1 class="text-3xl font-bold text-slate-900">Product Catalog</h1>
-            <p class="text-slate-600 mt-1">Manage your inventory products</p>
+            <h1 class="text-3xl font-bold text-slate-900">
+              Product Catalog
+            </h1>
+            <p class="text-slate-600 mt-1">
+              Manage your inventory products
+            </p>
           </div>
           <div class="flex items-center gap-3">
             <button
-              @click="handleExport"
               class="inline-flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 transition-colors"
+              @click="handleExport"
             >
               <Download :size="16" />
               Export
             </button>
             <button
-              @click="handleCreateProduct"
               class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+              @click="handleCreateProduct"
             >
               <Plus :size="16" />
               Create Product
@@ -466,26 +470,32 @@ onMounted(() => {
           <!-- Search input -->
           <div class="flex-1">
             <div class="relative">
-              <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" :size="20" />
+              <Search
+                class="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"
+                :size="20"
+              />
               <input
                 v-model="searchQuery"
-                @input="handleSearch(searchQuery)"
                 type="text"
                 placeholder="Search products by name, SKU, or category..."
                 class="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              />
+                @input="handleSearch(searchQuery)"
+              >
             </div>
           </div>
 
           <!-- Filter toggle -->
           <button
-            @click="showFilters = !showFilters"
             class="inline-flex items-center gap-2 px-4 py-3 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 transition-colors"
             :class="{ 'bg-blue-50 border-blue-300': showFilters }"
+            @click="showFilters = !showFilters"
           >
             <Filter :size="16" />
             Filters
-            <span v-if="hasActiveFilters" class="ml-1 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+            <span
+              v-if="hasActiveFilters"
+              class="ml-1 bg-blue-600 text-white text-xs px-2 py-1 rounded-full"
+            >
               Active
             </span>
           </button>
@@ -493,8 +503,8 @@ onMounted(() => {
           <!-- Clear filters -->
           <button
             v-if="hasActiveFilters"
-            @click="clearFilters"
             class="px-4 py-3 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors"
+            @click="clearFilters"
           >
             Clear all
           </button>
@@ -504,8 +514,8 @@ onMounted(() => {
         <ProductFilters
           v-if="showFilters"
           :filters="filters"
-          @update:filters="handleFiltersChange"
           class="mt-6"
+          @update:filters="handleFiltersChange"
         />
       </div>
 
@@ -521,8 +531,8 @@ onMounted(() => {
         </div>
         <div class="flex items-center gap-3">
           <button
-            @click="handleBulkDelete"
             class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
+            @click="handleBulkDelete"
           >
             Delete Selected
           </button>
@@ -547,7 +557,10 @@ onMounted(() => {
       </div>
 
       <!-- Pagination -->
-      <div v-if="!isLoading && totalPages > 1" class="mt-6">
+      <div
+        v-if="!isLoading && totalPages > 1"
+        class="mt-6"
+      >
         <Pagination
           :current-page="page"
           :total-pages="totalPages"
@@ -564,23 +577,28 @@ onMounted(() => {
         class="text-center py-12"
       >
         <div class="text-slate-400 mb-4">
-          <Package :size="64" class="mx-auto" />
+          <Package
+            :size="64"
+            class="mx-auto"
+          />
         </div>
-        <h3 class="text-lg font-medium text-slate-900 mb-2">No products found</h3>
+        <h3 class="text-lg font-medium text-slate-900 mb-2">
+          No products found
+        </h3>
         <p class="text-slate-600 mb-6">
           {{ hasActiveFilters ? 'No products match your current filters.' : 'Get started by creating your first product.' }}
         </p>
         <div class="flex items-center justify-center gap-3">
           <button
             v-if="hasActiveFilters"
-            @click="clearFilters"
             class="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+            @click="clearFilters"
           >
             Clear Filters
           </button>
           <button
-            @click="handleCreateProduct"
             class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+            @click="handleCreateProduct"
           >
             <Plus :size="16" />
             Create Product
@@ -594,15 +612,29 @@ onMounted(() => {
         class="text-center py-12"
       >
         <div class="text-red-400 mb-4">
-          <svg class="mx-auto h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          <svg
+            class="mx-auto h-16 w-16"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
+            />
           </svg>
         </div>
-        <h3 class="text-lg font-medium text-slate-900 mb-2">Failed to load products</h3>
-        <p class="text-slate-600 mb-6">{{ error }}</p>
+        <h3 class="text-lg font-medium text-slate-900 mb-2">
+          Failed to load products
+        </h3>
+        <p class="text-slate-600 mb-6">
+          {{ error }}
+        </p>
         <button
-          @click="fetchProducts"
           class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+          @click="fetchProducts"
         >
           Try Again
         </button>

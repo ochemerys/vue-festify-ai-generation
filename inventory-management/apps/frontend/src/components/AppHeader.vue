@@ -80,7 +80,10 @@ const closeMenus = () => {
         aria-expanded="false"
         @click="$emit('toggle-sidebar')"
       >
-        <Menu :size="24" class="text-slate-600" />
+        <Menu
+          :size="24"
+          class="text-slate-600"
+        />
       </button>
 
       <!-- Logo/Title -->
@@ -99,7 +102,10 @@ const closeMenus = () => {
           aria-label="Notifications"
           @click="toggleNotificationMenu"
         >
-          <Bell :size="20" class="text-slate-600" />
+          <Bell
+            :size="20"
+            class="text-slate-600"
+          />
           <!-- Badge -->
           <span
             v-if="unreadCount > 0"
@@ -117,7 +123,9 @@ const closeMenus = () => {
           aria-label="Notifications menu"
         >
           <div class="p-4 border-b border-slate-200">
-            <h3 class="text-sm font-semibold text-slate-900">Notifications</h3>
+            <h3 class="text-sm font-semibold text-slate-900">
+              Notifications
+            </h3>
           </div>
 
           <div class="max-h-96 overflow-y-auto">
@@ -181,8 +189,12 @@ const closeMenus = () => {
         >
           <!-- User info -->
           <div class="px-4 py-3 border-b border-slate-200">
-            <p class="text-sm font-semibold text-slate-900">{{ user?.name || 'User' }}</p>
-            <p class="text-xs text-slate-500">{{ user?.email || 'user@example.com' }}</p>
+            <p class="text-sm font-semibold text-slate-900">
+              {{ user?.name || 'User' }}
+            </p>
+            <p class="text-xs text-slate-500">
+              {{ user?.email || 'user@example.com' }}
+            </p>
           </div>
 
           <!-- Menu items -->

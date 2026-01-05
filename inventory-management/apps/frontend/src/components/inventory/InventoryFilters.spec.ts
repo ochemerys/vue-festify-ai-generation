@@ -432,7 +432,7 @@ describe('InventoryFilters.vue', () => {
       wrapper.vm.localFilters = {
         category: 'Electronics',
         supplier: 'TechCorp',
-        status: 'low-stock' as 'low-stock',
+        status: 'low-stock' as const,
         lowStockOnly: true
       }
       
@@ -447,7 +447,7 @@ describe('InventoryFilters.vue', () => {
       const customFilters = {
         category: 'Electronics',
         supplier: 'TechCorp',
-        status: 'in-stock' as 'in-stock',
+        status: 'in-stock' as const,
         lowStockOnly: true
       }
       

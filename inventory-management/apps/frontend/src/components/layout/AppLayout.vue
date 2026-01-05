@@ -166,8 +166,8 @@ defineExpose({
       <!-- Mobile overlay -->
       <div
         :class="mobileOverlayClasses"
-        @click="closeMobileSidebar"
         role="presentation"
+        @click="closeMobileSidebar"
       />
 
       <!-- Main content -->

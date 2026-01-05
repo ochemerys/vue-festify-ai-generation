@@ -113,7 +113,10 @@ const quantityClasses = computed(() => {
 
     <!-- Current Quantity -->
     <td class="px-6 py-4">
-      <div class="text-sm" :class="quantityClasses">
+      <div
+        class="text-sm"
+        :class="quantityClasses"
+      >
         {{ item.currentQuantity }}
       </div>
     </td>
@@ -143,9 +146,9 @@ const quantityClasses = computed(() => {
       <div class="flex items-center gap-2">
         <!-- Adjust Stock Button -->
         <button
-          @click="emit('adjust-stock')"
           class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
           :aria-label="`Adjust stock for ${item.productName}`"
+          @click="emit('adjust-stock')"
         >
           <Edit :size="14" />
           Adjust
@@ -153,9 +156,9 @@ const quantityClasses = computed(() => {
 
         <!-- View History Button -->
         <button
-          @click="emit('view-history')"
           class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
           :aria-label="`View history for ${item.productName}`"
+          @click="emit('view-history')"
         >
           <History :size="14" />
         </button>
@@ -163,9 +166,9 @@ const quantityClasses = computed(() => {
         <!-- Reorder Button (only show for low/out of stock) -->
         <button
           v-if="item.status === 'low-stock' || item.status === 'out-of-stock'"
-          @click="emit('reorder')"
           class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 rounded-lg transition-colors"
           :aria-label="`Reorder ${item.productName}`"
+          @click="emit('reorder')"
         >
           <ShoppingCart :size="14" />
         </button>

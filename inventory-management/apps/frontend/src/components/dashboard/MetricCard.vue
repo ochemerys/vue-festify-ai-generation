@@ -54,14 +54,20 @@ const trendClasses = computed(() => {
     :aria-label="`${props.label}: ${props.value}${props.trend ? ` (${props.trendDirection === 'up' ? '+' : props.trendDirection === 'down' ? '-' : ''}${props.trend}%)` : ''}`"
   >
     <!-- Skeleton loading state -->
-    <div v-if="props.loading" class="space-y-3">
+    <div
+      v-if="props.loading"
+      class="space-y-3"
+    >
       <div class="h-4 bg-slate-200 rounded w-3/4 animate-pulse" />
       <div class="h-8 bg-slate-200 rounded w-1/2 animate-pulse" />
       <div class="h-4 bg-slate-200 rounded w-1/3 animate-pulse" />
     </div>
 
     <!-- Content -->
-    <div v-else class="space-y-2">
+    <div
+      v-else
+      class="space-y-2"
+    >
       <!-- Label -->
       <p class="text-sm font-medium text-slate-600">
         {{ props.label }}
@@ -73,7 +79,10 @@ const trendClasses = computed(() => {
       </p>
 
       <!-- Trend -->
-      <div v-if="props.trend !== undefined && props.trendDirection" :class="trendClasses">
+      <div
+        v-if="props.trend !== undefined && props.trendDirection"
+        :class="trendClasses"
+      >
         <component
           :is="props.trendDirection === 'up' ? TrendingUp : TrendingDown"
           :size="16"

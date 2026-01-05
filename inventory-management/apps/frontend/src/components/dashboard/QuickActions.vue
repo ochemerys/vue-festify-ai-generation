@@ -79,7 +79,10 @@ const getIconComponent = (iconName: string) => {
           <p class="text-sm font-semibold text-slate-900">
             {{ action.label }}
           </p>
-          <p v-if="action.description" class="text-xs text-slate-600 mt-1">
+          <p
+            v-if="action.description"
+            class="text-xs text-slate-600 mt-1"
+          >
             {{ action.description }}
           </p>
         </div>
