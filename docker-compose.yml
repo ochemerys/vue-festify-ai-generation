@@ -1,20 +1,22 @@
+name: ai-lab
+
 services:
   postgres:
-    image: postgres:15-alpine
+    image: pgvector/pgvector:0.8.1-pg18-trixie
     container_name: postgres-container
     environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: "mysecretpassword"
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
       POSTGRES_DB: org_inventory
     ports:
       - "5432:5432"
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - db-data-pg18:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U root -d org_inventory"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d org_inventory"]
       interval: 10s
       timeout: 5s
       retries: 5
 
 volumes:
-  db-data:
+  db-data-pg18:
