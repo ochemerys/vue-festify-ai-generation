@@ -4,6 +4,7 @@ import ProductsListPage from './pages/ProductsListPage.vue'
 import InventoryListPage from './pages/InventoryListPage.vue'
 import OrderListPage from './pages/OrderListPage.vue'
 import PurchaseOrderListPage from './pages/PurchaseOrderListPage.vue'
+import ReportsPage from './pages/ReportsPage.vue'
 
 const routes = [
   {
@@ -30,6 +31,11 @@ const routes = [
     path: '/purchase-orders',
     name: 'PurchaseOrders',
     component: PurchaseOrderListPage
+  },
+  {
+    path: '/reports',
+    name: 'Reports',
+    component: ReportsPage
   }
 ]
 
