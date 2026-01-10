@@ -16,18 +16,18 @@ export async function reportRoutes(app: FastifyInstance) {
       const products = await productRepo.find({ where: { isActive: true }, relations: ['inventoryLevels'] })
 
       const totalProducts = products.length
-      const totalQuantity = products.reduce((sum, p) => sum + (p.inventoryLevels?.currentQuantity || 0), 0)
-      const totalValue = products.reduce((sum, p) => sum + ((p.inventoryLevels?.currentQuantity || 0) * p.price), 0)
+      const totalQuantity = products.reduce((sum, p) => sum + (p.inventoryLevels?.[0]?.currentQuantity || 0), 0)
+      const totalValue = products.reduce((sum, p) => sum + ((p.inventoryLevels?.[0]?.currentQuantity || 0) * p.price), 0)
       const averageValue = totalProducts > 0 ? totalValue / totalProducts : 0
 
       // Low stock items (quantity <= reorder level)
       const lowStockItems = products.filter(
-        (p) => p.inventoryLevels && p.inventoryLevels.currentQuantity <= p.reorderLevel
+        (p) => p.inventoryLevels?.[0] && p.inventoryLevels[0].currentQuantity <= p.reorderLevel
       )
 
       // Out of stock items
       const outOfStockItems = products.filter(
-        (p) => p.inventoryLevels && p.inventoryLevels.currentQuantity === 0
+        (p) => p.inventoryLevels?.[0] && p.inventoryLevels[0].currentQuantity === 0
       )
 
       return {
@@ -273,12 +273,12 @@ export async function reportRoutes(app: FastifyInstance) {
 
       const totalProducts = products.length
       const lowStockItems = products.filter(
-        (p) => p.inventoryLevels && p.inventoryLevels.currentQuantity <= p.reorderLevel
+        (p) => p.inventoryLevels?.[0] && p.inventoryLevels[0].currentQuantity <= p.reorderLevel
       ).length
       const outOfStockItems = products.filter(
-        (p) => p.inventoryLevels && p.inventoryLevels.currentQuantity === 0
+        (p) => p.inventoryLevels?.[0] && p.inventoryLevels[0].currentQuantity === 0
       ).length
-      const totalInventoryValue = products.reduce((sum, p) => sum + ((p.inventoryLevels?.currentQuantity || 0) * p.price), 0)
+      const totalInventoryValue = products.reduce((sum, p) => sum + ((p.inventoryLevels?.[0]?.currentQuantity || 0) * p.price), 0)
 
       // Get order metrics
       const orderRepo = AppDataSource.getRepository(Order)
@@ -390,9 +390,9 @@ async function getInventorySummaryData() {
     sku: p.sku,
     name: p.name,
     category: p.category,
-    currentQuantity: p.inventoryLevels?.currentQuantity || 0,
+    currentQuantity: p.inventoryLevels?.[0]?.currentQuantity || 0,
     reorderLevel: p.reorderLevel,
-    value: (p.inventoryLevels?.currentQuantity || 0) * p.price,
+    value: (p.inventoryLevels?.[0]?.currentQuantity || 0) * p.price,
   }))
 }
 

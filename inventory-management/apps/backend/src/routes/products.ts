@@ -339,10 +339,21 @@ export async function productRoutes(app: FastifyInstance) {
         return { success: false, error: 'SKU already exists' }
       }
 
-      const product = productRepository.create({
-        ...productData,
-        description: productData.description ?? undefined,
-      })
+      const data: any = {
+        sku: productData.sku,
+        name: productData.name,
+        category: productData.category,
+        supplier: productData.supplier,
+        price: productData.price,
+        reorderLevel: productData.reorderLevel,
+      }
+      if (productData.description !== undefined) {
+        data.description = productData.description
+      }
+      if (productData.cost !== undefined) {
+        data.cost = productData.cost
+      }
+      const product = productRepository.create(data)
       await productRepository.save(product)
 
       // Create initial inventory level

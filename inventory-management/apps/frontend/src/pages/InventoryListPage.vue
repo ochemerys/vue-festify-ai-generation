@@ -36,7 +36,7 @@ interface InventoryItem {
   price: number
 }
 
-interface InventoryFilters {
+interface InventoryFiltersInterface {
   search?: string
   category?: string
   status?: 'in-stock' | 'low-stock' | 'out-of-stock'
@@ -44,7 +44,7 @@ interface InventoryFilters {
   lowStockOnly?: boolean
 }
 
-interface InventorySummary {
+interface InventorySummaryInterface {
   totalItems: number
   inStockCount: number
   lowStockCount: number
@@ -63,11 +63,11 @@ const page = ref<number>(1)
 const pageSize = ref<number>(10)
 
 // Filters and search
-const filters = ref<InventoryFilters>({})
+const filters = ref<InventoryFiltersInterface>({})
 const searchQuery = ref<string>('')
 
 // Summary stats
-const summary = ref<InventorySummary>({
+const summary = ref<InventorySummaryInterface>({
   totalItems: 0,
   inStockCount: 0,
   lowStockCount: 0,
@@ -280,7 +280,7 @@ const handleSearch = (query: string) => {
   calculateSummary()
 }
 
-const handleFiltersChange = (newFilters: InventoryFilters) => {
+const handleFiltersChange = (newFilters: InventoryFiltersInterface) => {
   filters.value = newFilters
   page.value = 1
   calculateSummary()

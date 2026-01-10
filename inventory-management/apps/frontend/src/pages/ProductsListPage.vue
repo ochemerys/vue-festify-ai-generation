@@ -38,7 +38,7 @@ interface Product {
   updatedAt: Date
 }
 
-interface ProductFilters {
+interface ProductFiltersInterface {
   search?: string
   category?: string
   supplier?: string
@@ -65,7 +65,7 @@ const page = ref<number>(1)
 const pageSize = ref<number>(10)
 
 // Filters and search
-const filters = ref<ProductFilters>({})
+const filters = ref<ProductFiltersInterface>({})
 const sort = ref<SortOptions>({ field: 'name', direction: 'asc' })
 const searchQuery = ref<string>('')
 
@@ -251,8 +251,9 @@ const filteredProducts = computed(() => {
 
   // Apply sorting
   result.sort((a, b) => {
-    let aValue: any = a[sort.value.field]
-    let bValue: any = b[sort.value.field]
+    const field = sort.value.field as keyof Product
+    let aValue: string | number | Date = a[field] as string | number | Date
+    let bValue: string | number | Date = b[field] as string | number | Date
 
     if (sort.value.field === 'createdAt') {
       aValue = new Date(aValue).getTime()
@@ -328,14 +329,14 @@ const handleSearch = (query: string) => {
   selectedProducts.value.clear() // Clear selection
 }
 
-const handleFiltersChange = (newFilters: ProductFilters) => {
+const handleFiltersChange = (newFilters: ProductFiltersInterface) => {
   filters.value = newFilters
   page.value = 1
   selectedProducts.value.clear()
 }
 
 const handleSort = (field: string, direction: 'asc' | 'desc') => {
-  sort.value = { field: field as any, direction }
+  sort.value = { field: field as 'name' | 'price' | 'quantity' | 'createdAt', direction }
 }
 
 const handlePageChange = (newPage: number) => {
@@ -400,6 +401,7 @@ const handleEditProduct = (productId: string) => {
 
 const handleDeleteProduct = (productId: string) => {
   // In real implementation, show confirmation dialog
+  // eslint-disable-next-line no-alert
   if (confirm('Delete this product?')) {
     const index = mockProducts.findIndex(p => p.id === productId)
     if (index > -1) {
@@ -412,6 +414,7 @@ const handleDeleteProduct = (productId: string) => {
 
 const handleExport = () => {
   // In real implementation, export products to CSV/Excel
+  // eslint-disable-next-line no-console
   console.log('Export products')
 }
 

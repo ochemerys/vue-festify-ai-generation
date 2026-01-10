@@ -40,6 +40,7 @@ describe('ProductsListPage.vue', () => {
 
   beforeEach(async () => {
     // Mock window.confirm
+    // eslint-disable-next-line no-undef
     global.confirm = vi.fn(() => true)
 
     wrapper = mount(ProductsListPage, {
@@ -284,6 +285,7 @@ describe('ProductsListPage.vue', () => {
       await wrapper.vm.$nextTick()
 
       // Mock confirm to return true
+      // eslint-disable-next-line no-undef
       global.confirm = vi.fn(() => true)
 
       // Trigger bulk delete

@@ -64,11 +64,17 @@ export async function inventoryRoutes(app: FastifyInstance) {
         const transactionRepository = manager.getRepository(InventoryTransaction)
         const inventoryLevelRepository = manager.getRepository(InventoryLevel)
 
-        const transaction = transactionRepository.create({
-          ...transactionData,
-          notes: transactionData.notes ?? undefined,
+        const data: any = {
+          productId: transactionData.productId,
+          type: transactionData.type as any,
+          quantity: transactionData.quantity,
+          reference: transactionData.reference,
           createdBy: 'system', // TODO: Get from auth context
-        })
+        }
+        if (transactionData.notes !== undefined) {
+          data.notes = transactionData.notes
+        }
+        const transaction = transactionRepository.create(data)
         await transactionRepository.save(transaction)
 
         await inventoryLevelRepository.update(
@@ -229,7 +235,8 @@ export async function inventoryRoutes(app: FastifyInstance) {
     try {
       const { productId } = request.body as any
 
-      const inventoryLevel = await prisma.inventoryLevel.findUnique({
+      const inventoryRepository = AppDataSource.getRepository(InventoryLevel)
+      const inventoryLevel = await inventoryRepository.findOne({
         where: { productId },
       })
 
@@ -238,12 +245,16 @@ export async function inventoryRoutes(app: FastifyInstance) {
         return { success: false, error: 'Product inventory not found' }
       }
 
-      const updated = await prisma.inventoryLevel.update({
-        where: { productId },
-        data: {
+      await inventoryRepository.update(
+        { productId },
+        {
           reservedQuantity: 0,
           availableQuantity: inventoryLevel.currentQuantity,
-        },
+        }
+      )
+
+      const updated = await inventoryRepository.findOne({
+        where: { productId },
       })
 
       return { success: true, data: updated }
@@ -258,15 +269,14 @@ export async function inventoryRoutes(app: FastifyInstance) {
     '/api/inventory/alerts/product/:productId',
     async (request, reply) => {
       try {
-        const alerts = await prisma.stockAlert.findMany({
+        const alertRepository = AppDataSource.getRepository(StockAlert)
+        const alerts = await alertRepository.find({
           where: { 
             productId: request.params.productId,
             isResolved: false,
           },
-          include: {
-            product: true,
-          },
-          orderBy: { createdAt: 'desc' },
+          relations: ['product'],
+          order: { createdAt: 'DESC' },
         })
 
         return { success: true, data: alerts }
@@ -282,7 +292,8 @@ export async function inventoryRoutes(app: FastifyInstance) {
     '/api/inventory/levels/:productId/total',
     async (request, reply) => {
       try {
-        const inventoryLevel = await prisma.inventoryLevel.findUnique({
+        const inventoryRepository = AppDataSource.getRepository(InventoryLevel)
+        const inventoryLevel = await inventoryRepository.findOne({
           where: { productId: request.params.productId },
         })
 

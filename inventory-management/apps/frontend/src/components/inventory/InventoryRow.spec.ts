@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { mount, type VueWrapper, type DOMWrapper } from '@vue/test-utils'
+import { mount, type DOMWrapper } from '@vue/test-utils'
 import InventoryRow from './InventoryRow.vue'
 
 /**
