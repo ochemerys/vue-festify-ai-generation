@@ -1,0 +1,323 @@
+You are an expert Senior Frontend Engineer specializing in Vue 3 (Composition API), TypeScript, and Tailwind CSS.
+
+I need you to generate a set of production-ready components for an Inventory Management Orders page.
+
+## 1. Technical Stack Constraints
+
+- Framework: Vue 3 using <script setup lang="ts">.
+- Styling: Tailwind CSS (utility classes only, no custom CSS).
+- State: Architecture assumes Pinia stores (mock data fetching in composables for now).
+- Icons: Assume lucide-vue-next (e.g., <Package />, <AlertTriangle />). Do not use emojis.
+- Architecture: Strict Container/Presentational pattern.
+- Accessibility: WCAG AA compliance (semantic HTML, ARIA labels, focus management).
+- Router: existing Vue Router.
+
+## 2. Required Component Hierarchy
+
+Generate the following components. Do not change this structure.
+
+- OrderListPage.vue (Container): Orchestrates orders fetching, filtering, pagination, actions.
+- OrderSummaryStats.vue (Presentational): Shows total/pending/processing/shipped/delivered counts.
+- OrderFilters.vue (Presentational): Search, status multi-select, date range, clear/reset.
+- OrderTable.vue (Presentational): Table/grid for orders (desktop/tablet) with accessible semantics.
+- OrderRow.vue (Presentational): Single order row renderer with status badge and actions.
+- OrderCardList.vue (Presentational): Mobile card list view of orders.
+- PaginationControls.vue (Presentational): Pagination UI.
+- OrderDetailsModal.vue (Presentational): Read-only details modal.
+- BulkActionsBar.vue (Presentational): Bulk select, bulk update/cancel.
+- QuickActions.vue (Presentational): Action buttons rail.
+
+## 3. Design & Behavior Specifications (Refined)
+
+### A. Responsive Layout Behaviors
+
+- Desktop (>1280px): Fixed left Sidebar (240px). Main content center. Quick Actions rail fixed on right.
+- Laptop (1024px - 1280px): Fixed left Sidebar. Quick Actions rail disappears and moves to the top of the main content area (horizontal stack).
+- Tablet (768px - 1024px): Sidebar collapses to 80px (icons only).
+- Mobile (<768px): Sidebar is hidden (accessible via hamburger drawer). Content is single column.
+
+### B. Consistency & Ergonomics Rules
+
+- Terminology: Use "Orders" with statuses: pending, processing, shipped, delivered, cancelled. Do not use inventory-specific terms like "Low Stock Alerts" here.
+- Status Badges: Use color coding per design (pending: amber, processing: blue, shipped: violet, delivered: green, cancelled: red). Include text + icon for meaning.
+- Skeleton Loading: All components must take a loading prop. When true, render a shimmering skeleton that matches the exact dimensions of the content to prevent layout shift.
+
+### C. Component Contracts
+
+**AppHeader.vue:**
+- Props: user: User, notificationCount: number.
+- Emits: toggle-sidebar.
+
+**AppSidebar.vue:**
+- Props: navigation: NavItem[], isCollapsed: boolean, isMobileOpen: boolean.
+- Emits: update:isCollapsed, close-mobile.
+
+**QuickActions.vue:**
+- Props: actions: { label: string, icon: string, id: string }[].
+- Emits: execute (payload: actionId). Do not pass functions as props.
+
+**OrderSummaryStats.vue:**
+- Props: summary: { totalOrders: number; pendingOrders: number; processingOrders: number; shippedOrders: number; deliveredOrders: number }, loading: boolean
+- IMPORTANT: Use definition list semantics and aria-labels for counters.
+
+**OrderFilters.vue:**
+- Props: filters: { search?: string; status?: ('pending'|'processing'|'shipped'|'delivered'|'cancelled')[]; startDate?: string; endDate?: string }, loading: boolean
+- Emits: update:filters, reset
+
+**OrderTable.vue:**
+- Props: orders: Order[], loading: boolean, page: number, pageSize: number
+- Emits: view-details (orderId), update-status ({ orderId, status }), cancel (orderId), select ({ orderId, selected })
+
+**OrderRow.vue:**
+- Props: order: Order, selected: boolean
+- Emits: select (orderId), view-details (orderId), update-status ({ orderId, status }), cancel (orderId)
+
+**OrderCardList.vue:**
+- Props: orders: Order[], loading: boolean
+- Emits: view-details (orderId)
+
+**PaginationControls.vue:**
+- Props: page: number, pageSize: number, total: number
+- Emits: update:page, update:pageSize
+
+**OrderDetailsModal.vue:**
+- Props: order: Order | null, open: boolean, loading: boolean
+- Emits: close
+
+**BulkActionsBar.vue:**
+- Props: selectedIds: string[]
+- Emits: bulk-update (status), bulk-cancel
+
+## 4. Critical Implementation Rules (MUST FOLLOW)
+
+### A. Props Usage in Templates
+
+**WRONG:**
+```vue
+<template>
+  <div>{{ label }}</div>
+  <div v-if="loading">Loading...</div>
+</template>
+
+<script setup lang="ts">
+defineProps<Props>()
+</script>
+```
+
+**CORRECT:**
+```vue
+<template>
+  <div>{{ props.label }}</div>
+  <div v-if="props.loading">Loading...</div>
+</template>
+
+<script setup lang="ts">
+const props = defineProps<Props>()
+</script>
+```
+
+### B. Props Usage in Computed Properties
+
+**WRONG:**
+```typescript
+const gridItems = computed(() => {
+  return Array.from({ length: 8 }, (_, i) => metrics.value[i] || null)
+})
+```
+
+**CORRECT:**
+```typescript
+const props = defineProps<Props>()
+
+const gridItems = computed(() => {
+  return Array.from({ length: 8 }, (_, i) => props.metrics[i] || null)
+})
+```
+
+### C. Router Handling (CRITICAL)
+
+**WRONG:**
+```typescript
+import { useRoute } from 'vue-router'
+
+const route = useRoute() // This will fail if router is not configured!
+
+const isRouteActive = (path: string): boolean => {
+  return route.path.startsWith(path)
+}
+```
+
+**CORRECT:**
+```typescript
+import { ref } from 'vue'
+
+// Use ref-based fallback when router is not available
+const currentPath = ref('/')
+
+const isRouteActive = (path: string): boolean => {
+  if (path === '/') {
+    return currentPath.value === '/'
+  }
+  return currentPath.value.startsWith(path)
+}
+```
+
+### D. defineProps and defineEmits
+
+**WRONG:**
+```typescript
+defineProps<Props>()
+// ... later in the file ...
+const props = defineProps<Props>() // DUPLICATE!
+```
+
+**CORRECT:**
+```typescript
+const props = defineProps<Props>()
+const emits = defineEmits<Emits>()
+
+// Use props and emits throughout the component
+```
+
+## 5. Implementation Instructions
+
+### Step 1: Generate Core Components
+
+Generate the code for OrderListPage.vue first. Then create OrderSummaryStats.vue, OrderFilters.vue, OrderTable.vue, OrderRow.vue, OrderCardList.vue, PaginationControls.vue, OrderDetailsModal.vue, BulkActionsBar.vue, and QuickActions.vue.
+
+Use the following domain types for props:
+- Order: { id: string; orderNumber: string; customerId: string; customerName: string; customerEmail: string; status: 'pending'|'processing'|'shipped'|'delivered'|'cancelled'; total: number; itemCount: number; createdAt: string; updatedAt: string; shippedAt?: string; deliveredAt?: string; notes?: string }
+- OrderListResponse: { data: Order[]; total: number; page: number; pageSize: number; hasMore: boolean; summary: { totalOrders: number; pendingOrders: number; processingOrders: number; shippedOrders: number; deliveredOrders: number } }
+- OrderFilters: { search?: string; status?: ('pending'|'processing'|'shipped'|'delivered'|'cancelled')[]; startDate?: string; endDate?: string }
+
+Take in consideration order-list-page.design.md under packages/design/pages folder
+
+### Step 2: Code Quality Requirements
+
+- Use defineProps and defineEmits with TypeScript interfaces.
+- ALWAYS assign defineProps to a const variable: `const props = defineProps<Props>()`
+- ALWAYS reference props in templates and computed properties: `props.label`, `props.value`, etc.
+- Implement the responsive logic in AppLayout using simple window listeners (no external dependencies).
+- Add comments explaining accessible features (e.g., aria-expanded logic).
+- Do NOT use vue-router's useRoute() hook. Use ref-based fallback instead.
+
+### Step 3: Testing Requirements
+
+- All components must work WITHOUT vue-router configured.
+- All components must work WITHOUT Pinia stores configured.
+- All components must render without console errors or warnings.
+- All template references to props must use the props object.
+- All computed properties accessing props must use props.propertyName (not props.propertyName.value).
+- Verify BDD-aligned flows in UI:
+  - New order starts as "PENDING" and total is computed from items.
+  - Confirm -> UI status "processing"; Ship -> "shipped"; Deliver -> "delivered"; Cancel available for pending.
+  - Status filters and counts in summary reflect current filtered dataset.
+
+### Step 4: Documentation
+
+- Include JSDoc comments on all functions.
+- Include inline comments explaining complex logic.
+- Document all props and emits with TypeScript interfaces.
+- Include accessibility notes in comments.
+
+## 6. Common Pitfalls to Avoid
+
+1. **Duplicate defineProps()**: Only call defineProps once per component. Assign to const.
+2. **Missing props prefix in templates**: Always use `props.label` not `label` in templates.
+3. **Wrong computed property syntax**: Use `props.metrics[i]` not `metrics.value[i]`.
+4. **Router dependency**: Do NOT import or use useRoute(). Use ref-based fallback.
+5. **Unhandled errors**: Wrap router usage in try-catch or use optional chaining.
+6. **Missing prop assignments**: Always assign defineProps result: `const props = defineProps<Props>()`.
+
+## 7. Verification Checklist
+
+Before submitting code, verify:
+
+- [ ] No duplicate defineProps() calls
+- [ ] All template references use props object (props.label, props.value, etc.)
+- [ ] All computed properties use props.propertyName syntax
+- [ ] No useRoute() imports or usage
+- [ ] No console errors when router is not configured
+- [ ] No console warnings about missing injections
+- [ ] All components render correctly
+- [ ] Responsive design works at all breakpoints
+- [ ] Accessibility features are implemented
+- [ ] TypeScript strict mode compliance
+
+## 8. Example: Correct Component Structure
+
+```vue
+<script setup lang="ts">
+import { computed, ref } from 'vue'
+import { SomeIcon } from 'lucide-vue-next'
+
+interface Props {
+  label: string
+  value: string | number
+  loading?: boolean
+}
+
+interface Emits {
+  (e: 'action', payload: string): void
+}
+
+// CORRECT: Assign to const
+const props = defineProps<Props>()
+const emits = defineEmits<Emits>()
+
+// CORRECT: Use ref for fallback state
+const currentPath = ref('/')
+
+// CORRECT: Use props in computed
+const displayValue = computed(() => {
+  return props.value || '—'
+})
+
+// CORRECT: Use props in functions
+const handleClick = () => {
+  emits('action', props.label)
+}
+</script>
+
+<template>
+  <!-- CORRECT: Use props in template -->
+  <div v-if="props.loading" class="skeleton">Loading...</div>
+  <div v-else>
+    <p>{{ props.label }}</p>
+    <p>{{ displayValue }}</p>
+    <button @click="handleClick">Action</button>
+  </div>
+</template>
+```
+
+## 9. Dependencies to Install
+
+Before running the application, ensure these are installed:
+
+```bash
+pnpm add lucide-vue-next vue-router
+```
+
+Optional (mock if not installed): date-fns, papaparse
+
+Note: vue-router is optional but recommended for full routing functionality.
+
+## 10. Post-Generation Steps
+
+1. Install dependencies: `pnpm install`
+2. Start dev server: `pnpm dev`
+3. Verify no console errors or warnings
+4. Test responsive design at all breakpoints
+5. Test accessibility with axe DevTools
+6. Review all components for the pitfalls listed above
+
+---
+
+**CRITICAL REMINDERS:**
+
+1. **Props must be assigned to const**: `const props = defineProps<Props>()`
+2. **All template references must use props object**: `{{ props.label }}` not `{{ label }}`
+3. **All computed properties must use props.propertyName**
+4. **Do NOT use useRoute()**: Use ref-based fallback instead
+5. **No duplicate defineProps()**: Only call once per component
+6. **Test without router**: Components must work without vue-router configured

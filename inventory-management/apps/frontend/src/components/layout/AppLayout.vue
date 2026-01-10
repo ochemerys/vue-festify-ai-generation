@@ -68,6 +68,24 @@ const mainContentClasses = computed(() => {
   }
 })
 
+// Content wrapper classes for dynamic max-width
+const contentWrapperClasses = computed(() => {
+  const baseClasses = 'w-full mx-auto px-4 sm:px-6 py-6'
+  
+  switch (currentBreakpoint.value) {
+    case 'mobile':
+      return `${baseClasses} max-w-full`
+    case 'tablet':
+      return `${baseClasses} max-w-full`
+    case 'laptop':
+      return `${baseClasses} max-w-7xl` // 1280px
+    case 'desktop':
+      return `${baseClasses} max-w-full` // Full width with right rail
+    default:
+      return baseClasses
+  }
+})
+
 const sidebarClasses = computed(() => {
   const baseClasses = 'fixed left-0 top-0 h-screen bg-slate-900 text-white transition-all duration-300 z-40'
   
@@ -172,9 +190,33 @@ defineExpose({
 
       <!-- Main content -->
       <main :class="mainContentClasses">
-        <!-- Page content slot -->
-        <div class="flex-1 overflow-auto">
-          <slot />
+        <div class="flex flex-1 overflow-hidden">
+          <!-- Page content area with dynamic width -->
+          <div class="flex-1 overflow-auto">
+            <div :class="contentWrapperClasses">
+              <slot />
+            </div>
+          </div>
+
+          <!-- Right rail for quick actions (desktop only) -->
+          <aside
+            v-if="currentBreakpoint === 'desktop' && $slots['right-rail']"
+            class="w-64 border-l border-slate-200 bg-white overflow-y-auto flex-shrink-0"
+            role="complementary"
+            aria-label="Quick actions"
+          >
+            <div class="p-4">
+              <slot name="right-rail" />
+            </div>
+          </aside>
+        </div>
+
+        <!-- Inline quick actions for laptop (below header, above content) -->
+        <div
+          v-if="currentBreakpoint === 'laptop' && $slots['inline-actions']"
+          class="border-b border-slate-200 bg-white px-6 py-3"
+        >
+          <slot name="inline-actions" />
         </div>
       </main>
     </div>
