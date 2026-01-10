@@ -3,6 +3,7 @@ import DashboardPage from './pages/DashboardPage.vue'
 import ProductsListPage from './pages/ProductsListPage.vue'
 import InventoryListPage from './pages/InventoryListPage.vue'
 import OrderListPage from './pages/OrderListPage.vue'
+import PurchaseOrderListPage from './pages/PurchaseOrderListPage.vue'
 
 const routes = [
   {
@@ -24,6 +25,11 @@ const routes = [
     path: '/orders',
     name: 'Orders',
     component: OrderListPage
+  },
+  {
+    path: '/purchase-orders',
+    name: 'PurchaseOrders',
+    component: PurchaseOrderListPage
   }
 ]
 
