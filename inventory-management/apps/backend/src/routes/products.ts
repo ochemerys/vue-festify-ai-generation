@@ -339,22 +339,18 @@ export async function productRoutes(app: FastifyInstance) {
         return { success: false, error: 'SKU already exists' }
       }
 
-      const data: any = {
+      const data = {
         sku: productData.sku,
         name: productData.name,
         category: productData.category,
         supplier: productData.supplier,
         price: productData.price,
         reorderLevel: productData.reorderLevel,
-      }
-      if (productData.description !== undefined) {
-        data.description = productData.description
-      }
-      if (productData.cost !== undefined) {
-        data.cost = productData.cost
+        ...(productData.description !== undefined && { description: productData.description }),
+        ...(productData.cost !== undefined && { cost: productData.cost }),
       }
       const product = productRepository.create(data)
-      await productRepository.save(product)
+      const savedProduct = await productRepository.save(product)
 
       // Create initial inventory level
       const inventoryRepository = AppDataSource.getRepository(InventoryLevel)
