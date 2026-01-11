@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import {
   LayoutDashboard,
@@ -9,6 +10,9 @@ import {
   BarChart3,
   X
 } from 'lucide-vue-next'
+import { useAuthStore } from '../../stores/authStore'
+
+const authStore = useAuthStore()
 
 /**
  * AppSidebar.vue - Left navigation sidebar
@@ -72,6 +76,23 @@ const isRouteActive = (path: string): boolean => {
 const getIconComponent = (iconName: string) => {
   return iconMap[iconName] || Package
 }
+
+// Get user initials
+const userInitials = computed(() => {
+  try {
+    if (!authStore.currentUser) return 'U'
+    const firstName = authStore.currentUser.firstName || ''
+    const lastName = authStore.currentUser.lastName || ''
+    if (!firstName && !lastName) return 'U'
+    
+    const first = firstName.charAt(0) || ''
+    const second = lastName.charAt(0) || ''
+    const initials = (first + second).toUpperCase()
+    return initials || 'U'
+  } catch (e) {
+    return 'U'
+  }
+})
 </script>
 
 <template>
@@ -154,25 +175,28 @@ const getIconComponent = (iconName: string) => {
 
     <!-- Sidebar footer -->
     <div class="border-t border-slate-700 p-4 space-y-2">
-      <!-- User profile section (placeholder) -->
-      <div
+      <!-- User profile link -->
+      <router-link
+        to="/users/me"
         class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
         role="button"
         tabindex="0"
       >
-        <div class="w-8 h-8 bg-slate-600 rounded-full flex-shrink-0" />
+        <div class="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-semibold">
+          {{ userInitials }}
+        </div>
         <div
           v-if="!isCollapsed"
           class="flex-1 min-w-0"
         >
           <p class="text-sm font-medium truncate">
-            User Name
+            {{ authStore.currentUser?.firstName }} {{ authStore.currentUser?.lastName }}
           </p>
           <p class="text-xs text-slate-400 truncate">
-            user@example.com
+            {{ authStore.currentUser?.email }}
           </p>
         </div>
-      </div>
+      </router-link>
 
       <!-- Settings link -->
       <a

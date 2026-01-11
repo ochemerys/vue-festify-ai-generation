@@ -54,5 +54,20 @@ vi.mock('vue-router', () => ({
   createWebHistory: vi.fn(),
   useRoute: vi.fn(() => ({
     path: '/'
+  })),
+  useRouter: vi.fn(() => ({
+    push: vi.fn()
+  }))
+}))
+
+// Mock Pinia stores
+vi.mock('../../stores/authStore', () => ({
+  useAuthStore: vi.fn(() => ({
+    currentUser: {
+      firstName: 'User',
+      lastName: 'Name',
+      email: 'user@example.com'
+    },
+    logout: vi.fn()
   }))
 }))

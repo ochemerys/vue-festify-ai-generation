@@ -33,7 +33,7 @@ interface Emits {
   (e: 'navigate-to-profile'): void
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 defineEmits<Emits>()
 
 // Dropdown state
@@ -50,6 +50,19 @@ const notifications = [
 // Computed
 const unreadCount = computed(() => {
   return notifications.filter(n => !n.read).length
+})
+
+const userInitials = computed(() => {
+  if (!props.user?.name) return 'U'
+  const name = String(props.user.name).trim()
+  if (!name) return 'U'
+  const parts = name.split(' ')
+  if (parts.length >= 2) {
+    const first = parts[0].charAt(0) || ''
+    const second = parts[1].charAt(0) || ''
+    return (first + second).toUpperCase()
+  }
+  return name.charAt(0).toUpperCase()
 })
 
 // Methods
@@ -109,7 +122,7 @@ const closeMenus = () => {
           <!-- Badge -->
           <span
             v-if="unreadCount > 0"
-            class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center"
+            class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center"
           >
             {{ unreadCount }}
           </span>
@@ -171,12 +184,12 @@ const closeMenus = () => {
           @click="toggleUserMenu"
         >
           <!-- Avatar -->
-          <div class="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-            {{ user?.name?.charAt(0).toUpperCase() || 'U' }}
+          <div class="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+            {{ userInitials }}
           </div>
           <!-- Name (hidden on mobile) -->
           <span class="hidden sm:inline text-sm font-medium text-slate-900">
-            {{ user?.name || 'User' }}
+            {{ props.user?.name || 'User' }}
           </span>
         </button>
 
@@ -190,23 +203,23 @@ const closeMenus = () => {
           <!-- User info -->
           <div class="px-4 py-3 border-b border-slate-200">
             <p class="text-sm font-semibold text-slate-900">
-              {{ user?.name || 'User' }}
+              {{ props.user?.name || 'User' }}
             </p>
             <p class="text-xs text-slate-500">
-              {{ user?.email || 'user@example.com' }}
+              {{ props.user?.email || 'user@example.com' }}
             </p>
           </div>
 
           <!-- Menu items -->
-          <a
-            href="#"
+          <router-link
+            to="/users/me"
             class="flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
             role="menuitem"
-            @click.prevent="$emit('navigate-to-profile')"
+            @click="closeMenus"
           >
             <User :size="16" />
             Profile
-          </a>
+          </router-link>
 
           <a
             href="#"

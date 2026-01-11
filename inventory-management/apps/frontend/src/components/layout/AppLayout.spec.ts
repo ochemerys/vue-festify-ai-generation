@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { h } from 'vue'
+import { createPinia } from 'pinia'
 import AppLayout from './AppLayout.vue'
 import AppHeader from '../AppHeader.vue'
 import AppSidebar from './AppSidebar.vue'
@@ -26,6 +27,7 @@ const RouterLinkStub = {
 
 const mountOptions = {
   global: {
+    plugins: [createPinia()],
     stubs: {
       RouterLink: RouterLinkStub
     }

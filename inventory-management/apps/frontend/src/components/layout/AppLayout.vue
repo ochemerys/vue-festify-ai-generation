@@ -2,6 +2,11 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import AppHeader from '../AppHeader.vue'
 import AppSidebar from './AppSidebar.vue'
+import { useAuthStore } from '../../stores/authStore'
+import { useRouter } from 'vue-router'
+
+const authStore = useAuthStore()
+const router = useRouter()
 
 /**
  * AppLayout.vue - Main application shell
@@ -35,7 +40,8 @@ const navigationItems: NavItem[] = [
   { id: 'inventory', label: 'Inventory', icon: 'Boxes', path: '/inventory' },
   { id: 'orders', label: 'Orders', icon: 'ShoppingCart', path: '/orders' },
   { id: 'purchase-orders', label: 'Purchase Orders', icon: 'Truck', path: '/purchase-orders' },
-  { id: 'reports', label: 'Reports', icon: 'BarChart3', path: '/reports' }
+  { id: 'reports', label: 'Reports', icon: 'BarChart3', path: '/reports' },
+  { id: 'users', label: 'Users', icon: 'User', path: '/users' }
 ]
 
 // Responsive state
@@ -144,6 +150,12 @@ onUnmounted(() => {
   window.removeEventListener('resize', handleWindowResize)
 })
 
+// Handle logout
+const handleLogout = () => {
+  authStore.logout()
+  router.push('/login')
+}
+
 // Expose for tests
 defineExpose({
   toggleMobileSidebar,
@@ -159,8 +171,11 @@ defineExpose({
     <!-- Header -->
     <header class="fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 z-20 shadow-sm">
       <AppHeader
+        :user="authStore.currentUser ? { name: `${authStore.currentUser.firstName} ${authStore.currentUser.lastName}`.trim(), email: authStore.currentUser.email } : { name: 'User', email: '' }"
         :notification-count="3"
         @toggle-sidebar="toggleMobileSidebar"
+        @logout="handleLogout"
+        @navigate-to-profile="router.push('/users/me')"
       />
     </header>
 

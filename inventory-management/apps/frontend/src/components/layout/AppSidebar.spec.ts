@@ -1,7 +1,20 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { h } from 'vue'
+import { createPinia } from 'pinia'
 import AppSidebar from './AppSidebar.vue'
+
+// Mock the auth store
+vi.mock('../../stores/authStore', () => ({
+  useAuthStore: vi.fn(() => ({
+    currentUser: {
+      firstName: 'User',
+      lastName: 'Name',
+      email: 'user@example.com'
+    },
+    logout: vi.fn()
+  }))
+}))
 
 /**
  * AppSidebar.spec.ts - Unit tests for AppSidebar component
@@ -32,6 +45,7 @@ describe('AppSidebar.vue', () => {
 
   const mountOptions = {
     global: {
+      plugins: [createPinia()],
       stubs: {
         RouterLink: RouterLinkStub
       }
@@ -582,7 +596,7 @@ describe('AppSidebar.vue', () => {
       const wrapper = mount(AppSidebar, { props, ...mountOptions })
 
       // Assert
-      expect(wrapper.html()).toContain('bg-slate-600')
+      expect(wrapper.html()).toContain('bg-gradient-to-br')
       expect(wrapper.html()).toContain('rounded-full')
     })
 
