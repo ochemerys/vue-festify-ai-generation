@@ -199,8 +199,8 @@ const userInitials = computed(() => {
       </router-link>
 
       <!-- Settings link -->
-      <a
-        href="#"
+      <router-link
+        to="/settings"
         class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-sm"
       >
         <svg
@@ -226,7 +226,7 @@ const userInitials = computed(() => {
           v-if="!isCollapsed"
           class="text-sm"
         >Settings</span>
-      </a>
+      </router-link>
     </div>
   </div>
 </template>

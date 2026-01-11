@@ -11,6 +11,7 @@ import UserProfilePage from './pages/UserProfilePage.vue'
 import UnauthorizedPage from './pages/UnauthorizedPage.vue'
 import ForgotPasswordPage from './pages/ForgotPasswordPage.vue'
 import SignupPage from './pages/SignupPage.vue'
+import SettingsPage from './pages/SettingsPage.vue'
 import { useAuthStore } from './stores/authStore'
 
 const routes = [
@@ -78,6 +79,11 @@ const routes = [
     path: '/unauthorized',
     name: 'Unauthorized',
     component: UnauthorizedPage
+  },
+  {
+    path: '/settings',
+    name: 'Settings',
+    component: SettingsPage
   }
 ]
 

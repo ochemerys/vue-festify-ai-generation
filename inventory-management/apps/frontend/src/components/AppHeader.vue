@@ -221,14 +221,15 @@ const closeMenus = () => {
             Profile
           </router-link>
 
-          <a
-            href="#"
+          <router-link
+            to="/settings"
             class="flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors border-b border-slate-200"
             role="menuitem"
+            @click="closeMenus"
           >
             <Settings :size="16" />
             Settings
-          </a>
+          </router-link>
 
           <button
             class="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
