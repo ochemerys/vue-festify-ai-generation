@@ -33,7 +33,12 @@ const GoodsReceiptRequestSchema = z.object({
 
 export async function purchaseOrderRoutes(app: FastifyInstance) {
   // POST /api/purchase-orders - Create purchase order
-  app.post('/api/purchase-orders', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.post('/api/purchase-orders', {
+    schema: {
+      description: 'Create a new purchase order',
+      tags: ['Purchase Orders'],
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const poData = CreatePurchaseOrderRequestSchema.parse(request.body)
 
@@ -108,7 +113,12 @@ export async function purchaseOrderRoutes(app: FastifyInstance) {
   })
 
   // GET /api/purchase-orders - List purchase orders
-  app.get('/api/purchase-orders', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.get('/api/purchase-orders', {
+    schema: {
+      description: 'Get paginated list of purchase orders with optional filters',
+      tags: ['Purchase Orders'],
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const filters = PurchaseOrderFiltersSchema.parse(request.query)
 
@@ -165,7 +175,12 @@ export async function purchaseOrderRoutes(app: FastifyInstance) {
   })
 
   // GET /api/purchase-orders/:id - Get purchase order by ID
-  app.get<{ Params: { id: string } }>('/api/purchase-orders/:id', async (request, reply) => {
+  app.get<{ Params: { id: string } }>('/api/purchase-orders/:id', {
+    schema: {
+      description: 'Get a single purchase order by ID',
+      tags: ['Purchase Orders'],
+    },
+  }, async (request, reply) => {
     try {
       const purchaseOrder = await AppDataSource.getRepository(PurchaseOrder).findOne({
         where: { id: request.params.id },
@@ -185,7 +200,12 @@ export async function purchaseOrderRoutes(app: FastifyInstance) {
   })
 
   // PUT /api/purchase-orders/:id/status - Update PO status
-  app.put<{ Params: { id: string } }>('/api/purchase-orders/:id/status', async (request, reply) => {
+  app.put<{ Params: { id: string } }>('/api/purchase-orders/:id/status', {
+    schema: {
+      description: 'Update purchase order status',
+      tags: ['Purchase Orders'],
+    },
+  }, async (request, reply) => {
     try {
       const { status } = request.body as { status: string }
 
@@ -221,7 +241,12 @@ export async function purchaseOrderRoutes(app: FastifyInstance) {
   })
 
   // PUT /api/purchase-orders/:id/expected-date - Update expected date
-  app.put<{ Params: { id: string } }>('/api/purchase-orders/:id/expected-date', async (request, reply) => {
+  app.put<{ Params: { id: string } }>('/api/purchase-orders/:id/expected-date', {
+    schema: {
+      description: 'Update purchase order expected delivery date',
+      tags: ['Purchase Orders'],
+    },
+  }, async (request, reply) => {
     try {
       const { expectedDate } = request.body as { expectedDate: string }
 
@@ -243,7 +268,12 @@ export async function purchaseOrderRoutes(app: FastifyInstance) {
   })
 
   // POST /api/purchase-orders/:id/receive - Receive goods
-  app.post<{ Params: { id: string } }>('/api/purchase-orders/:id/receive', async (request, reply) => {
+  app.post<{ Params: { id: string } }>('/api/purchase-orders/:id/receive', {
+    schema: {
+      description: 'Record goods receipt for a purchase order',
+      tags: ['Purchase Orders'],
+    },
+  }, async (request, reply) => {
     try {
       const poId = request.params.id
       const receiptData = GoodsReceiptRequestSchema.parse(request.body)
@@ -339,7 +369,12 @@ export async function purchaseOrderRoutes(app: FastifyInstance) {
   })
 
   // GET /api/purchase-orders/summary - Get PO summary report
-  app.get('/api/purchase-orders/summary', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.get('/api/purchase-orders/summary', {
+    schema: {
+      description: 'Get purchase order summary statistics',
+      tags: ['Purchase Orders'],
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const poRepo = AppDataSource.getRepository(PurchaseOrder)
       const summary = await poRepo.createQueryBuilder('po')
@@ -375,7 +410,12 @@ export async function purchaseOrderRoutes(app: FastifyInstance) {
   })
 
   // GET /api/purchase-orders/supplier-performance - Get supplier performance report
-  app.get('/api/purchase-orders/supplier-performance', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.get('/api/purchase-orders/supplier-performance', {
+    schema: {
+      description: 'Get supplier performance metrics',
+      tags: ['Purchase Orders'],
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const poRepo = AppDataSource.getRepository(PurchaseOrder)
       const supplierPerformance = await poRepo.createQueryBuilder('po')

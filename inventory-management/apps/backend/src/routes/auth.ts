@@ -32,7 +32,46 @@ export async function authRoutes(app: FastifyInstance) {
   // Import entities inside the function to ensure reflect-metadata is loaded first
   const { AppDataSource, User } = await import('@inventory/db')
   // POST /auth/login - User login
-  app.post('/auth/login', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.post('/auth/login', {
+    schema: {
+      description: 'User login with email and password',
+      tags: ['Authentication'],
+      body: {
+        type: 'object',
+        properties: {
+          email: { type: 'string', format: 'email' },
+          password: { type: 'string' },
+        },
+        required: ['email', 'password'],
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            data: {
+              type: 'object',
+              properties: {
+                accessToken: { type: 'string' },
+                tokenType: { type: 'string' },
+                expiresIn: { type: 'number' },
+                user: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    email: { type: 'string' },
+                    firstName: { type: 'string' },
+                    lastName: { type: 'string' },
+                    role: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const { email, password } = LoginRequestSchema.parse(request.body)
 
@@ -88,14 +127,56 @@ export async function authRoutes(app: FastifyInstance) {
   })
 
   // POST /auth/logout - User logout
-  app.post('/auth/logout', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.post('/auth/logout', {
+    schema: {
+      description: 'User logout',
+      tags: ['Authentication'],
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            message: { type: 'string' },
+          },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
     // In a stateless JWT system, logout is handled client-side by discarding the token
     // In a production system, you might want to implement token blacklisting
     return { success: true, message: 'Logged out successfully' }
   })
 
   // POST /auth/refresh - Refresh access token
-  app.post('/auth/refresh', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.post('/auth/refresh', {
+    schema: {
+      description: 'Refresh access token using refresh token',
+      tags: ['Authentication'],
+      body: {
+        type: 'object',
+        properties: {
+          refreshToken: { type: 'string' },
+        },
+        required: ['refreshToken'],
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            data: {
+              type: 'object',
+              properties: {
+                accessToken: { type: 'string' },
+                tokenType: { type: 'string' },
+                expiresIn: { type: 'number' },
+              },
+            },
+          },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const { refreshToken } = request.body as any
 
@@ -142,7 +223,27 @@ export async function authRoutes(app: FastifyInstance) {
   })
 
   // GET /auth/permissions - Get user permissions
-  app.get('/auth/permissions', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.get('/auth/permissions', {
+    schema: {
+      description: 'Get user permissions based on role',
+      tags: ['Authentication'],
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            data: {
+              type: 'object',
+              properties: {
+                role: { type: 'string' },
+                permissions: { type: 'object' },
+              },
+            },
+          },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       // In a real app, you'd get user from JWT token
       // For now, return mock permissions
@@ -164,7 +265,32 @@ export async function authRoutes(app: FastifyInstance) {
   })
 
   // POST /users - Create new user
-  app.post('/users', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.post('/users', {
+    schema: {
+      description: 'Create a new user',
+      tags: ['Users'],
+      body: {
+        type: 'object',
+        properties: {
+          email: { type: 'string', format: 'email' },
+          password: { type: 'string' },
+          firstName: { type: 'string' },
+          lastName: { type: 'string' },
+          role: { type: 'string', enum: ['ADMIN', 'MANAGER', 'STAFF', 'VIEWER'] },
+        },
+        required: ['email', 'password', 'firstName', 'lastName'],
+      },
+      response: {
+        201: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            data: { type: 'object' },
+          },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const userData = CreateUserRequestSchema.parse(request.body)
 
@@ -204,7 +330,24 @@ export async function authRoutes(app: FastifyInstance) {
   })
 
   // GET /users - List all users
-  app.get('/users', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.get('/users', {
+    schema: {
+      description: 'Get list of all users',
+      tags: ['Users'],
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            data: {
+              type: 'array',
+              items: { type: 'object' },
+            },
+          },
+        },
+      },
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const userRepository = AppDataSource.getRepository(User)
       const users = await userRepository.find({
@@ -220,7 +363,28 @@ export async function authRoutes(app: FastifyInstance) {
   })
 
   // GET /users/:id - Get user by ID
-  app.get<{ Params: { id: string } }>('/users/:id', async (request, reply) => {
+  app.get<{ Params: { id: string } }>('/users/:id', {
+    schema: {
+      description: 'Get user by ID',
+      tags: ['Users'],
+      params: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', description: 'User ID' },
+        },
+        required: ['id'],
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            data: { type: 'object' },
+          },
+        },
+      },
+    },
+  }, async (request, reply) => {
     try {
       const userRepository = AppDataSource.getRepository(User)
       const user = await userRepository.findOne({
@@ -241,7 +405,38 @@ export async function authRoutes(app: FastifyInstance) {
   })
 
   // PUT /users/:id - Update user
-  app.put<{ Params: { id: string } }>('/users/:id', async (request, reply) => {
+  app.put<{ Params: { id: string } }>('/users/:id', {
+    schema: {
+      description: 'Update user information',
+      tags: ['Users'],
+      params: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', description: 'User ID' },
+        },
+        required: ['id'],
+      },
+      body: {
+        type: 'object',
+        properties: {
+          firstName: { type: 'string' },
+          lastName: { type: 'string' },
+          password: { type: 'string' },
+          role: { type: 'string', enum: ['ADMIN', 'MANAGER', 'STAFF', 'VIEWER'] },
+          isActive: { type: 'boolean' },
+        },
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            data: { type: 'object' },
+          },
+        },
+      },
+    },
+  }, async (request, reply) => {
     try {
       const updateData = UpdateUserRequestSchema.parse(request.body)
 
@@ -283,7 +478,28 @@ export async function authRoutes(app: FastifyInstance) {
   })
 
   // PATCH /users/:id/deactivate - Deactivate user
-  app.patch<{ Params: { id: string } }>('/users/:id/deactivate', async (request, reply) => {
+  app.patch<{ Params: { id: string } }>('/users/:id/deactivate', {
+    schema: {
+      description: 'Deactivate a user account',
+      tags: ['Users'],
+      params: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', description: 'User ID' },
+        },
+        required: ['id'],
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            data: { type: 'object' },
+          },
+        },
+      },
+    },
+  }, async (request, reply) => {
     try {
       const userRepository = AppDataSource.getRepository(User)
       await userRepository.update(request.params.id, { isActive: false })
@@ -306,7 +522,28 @@ export async function authRoutes(app: FastifyInstance) {
   })
 
   // PATCH /users/:id/reactivate - Reactivate user
-  app.patch<{ Params: { id: string } }>('/users/:id/reactivate', async (request, reply) => {
+  app.patch<{ Params: { id: string } }>('/users/:id/reactivate', {
+    schema: {
+      description: 'Reactivate a user account',
+      tags: ['Users'],
+      params: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', description: 'User ID' },
+        },
+        required: ['id'],
+      },
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            data: { type: 'object' },
+          },
+        },
+      },
+    },
+  }, async (request, reply) => {
     try {
       const userRepository = AppDataSource.getRepository(User)
       await userRepository.update(request.params.id, { isActive: true })

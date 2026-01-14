@@ -14,20 +14,16 @@ export class GoodsReceipt {
   @Column('varchar')
   receiptNumber!: string;
 
-  @Column('uuid')
-  receivedBy!: string;
+  @Column('timestamp')
+  receivedDate!: Date;
 
   @Column('text', { nullable: true })
   notes?: string;
 
   @CreateDateColumn()
-  receivedAt!: Date;
+  createdAt!: Date;
 
   @ManyToOne('PurchaseOrder', (po: PurchaseOrder) => po.goodsReceipts)
   @JoinColumn({ name: 'purchaseOrderId' })
   purchaseOrder!: PurchaseOrder;
-
-  @ManyToOne('User')
-  @JoinColumn({ name: 'receivedBy' })
-  receivedByUser!: User;
 }

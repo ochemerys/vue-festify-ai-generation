@@ -10,7 +10,12 @@ const DateRangeSchema = z.object({
 
 export async function reportRoutes(app: FastifyInstance) {
   // GET /api/reports/inventory-summary - Inventory summary report
-  app.get('/api/reports/inventory-summary', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.get('/api/reports/inventory-summary', {
+    schema: {
+      description: 'Get inventory summary report',
+      tags: ['Reports'],
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const productRepo = AppDataSource.getRepository(Product)
       const products = await productRepo.find({ where: { isActive: true }, relations: ['inventoryLevels'] })
@@ -58,7 +63,12 @@ export async function reportRoutes(app: FastifyInstance) {
   })
 
   // GET /api/reports/low-stock - Low stock report
-  app.get('/api/reports/low-stock', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.get('/api/reports/low-stock', {
+    schema: {
+      description: 'Get low stock items report',
+      tags: ['Reports'],
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const productRepo = AppDataSource.getRepository(Product)
       const lowStockProducts = await productRepo.createQueryBuilder('product')
@@ -89,7 +99,12 @@ export async function reportRoutes(app: FastifyInstance) {
   })
 
   // GET /api/reports/sales - Sales report
-  app.get('/api/reports/sales', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.get('/api/reports/sales', {
+    schema: {
+      description: 'Get sales report with optional date range',
+      tags: ['Reports'],
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const { startDate, endDate } = DateRangeSchema.parse(request.query)
 
@@ -154,7 +169,12 @@ export async function reportRoutes(app: FastifyInstance) {
   })
 
   // GET /api/reports/inventory-movement - Inventory movement report
-  app.get('/api/reports/inventory-movement', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.get('/api/reports/inventory-movement', {
+    schema: {
+      description: 'Get inventory movement report with optional date range',
+      tags: ['Reports'],
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const { startDate, endDate } = DateRangeSchema.parse(request.query)
 
@@ -215,7 +235,12 @@ export async function reportRoutes(app: FastifyInstance) {
   })
 
   // GET /api/reports/product-performance - Product performance report
-  app.get('/api/reports/product-performance', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.get('/api/reports/product-performance', {
+    schema: {
+      description: 'Get product performance metrics with optional date range',
+      tags: ['Reports'],
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const { startDate, endDate } = DateRangeSchema.parse(request.query)
 
@@ -265,7 +290,12 @@ export async function reportRoutes(app: FastifyInstance) {
   })
 
   // GET /api/reports/dashboard - Dashboard metrics
-  app.get('/api/reports/dashboard', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.get('/api/reports/dashboard', {
+    schema: {
+      description: 'Get dashboard metrics and KPIs',
+      tags: ['Reports'],
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       // Get inventory metrics
       const productRepo = AppDataSource.getRepository(Product)
@@ -338,7 +368,12 @@ export async function reportRoutes(app: FastifyInstance) {
   })
 
   // GET /api/reports/:type/export - Export report
-  app.get<{ Params: { type: string } }>('/api/reports/:type/export', async (request, reply) => {
+  app.get<{ Params: { type: string } }>('/api/reports/:type/export', {
+    schema: {
+      description: 'Export report in JSON or CSV format',
+      tags: ['Reports'],
+    },
+  }, async (request, reply) => {
     try {
       const { type } = request.params
       const format = (request.query as any).format || 'json'

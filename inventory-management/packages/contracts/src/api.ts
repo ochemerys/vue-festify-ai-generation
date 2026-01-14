@@ -62,9 +62,18 @@ export const AuthTokenSchema = z.object({
   tokenType: z.string(),
 })
 
+// Optional: user payload for login responses
+export const AuthenticatedUserSchema = z.object({
+  id: z.string().cuid(),
+  email: z.string().email(),
+  firstName: z.string(),
+  lastName: z.string(),
+  role: z.enum(['ADMIN', 'MANAGER', 'STAFF', 'VIEWER']).default('STAFF'),
+})
+
 export const AuthResponseSchema = z.object({
   success: z.boolean(),
-  data: AuthTokenSchema.optional(),
+  data: AuthTokenSchema.extend({ user: AuthenticatedUserSchema.optional() }).optional(),
   error: ApiErrorSchema.optional(),
   timestamp: z.string().datetime(),
 })
@@ -109,6 +118,7 @@ export type PaginationParams = z.infer<typeof PaginationParamsSchema>
 export type ValidationError = z.infer<typeof ValidationErrorSchema>
 export type HealthCheckResponse = z.infer<typeof HealthCheckResponseSchema>
 export type AuthToken = z.infer<typeof AuthTokenSchema>
+export type AuthenticatedUser = z.infer<typeof AuthenticatedUserSchema>
 export type AuthResponse = z.infer<typeof AuthResponseSchema>
 export type ValidationErrorResponse = z.infer<typeof ValidationErrorResponseSchema>
 

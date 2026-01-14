@@ -251,6 +251,12 @@ export async function productRoutes(app: FastifyInstance) {
   // GET /api/products/sku/:sku - Get product by SKU
   app.get<{ Params: { sku: string } }>(
     '/api/products/sku/:sku',
+    {
+      schema: {
+        description: 'Get a product by SKU',
+        tags: ['Products'],
+      },
+    },
     async (request, reply) => {
       try {
         const productRepository = AppDataSource.getRepository(Product)
@@ -377,6 +383,12 @@ export async function productRoutes(app: FastifyInstance) {
   // PUT /api/products/:id - Update product
   app.put<{ Params: { id: string } }>(
     '/api/products/:id',
+    {
+      schema: {
+        description: 'Update product information',
+        tags: ['Products'],
+      },
+    },
     async (request, reply) => {
       try {
         const updateData = UpdateProductRequestSchema.parse(request.body)
@@ -417,6 +429,12 @@ export async function productRoutes(app: FastifyInstance) {
   // PATCH /api/products/:id/deactivate - Deactivate product
   app.patch<{ Params: { id: string } }>(
     '/api/products/:id/deactivate',
+    {
+      schema: {
+        description: 'Deactivate a product',
+        tags: ['Products'],
+      },
+    },
     async (request, reply) => {
       try {
         const productRepository = AppDataSource.getRepository(Product)
@@ -441,6 +459,12 @@ export async function productRoutes(app: FastifyInstance) {
   // DELETE /api/products/:id - Delete product
   app.delete<{ Params: { id: string } }>(
     '/api/products/:id',
+    {
+      schema: {
+        description: 'Delete a product',
+        tags: ['Products'],
+      },
+    },
     async (request, reply) => {
       try {
         const productRepository = AppDataSource.getRepository(Product)

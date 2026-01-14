@@ -10,14 +10,11 @@ export class StockAlert {
   @Column('uuid')
   productId!: string;
 
-  @Column('varchar')
-  alertType!: string; // 'LOW_STOCK', 'OUT_OF_STOCK', etc.
+  @Column('int')
+  currentQuantity!: number;
 
   @Column('int')
-  currentStock!: number;
-
-  @Column('int')
-  threshold!: number;
+  reorderLevel!: number;
 
   @Column('boolean', { default: false })
   isResolved!: boolean;

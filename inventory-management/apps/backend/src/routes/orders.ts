@@ -12,7 +12,12 @@ const OrderItemSchema = z.object({
 
 export async function orderRoutes(app: FastifyInstance) {
   // GET /api/orders/summary - Get order summary report (MUST be before parameterized routes)
-  app.get('/api/orders/summary', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.get('/api/orders/summary', {
+    schema: {
+      description: 'Get order summary statistics',
+      tags: ['Orders'],
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const orderRepo = AppDataSource.getRepository(Order)
       const raw = await orderRepo
@@ -47,7 +52,12 @@ export async function orderRoutes(app: FastifyInstance) {
   })
 
   // POST /api/orders - Create new order
-  app.post('/api/orders', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.post('/api/orders', {
+    schema: {
+      description: 'Create a new sales order',
+      tags: ['Orders'],
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const orderData = CreateOrderRequestSchema.parse(request.body)
 
@@ -141,7 +151,12 @@ export async function orderRoutes(app: FastifyInstance) {
   })
 
   // GET /api/orders - List orders with filters
-  app.get('/api/orders', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.get('/api/orders', {
+    schema: {
+      description: 'Get paginated list of orders with optional filters',
+      tags: ['Orders'],
+    },
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const filters = OrderFiltersSchema.parse(request.query)
 
@@ -193,7 +208,12 @@ export async function orderRoutes(app: FastifyInstance) {
   })
 
   // GET /api/orders/:id - Get order by ID
-  app.get<{ Params: { id: string } }>('/api/orders/:id', async (request, reply) => {
+  app.get<{ Params: { id: string } }>('/api/orders/:id', {
+    schema: {
+      description: 'Get a single order by ID',
+      tags: ['Orders'],
+    },
+  }, async (request, reply) => {
     try {
       const order = await AppDataSource.getRepository(Order).findOne({
         where: { id: request.params.id },
@@ -212,8 +232,119 @@ export async function orderRoutes(app: FastifyInstance) {
     }
   })
 
+  // PUT /api/orders/:id - Update order (proxy to status update per frontend expectation)
+  app.put<{ Params: { id: string } }>('/api/orders/:id', {
+    schema: {
+      description: 'Update order status and details',
+      tags: ['Orders'],
+    },
+  }, async (request, reply) => {
+    // Delegate to status update logic using the same schema
+    try {
+      const { status, notes } = UpdateOrderStatusRequestSchema.parse(request.body)
+      // Reuse handler by calling underlying repository logic similar to status route
+      const order = await AppDataSource.getRepository(Order).findOne({ where: { id: request.params.id }, relations: { items: true } })
+
+      if (!order) {
+        reply.status(404)
+        return { success: false, error: 'Order not found' }
+      }
+
+      const updateData: any = { status }
+      if (notes) updateData.notes = notes
+
+      if (status === 'CONFIRMED' && order.status === 'PENDING') {
+        // inventory already reserved during creation
+      } else if (status === 'SHIPPED' && order.status === 'CONFIRMED') {
+        updateData.shippedAt = new Date()
+        await AppDataSource.transaction(async (manager: EntityManager) => {
+          for (const item of order.items as any[]) {
+            await manager
+              .getRepository(InventoryLevel)
+              .createQueryBuilder()
+              .update(InventoryLevel)
+              .set({
+                currentQuantity: () => `current_quantity - ${item.quantity}`,
+                reservedQuantity: () => `reserved_quantity - ${item.quantity}`,
+              })
+              .where('product_id = :pid', { pid: item.productId })
+              .execute()
+
+            const invTx = manager.create(InventoryTransaction, {
+              productId: item.productId,
+              type: TransactionType.SALE,
+              quantity: item.quantity,
+              reference: order.orderNumber,
+              notes: `Order ${order.orderNumber}`,
+              createdBy: 'system',
+            })
+            await manager.save(invTx)
+          }
+        })
+      } else if (status === 'DELIVERED' && order.status === 'SHIPPED') {
+        updateData.deliveredAt = new Date()
+      } else if (status === 'CANCELLED') {
+        await AppDataSource.transaction(async (manager: EntityManager) => {
+          for (const item of order.items as any[]) {
+            await manager
+              .getRepository(InventoryLevel)
+              .createQueryBuilder()
+              .update(InventoryLevel)
+              .set({
+                reservedQuantity: () => `reserved_quantity - ${item.quantity}`,
+                availableQuantity: () => `available_quantity + ${item.quantity}`,
+              })
+              .where('product_id = :pid', { pid: item.productId })
+              .execute()
+          }
+        })
+      } else if (status === 'RETURNED') {
+        await AppDataSource.transaction(async (manager: EntityManager) => {
+          for (const item of order.items as any[]) {
+            await manager
+              .getRepository(InventoryLevel)
+              .createQueryBuilder()
+              .update(InventoryLevel)
+              .set({
+                currentQuantity: () => `current_quantity + ${item.quantity}`,
+                availableQuantity: () => `available_quantity + ${item.quantity}`,
+              })
+              .where('product_id = :pid', { pid: item.productId })
+              .execute()
+
+            const invTx = manager.create(InventoryTransaction, {
+              productId: item.productId,
+              type: TransactionType.RETURN,
+              quantity: item.quantity,
+              reference: order.orderNumber,
+              notes: `Return for order ${order.orderNumber}`,
+              createdBy: 'system',
+            })
+            await manager.save(invTx)
+          }
+        })
+      }
+
+      await AppDataSource.getRepository(Order).update({ id: request.params.id }, updateData as any)
+      const updatedOrder = await AppDataSource.getRepository(Order).findOne({ where: { id: request.params.id }, relations: { items: { product: true } } })
+      return { success: true, data: updatedOrder }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        reply.status(400)
+        return { success: false, error: 'Validation failed', details: error.issues }
+      }
+      reply.status(500)
+      return { success: false, error: 'Internal server error' }
+    }
+  })
+
   // PUT /api/orders/:id/status - Update order status
-  app.put<{ Params: { id: string } }>('/api/orders/:id/status', async (request, reply) => {
+  app.put<{ Params: { id: string } }>('/api/orders/:id/status', {
+    schema: {
+      description: 'Update order status',
+      tags: ['Orders'],
+    },
+  }, async (request, reply) => {
     try {
       const { status, notes } = UpdateOrderStatusRequestSchema.parse(request.body)
 
@@ -321,7 +452,12 @@ export async function orderRoutes(app: FastifyInstance) {
   })
 
   // POST /api/orders/:id/items - Add items to existing order
-  app.post<{ Params: { id: string } }>('/api/orders/:id/items', async (request, reply) => {
+  app.post<{ Params: { id: string } }>('/api/orders/:id/items', {
+    schema: {
+      description: 'Add items to an existing order',
+      tags: ['Orders'],
+    },
+  }, async (request, reply) => {
     try {
       const orderId = request.params.id
       const { productId, quantity, unitPrice } = OrderItemSchema.parse(request.body)
@@ -393,7 +529,12 @@ export async function orderRoutes(app: FastifyInstance) {
   })
 
   // DELETE /api/orders/:id/items/:itemId - Remove item from order
-  app.delete<{ Params: { id: string; itemId: string } }>('/api/orders/:id/items/:itemId', async (request, reply) => {
+  app.delete<{ Params: { id: string; itemId: string } }>('/api/orders/:id/items/:itemId', {
+    schema: {
+      description: 'Remove an item from an order',
+      tags: ['Orders'],
+    },
+  }, async (request, reply) => {
     try {
       const { id: orderId, itemId } = request.params
 

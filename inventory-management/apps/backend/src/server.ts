@@ -28,6 +28,13 @@ await app.register(swagger, {
       title: 'Inventory Management API',
       description: 'REST API for Inventory Management System',
       version: '1.0.0',
+      contact: {
+        name: 'API Support',
+        email: 'support@example.com',
+      },
+      license: {
+        name: 'MIT',
+      },
     },
     servers: [
       {
@@ -41,12 +48,47 @@ await app.register(swagger, {
           type: 'http',
           scheme: 'bearer',
           bearerFormat: 'JWT',
+          description: 'JWT Bearer token for authentication',
         },
       },
     },
     security: [
       {
         bearerAuth: [],
+      },
+    ],
+    tags: [
+      {
+        name: 'Authentication',
+        description: 'User authentication and authorization endpoints',
+      },
+      {
+        name: 'Products',
+        description: 'Product management endpoints',
+      },
+      {
+        name: 'Inventory',
+        description: 'Inventory level and transaction management',
+      },
+      {
+        name: 'Orders',
+        description: 'Sales order management',
+      },
+      {
+        name: 'Purchase Orders',
+        description: 'Purchase order and goods receipt management',
+      },
+      {
+        name: 'Reports',
+        description: 'Business reports and analytics',
+      },
+      {
+        name: 'Users',
+        description: 'User management endpoints',
+      },
+      {
+        name: 'Health',
+        description: 'System health and status',
       },
     ],
   },
