@@ -14,9 +14,9 @@ import { StockAlert } from './entities/stock-alert.entity.js'
 import bcrypt from 'bcryptjs'
 
 async function seed() {
-  await AppDataSource.initialize()
-
   try {
+    await AppDataSource.initialize()
+
     // Check if seed already exists
     const existingUser = await AppDataSource.getRepository(User).findOne({
       where: { email: 'admin@example.com' },
@@ -24,7 +24,6 @@ async function seed() {
 
     if (existingUser) {
       console.log('Database already seeded. Skipping.')
-      await AppDataSource.destroy()
       return
     }
 
@@ -629,7 +628,7 @@ async function seedOrders(
     const order = new Order()
     order.orderNumber = `ORD-${String(3000 + i).padStart(4, '0')}`
     order.customerName = customerNames[i % customerNames.length]
-    order.customerId = `CUST-${String(i + 1).padStart(3, '0')}`
+    // customerId is UUID type, leaving it undefined/null
     order.customerEmail = `customer${i + 1}@example.com`
     order.customerPhone = `+1-555-${String(1000 + i).padStart(4, '0')}`
     order.shippingAddress = `${100 + i} Business Ave, Suite ${i + 1}, New York, NY 10001`

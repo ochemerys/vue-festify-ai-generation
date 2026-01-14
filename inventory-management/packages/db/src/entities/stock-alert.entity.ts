@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm'
-import { Product } from './product.entity'
+import { Product } from './product.entity.js'
 
 @Entity({ name: 'stock_alerts' })
 export class StockAlert {

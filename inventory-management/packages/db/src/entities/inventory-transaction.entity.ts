@@ -1,8 +1,8 @@
 import 'reflect-metadata'
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm'
-import { Product } from './product.entity'
-import { InventoryLevel } from './inventory-level.entity';
-import { User } from './user.entity';
+import { Product } from './product.entity.js'
+import { InventoryLevel } from './inventory-level.entity.js';
+import { User } from './user.entity.js';
 
 export enum TransactionType {
   PURCHASE = 'PURCHASE',

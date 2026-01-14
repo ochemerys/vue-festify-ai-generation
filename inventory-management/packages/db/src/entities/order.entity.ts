@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany, JoinColumn } from 'typeorm'
-import { User } from './user.entity'
-import { OrderItem } from './order-item.entity';
+import { User } from './user.entity.js'
+import { OrderItem } from './order-item.entity.js';
 
 export enum OrderStatus {
   PENDING = 'PENDING',

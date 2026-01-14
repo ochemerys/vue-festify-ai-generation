@@ -16,10 +16,10 @@
     "lint:fix": "pnpm -r lint:fix",
     "format": "prettier --write \"**/*.{ts,tsx,vue,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,vue,json,md}\"",
-    "db:push": "pnpm --filter @inventory/db db:push",
-    "db:migrate": "pnpm --filter @inventory/db db:migrate",
+    "migration:create": "pnpm --filter @inventory/db migration:create",
+    "migration:run": "pnpm --filter @inventory/db migration:run",
+    "migration:revert": "pnpm --filter @inventory/db migration:revert",
     "db:seed": "pnpm --filter @inventory/db db:seed",
-    "db:studio": "pnpm --filter @inventory/db db:studio",
     "clean": "pnpm -r exec rm -rf dist node_modules && rm -rf node_modules",
     "install:clean": "pnpm clean && pnpm install"
   },

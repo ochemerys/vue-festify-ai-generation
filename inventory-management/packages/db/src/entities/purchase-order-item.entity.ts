@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm'
-import { PurchaseOrder } from './purchase-order.entity'
-import { Product } from './product.entity';
+import { PurchaseOrder } from './purchase-order.entity.js'
+import { Product } from './product.entity.js';
 
 @Entity({ name: 'purchase_order_items' })
 export class PurchaseOrderItem {

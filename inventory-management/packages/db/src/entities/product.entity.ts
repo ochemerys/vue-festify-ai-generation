@@ -1,9 +1,9 @@
 import 'reflect-metadata'
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm'
-import { InventoryLevel } from './inventory-level.entity'
-import { OrderItem } from './order-item.entity';
-import { InventoryTransaction } from './inventory-transaction.entity';
-import { StockAlert } from './stock-alert.entity';
+import { InventoryLevel } from './inventory-level.entity.js'
+import { OrderItem } from './order-item.entity.js';
+import { InventoryTransaction } from './inventory-transaction.entity.js';
+import { StockAlert } from './stock-alert.entity.js';
 
 @Entity({ name: 'products' })
 export class Product {

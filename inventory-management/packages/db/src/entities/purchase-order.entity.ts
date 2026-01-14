@@ -1,9 +1,9 @@
 import 'reflect-metadata'
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany, JoinColumn } from 'typeorm'
-import { Supplier } from './supplier.entity'
-import { PurchaseOrderItem } from './purchase-order-item.entity';
-import { GoodsReceipt } from './goods-receipt.entity';
-import { User } from './user.entity';
+import { Supplier } from './supplier.entity.js'
+import { PurchaseOrderItem } from './purchase-order-item.entity.js';
+import { GoodsReceipt } from './goods-receipt.entity.js';
+import { User } from './user.entity.js';
 
 export enum PurchaseOrderStatus {
   DRAFT = 'DRAFT',

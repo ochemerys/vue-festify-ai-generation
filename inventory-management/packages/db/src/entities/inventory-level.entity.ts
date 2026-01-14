@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 import { Entity, PrimaryColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm'
-import { Product } from './product.entity'
-import { InventoryTransaction } from './inventory-transaction.entity';
+import { Product } from './product.entity.js'
+import { InventoryTransaction } from './inventory-transaction.entity.js';
 
 @Entity({ name: 'inventory_levels' })
 export class InventoryLevel {

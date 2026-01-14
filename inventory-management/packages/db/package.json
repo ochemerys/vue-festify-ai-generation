@@ -27,9 +27,9 @@
     "test": "echo 'No tests configured for db package' && exit 0",
     "typeorm": "dotenv -- node ./node_modules/typeorm/cli.js",
     "migration:create": "npm run typeorm -- migration:create src/migrations/NewMigration",
-    "migration:run": "npm run build && npm run typeorm -- -d dist/data-source.js migration:run",
-    "migration:revert": "npm run build && npm run typeorm -- -d dist/data-source.js migration:revert",
-    "db:seed": "npm run build && dotenv -- node dist/seed.js"
+    "migration:run": "npm run build && npm run typeorm -- -d dist/src/data-source.js migration:run",
+    "migration:revert": "npm run build && npm run typeorm -- -d dist/src/data-source.js migration:revert",
+    "db:seed": "npm run build && dotenv -- node dist/src/seed.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
