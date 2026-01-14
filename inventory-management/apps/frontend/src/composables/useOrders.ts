@@ -1,154 +1,53 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-import { ref, computed } from 'vue'
-
-// Mock orders data
-const MOCK_ORDERS = [
-  {
-    id: '1',
-    orderNumber: 'ORD-001',
-    status: 'PENDING',
-    total: 1029.97,
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '2',
-    orderNumber: 'ORD-002',
-    status: 'COMPLETED',
-    total: 179.98,
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '3',
-    orderNumber: 'ORD-003',
-    status: 'PENDING',
-    total: 49.99,
-    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '4',
-    orderNumber: 'ORD-004',
-    status: 'COMPLETED',
-    total: 999.99,
-    createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '5',
-    orderNumber: 'ORD-005',
-    status: 'SHIPPED',
-    total: 299.97,
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-]
-
-/**
- * Mock API function - simulates fetching orders with pagination
- * Will be replaced with real API call: apiClient.getOrders()
- */
-async function mockGetOrders(params: { page: number; pageSize: number }) {
-  await new Promise(resolve => setTimeout(resolve, 500))
-
-  const { page, pageSize } = params
-  const start = (page - 1) * pageSize
-  const end = start + pageSize
-  const data = MOCK_ORDERS.slice(start, end)
-
-  return {
-    success: true,
-    data,
-    pagination: {
-      page,
-      pageSize,
-      total: MOCK_ORDERS.length,
-      totalPages: Math.ceil(MOCK_ORDERS.length / pageSize),
-    },
-  }
-}
-
-/**
- * Mock API function - simulates fetching single order
- * Will be replaced with real API call: apiClient.getOrder()
- */
-async function mockGetOrder(id: string) {
-  await new Promise(resolve => setTimeout(resolve, 300))
-  const order = MOCK_ORDERS.find(o => o.id === id)
-  return {
-    success: !!order,
-    data: order,
-  }
-}
-
-/**
- * Mock API function - simulates creating an order
- * Will be replaced with real API call: apiClient.createOrder()
- */
-async function mockCreateOrder(data: any) {
-  await new Promise(resolve => setTimeout(resolve, 300))
-
-  const newOrder = {
-    id: Date.now().toString(),
-    orderNumber: `ORD-${String(MOCK_ORDERS.length + 1).padStart(3, '0')}`,
-    status: 'PENDING',
-    total: data.total || 0,
-    createdAt: new Date().toISOString(),
-  }
-
-  MOCK_ORDERS.unshift(newOrder)
-  return { success: true, data: newOrder }
-}
+import { ref, computed, type Ref } from 'vue'
+import { apiClient } from '../services/api'
 
 /**
  * Fetch orders with pagination
  */
-export function useOrders(page = ref(1), pageSize = ref(10)) {
+export function useOrders(
+  page: Ref<number> = ref(1),
+  pageSize: Ref<number> = ref(10)
+) {
   const query = useQuery({
     queryKey: ['orders', page, pageSize],
     queryFn: () =>
-      mockGetOrders({
+      apiClient.getOrders({
         page: page.value,
         pageSize: pageSize.value,
       }),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 3, // 3 minutes
   })
 
   return {
-    orders: computed(() => {
-      if (query.data && 'data' in query.data) {
-        return query.data.data || []
-      }
-      return []
-    }),
-    pagination: computed(() => {
-      if (query.data && 'pagination' in query.data) {
-        return query.data.pagination
-      }
-      return undefined
-    }),
+    orders: computed(() => query.data.value?.data || []),
+    pagination: computed(() => query.data.value?.pagination),
     isLoading: query.isPending,
     isError: query.isError,
     error: query.error,
+    refetch: query.refetch,
   }
 }
 
 /**
  * Fetch single order by ID
  */
-export function useOrder(id: string) {
+export function useOrder(id: Ref<string> | string) {
+  const orderId = typeof id === 'string' ? ref(id) : id
+
   const query = useQuery({
-    queryKey: ['order', id],
-    queryFn: () => mockGetOrder(id),
-    enabled: !!id,
+    queryKey: ['order', orderId],
+    queryFn: () => apiClient.getOrder(orderId.value),
+    enabled: computed(() => !!orderId.value),
+    staleTime: 1000 * 60 * 3, // 3 minutes
   })
 
   return {
-    order: computed(() => {
-      if (query.data && 'data' in query.data) {
-        return query.data.data
-      }
-      return undefined
-    }),
+    order: computed(() => query.data.value?.data),
     isLoading: query.isPending,
     isError: query.isError,
     error: query.error,
+    refetch: query.refetch,
   }
 }
 
@@ -159,17 +58,23 @@ export function useCreateOrder() {
   const queryClient = useQueryClient()
 
   const mutation = useMutation({
-    mutationFn: (data: any) => mockCreateOrder(data),
+    mutationFn: (data: Record<string, unknown>) => apiClient.createOrder(data),
     onSuccess: () => {
+      // Invalidate orders list
       queryClient.invalidateQueries({ queryKey: ['orders'] })
+      // Also invalidate inventory as orders affect stock
+      queryClient.invalidateQueries({ queryKey: ['inventory'] })
     },
   })
 
   return {
     createOrder: mutation.mutate,
+    createOrderAsync: mutation.mutateAsync,
     isLoading: mutation.isPending,
+    isSuccess: mutation.isSuccess,
     isError: mutation.isError,
     error: mutation.error,
+    reset: mutation.reset,
   }
 }
 
@@ -180,26 +85,124 @@ export function useUpdateOrder() {
   const queryClient = useQueryClient()
 
   const mutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      await new Promise(resolve => setTimeout(resolve, 300))
-
-      const order = MOCK_ORDERS.find(o => o.id === id)
-      if (order) {
-        Object.assign(order, data)
-      }
-
-      return { success: !!order, data: order }
-    },
-    onSuccess: (_, { id }) => {
+    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
+      apiClient.updateOrder(id, data),
+    onSuccess: (response, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['orders'] })
       queryClient.invalidateQueries({ queryKey: ['order', id] })
+      // Invalidate inventory if order status changed
+      queryClient.invalidateQueries({ queryKey: ['inventory'] })
     },
   })
 
   return {
     updateOrder: mutation.mutate,
+    updateOrderAsync: mutation.mutateAsync,
     isLoading: mutation.isPending,
+    isSuccess: mutation.isSuccess,
     isError: mutation.isError,
     error: mutation.error,
+    reset: mutation.reset,
+  }
+}
+
+/**
+ * Fetch purchase orders with pagination
+ */
+export function usePurchaseOrders(
+  page: Ref<number> = ref(1),
+  pageSize: Ref<number> = ref(10)
+) {
+  const query = useQuery({
+    queryKey: ['purchase-orders', page, pageSize],
+    queryFn: () =>
+      apiClient.getPurchaseOrders({
+        page: page.value,
+        pageSize: pageSize.value,
+      }),
+    staleTime: 1000 * 60 * 3, // 3 minutes
+  })
+
+  return {
+    purchaseOrders: computed(() => query.data.value?.data || []),
+    pagination: computed(() => query.data.value?.pagination),
+    isLoading: query.isPending,
+    isError: query.isError,
+    error: query.error,
+    refetch: query.refetch,
+  }
+}
+
+/**
+ * Fetch single purchase order by ID
+ */
+export function usePurchaseOrder(id: Ref<string> | string) {
+  const poId = typeof id === 'string' ? ref(id) : id
+
+  const query = useQuery({
+    queryKey: ['purchase-order', poId],
+    queryFn: () => apiClient.getPurchaseOrder(poId.value),
+    enabled: computed(() => !!poId.value),
+    staleTime: 1000 * 60 * 3, // 3 minutes
+  })
+
+  return {
+    purchaseOrder: computed(() => query.data.value?.data),
+    isLoading: query.isPending,
+    isError: query.isError,
+    error: query.error,
+    refetch: query.refetch,
+  }
+}
+
+/**
+ * Create purchase order mutation
+ */
+export function useCreatePurchaseOrder() {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: (data: Record<string, unknown>) => apiClient.createPurchaseOrder(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchase-orders'] })
+    },
+  })
+
+  return {
+    createPurchaseOrder: mutation.mutate,
+    createPurchaseOrderAsync: mutation.mutateAsync,
+    isLoading: mutation.isPending,
+    isSuccess: mutation.isSuccess,
+    isError: mutation.isError,
+    error: mutation.error,
+    reset: mutation.reset,
+  }
+}
+
+/**
+ * Update purchase order mutation
+ */
+export function useUpdatePurchaseOrder() {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
+      apiClient.updatePurchaseOrder(id, data),
+    onSuccess: (response, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['purchase-orders'] })
+      queryClient.invalidateQueries({ queryKey: ['purchase-order', id] })
+      // Invalidate inventory if PO was received
+      queryClient.invalidateQueries({ queryKey: ['inventory'] })
+    },
+  })
+
+  return {
+    updatePurchaseOrder: mutation.mutate,
+    updatePurchaseOrderAsync: mutation.mutateAsync,
+    isLoading: mutation.isPending,
+    isSuccess: mutation.isSuccess,
+    isError: mutation.isError,
+    error: mutation.error,
+    reset: mutation.reset,
   }
 }

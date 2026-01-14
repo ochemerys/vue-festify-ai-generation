@@ -1,187 +1,53 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-import { ref, computed } from 'vue'
-
-// Mock users data
-const MOCK_USERS = [
-  {
-    id: '1',
-    email: 'admin@example.com',
-    firstName: 'Admin',
-    lastName: 'User',
-    role: 'ADMIN',
-    isActive: true,
-    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '2',
-    email: 'manager@example.com',
-    firstName: 'Manager',
-    lastName: 'User',
-    role: 'MANAGER',
-    isActive: true,
-    createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '3',
-    email: 'staff@example.com',
-    firstName: 'Staff',
-    lastName: 'User',
-    role: 'STAFF',
-    isActive: true,
-    createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '4',
-    email: 'viewer@example.com',
-    firstName: 'Viewer',
-    lastName: 'User',
-    role: 'VIEWER',
-    isActive: true,
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-]
-
-/**
- * Mock API function - simulates fetching users with pagination
- * Will be replaced with real API call: apiClient.getUsers()
- */
-async function mockGetUsers(params: { page: number; pageSize: number }) {
-  await new Promise(resolve => setTimeout(resolve, 500))
-
-  const { page, pageSize } = params
-  const start = (page - 1) * pageSize
-  const end = start + pageSize
-  const data = MOCK_USERS.slice(start, end)
-
-  return {
-    success: true,
-    data,
-    pagination: {
-      page,
-      pageSize,
-      total: MOCK_USERS.length,
-      totalPages: Math.ceil(MOCK_USERS.length / pageSize),
-    },
-  }
-}
-
-/**
- * Mock API function - simulates fetching single user
- * Will be replaced with real API call: apiClient.getUser()
- */
-async function mockGetUser(id: string) {
-  await new Promise(resolve => setTimeout(resolve, 300))
-  const user = MOCK_USERS.find(u => u.id === id)
-  return {
-    success: !!user,
-    data: user,
-  }
-}
-
-/**
- * Mock API function - simulates creating a user
- * Will be replaced with real API call: apiClient.createUser()
- */
-async function mockCreateUser(data: any) {
-  await new Promise(resolve => setTimeout(resolve, 300))
-
-  const newUser = {
-    id: Date.now().toString(),
-    email: data.email,
-    firstName: data.firstName,
-    lastName: data.lastName,
-    role: data.role || 'STAFF',
-    isActive: true,
-    createdAt: new Date().toISOString(),
-  }
-
-  MOCK_USERS.unshift(newUser)
-  return { success: true, data: newUser }
-}
-
-/**
- * Mock API function - simulates updating a user
- * Will be replaced with real API call: apiClient.updateUser()
- */
-async function mockUpdateUser(id: string, data: any) {
-  await new Promise(resolve => setTimeout(resolve, 300))
-
-  const user = MOCK_USERS.find(u => u.id === id)
-  if (user) {
-    Object.assign(user, data)
-  }
-
-  return { success: !!user, data: user }
-}
-
-/**
- * Mock API function - simulates deactivating a user
- * Will be replaced with real API call: apiClient.deactivateUser()
- */
-async function mockDeactivateUser(id: string) {
-  await new Promise(resolve => setTimeout(resolve, 300))
-
-  const user = MOCK_USERS.find(u => u.id === id)
-  if (user) {
-    user.isActive = false
-  }
-
-  return { success: !!user, data: user }
-}
+import { ref, computed, type Ref } from 'vue'
+import { apiClient } from '../services/api'
 
 /**
  * Fetch users with pagination
  */
-export function useUsers(page = ref(1), pageSize = ref(10)) {
+export function useUsers(
+  page: Ref<number> = ref(1),
+  pageSize: Ref<number> = ref(10)
+) {
   const query = useQuery({
     queryKey: ['users', page, pageSize],
     queryFn: () =>
-      mockGetUsers({
+      apiClient.getUsers({
         page: page.value,
         pageSize: pageSize.value,
       }),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   })
 
   return {
-    users: computed(() => {
-      if (query.data && 'data' in query.data) {
-        return query.data.data || []
-      }
-      return []
-    }),
-    pagination: computed(() => {
-      if (query.data && 'pagination' in query.data) {
-        return query.data.pagination
-      }
-      return undefined
-    }),
+    users: computed(() => query.data.value?.data || []),
+    pagination: computed(() => query.data.value?.pagination),
     isLoading: query.isPending,
     isError: query.isError,
     error: query.error,
+    refetch: query.refetch,
   }
 }
 
 /**
  * Fetch single user by ID
  */
-export function useUser(id: string) {
+export function useUser(id: Ref<string> | string) {
+  const userId = typeof id === 'string' ? ref(id) : id
+
   const query = useQuery({
-    queryKey: ['user', id],
-    queryFn: () => mockGetUser(id),
-    enabled: !!id,
+    queryKey: ['user', userId],
+    queryFn: () => apiClient.getUser(userId.value),
+    enabled: computed(() => !!userId.value),
+    staleTime: 1000 * 60 * 5, // 5 minutes
   })
 
   return {
-    user: computed(() => {
-      if (query.data && 'data' in query.data) {
-        return query.data.data
-      }
-      return undefined
-    }),
+    user: computed(() => query.data.value?.data),
     isLoading: query.isPending,
     isError: query.isError,
     error: query.error,
+    refetch: query.refetch,
   }
 }
 
@@ -192,7 +58,7 @@ export function useCreateUser() {
   const queryClient = useQueryClient()
 
   const mutation = useMutation({
-    mutationFn: (data: any) => mockCreateUser(data),
+    mutationFn: (data: Record<string, unknown>) => apiClient.createUser(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
     },
@@ -200,9 +66,12 @@ export function useCreateUser() {
 
   return {
     createUser: mutation.mutate,
+    createUserAsync: mutation.mutateAsync,
     isLoading: mutation.isPending,
+    isSuccess: mutation.isSuccess,
     isError: mutation.isError,
     error: mutation.error,
+    reset: mutation.reset,
   }
 }
 
@@ -213,9 +82,9 @@ export function useUpdateUser() {
   const queryClient = useQueryClient()
 
   const mutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) =>
-      mockUpdateUser(id, data),
-    onSuccess: (_, { id }) => {
+    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
+      apiClient.updateUser(id, data),
+    onSuccess: (response, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       queryClient.invalidateQueries({ queryKey: ['user', id] })
     },
@@ -223,9 +92,12 @@ export function useUpdateUser() {
 
   return {
     updateUser: mutation.mutate,
+    updateUserAsync: mutation.mutateAsync,
     isLoading: mutation.isPending,
+    isSuccess: mutation.isSuccess,
     isError: mutation.isError,
     error: mutation.error,
+    reset: mutation.reset,
   }
 }
 
@@ -236,8 +108,8 @@ export function useDeactivateUser() {
   const queryClient = useQueryClient()
 
   const mutation = useMutation({
-    mutationFn: (id: string) => mockDeactivateUser(id),
-    onSuccess: (_, id) => {
+    mutationFn: (id: string) => apiClient.deactivateUser(id),
+    onSuccess: (response, id) => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       queryClient.invalidateQueries({ queryKey: ['user', id] })
     },
@@ -245,8 +117,36 @@ export function useDeactivateUser() {
 
   return {
     deactivateUser: mutation.mutate,
+    deactivateUserAsync: mutation.mutateAsync,
     isLoading: mutation.isPending,
+    isSuccess: mutation.isSuccess,
     isError: mutation.isError,
     error: mutation.error,
+    reset: mutation.reset,
+  }
+}
+
+/**
+ * Reactivate user mutation
+ */
+export function useReactivateUser() {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: (id: string) => apiClient.reactivateUser(id),
+    onSuccess: (response, id) => {
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+      queryClient.invalidateQueries({ queryKey: ['user', id] })
+    },
+  })
+
+  return {
+    reactivateUser: mutation.mutate,
+    reactivateUserAsync: mutation.mutateAsync,
+    isLoading: mutation.isPending,
+    isSuccess: mutation.isSuccess,
+    isError: mutation.isError,
+    error: mutation.error,
+    reset: mutation.reset,
   }
 }

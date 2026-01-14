@@ -1,174 +1,35 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-import { ref, computed } from 'vue'
-
-// Mock data
-const MOCK_PRODUCTS = [
-  {
-    id: '1',
-    sku: 'PROD-001',
-    name: 'Laptop',
-    description: 'High-performance laptop for professionals',
-    category: 'Electronics',
-    supplier: 'Tech Corp',
-    price: 999.99,
-    cost: 500.00,
-    reorderLevel: 5,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    sku: 'PROD-002',
-    name: 'Wireless Mouse',
-    description: 'Ergonomic wireless mouse',
-    category: 'Electronics',
-    supplier: 'Tech Corp',
-    price: 29.99,
-    cost: 10.00,
-    reorderLevel: 50,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '3',
-    sku: 'PROD-003',
-    name: 'Mechanical Keyboard',
-    description: 'RGB mechanical keyboard',
-    category: 'Electronics',
-    supplier: 'Tech Corp',
-    price: 149.99,
-    cost: 75.00,
-    reorderLevel: 20,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '4',
-    sku: 'PROD-004',
-    name: 'USB-C Cable',
-    description: '2m USB-C charging cable',
-    category: 'Accessories',
-    supplier: 'Cable Co',
-    price: 12.99,
-    cost: 3.00,
-    reorderLevel: 100,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '5',
-    sku: 'PROD-005',
-    name: 'Monitor Stand',
-    description: 'Adjustable monitor stand',
-    category: 'Furniture',
-    supplier: 'Furniture Plus',
-    price: 49.99,
-    cost: 20.00,
-    reorderLevel: 10,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-]
+import { ref, computed, type Ref } from 'vue'
+import { apiClient, type CreateProductRequest, type UpdateProductRequest } from '../services/api'
 
 /**
- * Mock API function - simulates fetching products with pagination
- * Will be replaced with real API call: apiClient.getProducts()
+ * Fetch products with pagination and filters
  */
-async function mockGetProducts(params: { page: number; pageSize: number }) {
-  // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 500))
-
-  const { page, pageSize } = params
-  const start = (page - 1) * pageSize
-  const end = start + pageSize
-  const data = MOCK_PRODUCTS.slice(start, end)
-
-  return {
-    success: true,
-    data,
-    pagination: {
-      page,
-      pageSize,
-      total: MOCK_PRODUCTS.length,
-      totalPages: Math.ceil(MOCK_PRODUCTS.length / pageSize),
-    },
-  }
-}
-
-/**
- * Mock API function - simulates creating a product
- * Will be replaced with real API call: apiClient.createProduct()
- */
-async function mockCreateProduct(data: any) {
-  await new Promise(resolve => setTimeout(resolve, 300))
-
-  const newProduct = {
-    id: Date.now().toString(),
-    sku: data.sku || `PROD-${Date.now()}`,
-    name: data.name,
-    description: data.description || '',
-    category: data.category,
-    supplier: data.supplier,
-    price: data.price,
-    cost: data.cost || 0,
-    reorderLevel: data.reorderLevel || 10,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  }
-
-  MOCK_PRODUCTS.unshift(newProduct)
-  return { success: true, data: newProduct }
-}
-
-/**
- * Mock API function - simulates deleting a product
- * Will be replaced with real API call: apiClient.deleteProduct()
- */
-async function mockDeleteProduct(id: string) {
-  await new Promise(resolve => setTimeout(resolve, 300))
-
-  const index = MOCK_PRODUCTS.findIndex(p => p.id === id)
-  if (index !== -1) {
-    MOCK_PRODUCTS.splice(index, 1)
-  }
-
-  return { success: true }
-}
-
-/**
- * Fetch products with pagination
- * Currently uses mock data, will switch to API when ready
- */
-export function useProducts(page = ref(1), pageSize = ref(10)) {
+export function useProducts(
+  page: Ref<number> = ref(1),
+  pageSize: Ref<number> = ref(10),
+  filters: Ref<{
+    category?: string
+    supplier?: string
+    minPrice?: number
+    maxPrice?: number
+    search?: string
+  }> = ref({})
+) {
   const query = useQuery({
-    queryKey: ['products', page, pageSize],
+    queryKey: ['products', page, pageSize, filters],
     queryFn: () =>
-      mockGetProducts({
+      apiClient.getProducts({
         page: page.value,
         pageSize: pageSize.value,
+        ...filters.value,
       }),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   })
 
   return {
-    products: computed(() => {
-      if (query.data && 'data' in query.data) {
-        return query.data.data || []
-      }
-      return []
-    }),
-    pagination: computed(() => {
-      if (query.data && 'pagination' in query.data) {
-        return query.data.pagination
-      }
-      return undefined
-    }),
+    products: computed(() => query.data.value?.data || []),
+    pagination: computed(() => query.data.value?.pagination),
     isLoading: query.isPending,
     isError: query.isError,
     error: query.error,
@@ -179,30 +40,44 @@ export function useProducts(page = ref(1), pageSize = ref(10)) {
 /**
  * Fetch single product by ID
  */
-export function useProduct(id: string) {
+export function useProduct(id: Ref<string> | string) {
+  const productId = typeof id === 'string' ? ref(id) : id
+
   const query = useQuery({
-    queryKey: ['product', id],
-    queryFn: async () => {
-      await new Promise(resolve => setTimeout(resolve, 300))
-      const product = MOCK_PRODUCTS.find(p => p.id === id)
-      return {
-        success: !!product,
-        data: product,
-      }
-    },
-    enabled: !!id,
+    queryKey: ['product', productId],
+    queryFn: () => apiClient.getProduct(productId.value),
+    enabled: computed(() => !!productId.value),
+    staleTime: 1000 * 60 * 5, // 5 minutes
   })
 
   return {
-    product: computed(() => {
-      if (query.data && 'data' in query.data) {
-        return query.data.data
-      }
-      return undefined
-    }),
+    product: computed(() => query.data.value?.data),
     isLoading: query.isPending,
     isError: query.isError,
     error: query.error,
+    refetch: query.refetch,
+  }
+}
+
+/**
+ * Fetch product by SKU
+ */
+export function useProductBySku(sku: Ref<string> | string) {
+  const productSku = typeof sku === 'string' ? ref(sku) : sku
+
+  const query = useQuery({
+    queryKey: ['product', 'sku', productSku],
+    queryFn: () => apiClient.getProductBySku(productSku.value),
+    enabled: computed(() => !!productSku.value),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  })
+
+  return {
+    product: computed(() => query.data.value?.data),
+    isLoading: query.isPending,
+    isError: query.isError,
+    error: query.error,
+    refetch: query.refetch,
   }
 }
 
@@ -213,7 +88,7 @@ export function useCreateProduct() {
   const queryClient = useQueryClient()
 
   const mutation = useMutation({
-    mutationFn: (data: any) => mockCreateProduct(data),
+    mutationFn: (data: CreateProductRequest) => apiClient.createProduct(data),
     onSuccess: () => {
       // Invalidate products list to refetch
       queryClient.invalidateQueries({ queryKey: ['products'] })
@@ -222,9 +97,12 @@ export function useCreateProduct() {
 
   return {
     createProduct: mutation.mutate,
+    createProductAsync: mutation.mutateAsync,
     isLoading: mutation.isPending,
+    isSuccess: mutation.isSuccess,
     isError: mutation.isError,
     error: mutation.error,
+    reset: mutation.reset,
   }
 }
 
@@ -235,17 +113,10 @@ export function useUpdateProduct() {
   const queryClient = useQueryClient()
 
   const mutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      await new Promise(resolve => setTimeout(resolve, 300))
-
-      const product = MOCK_PRODUCTS.find(p => p.id === id)
-      if (product) {
-        Object.assign(product, data, { updatedAt: new Date().toISOString() })
-      }
-
-      return { success: !!product, data: product }
-    },
-    onSuccess: (_, { id }) => {
+    mutationFn: ({ id, data }: { id: string; data: UpdateProductRequest }) =>
+      apiClient.updateProduct(id, data),
+    onSuccess: (response, { id }) => {
+      // Invalidate both list and single product queries
       queryClient.invalidateQueries({ queryKey: ['products'] })
       queryClient.invalidateQueries({ queryKey: ['product', id] })
     },
@@ -253,9 +124,37 @@ export function useUpdateProduct() {
 
   return {
     updateProduct: mutation.mutate,
+    updateProductAsync: mutation.mutateAsync,
     isLoading: mutation.isPending,
+    isSuccess: mutation.isSuccess,
     isError: mutation.isError,
     error: mutation.error,
+    reset: mutation.reset,
+  }
+}
+
+/**
+ * Deactivate product mutation
+ */
+export function useDeactivateProduct() {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: (id: string) => apiClient.deactivateProduct(id),
+    onSuccess: (response, id) => {
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      queryClient.invalidateQueries({ queryKey: ['product', id] })
+    },
+  })
+
+  return {
+    deactivateProduct: mutation.mutate,
+    deactivateProductAsync: mutation.mutateAsync,
+    isLoading: mutation.isPending,
+    isSuccess: mutation.isSuccess,
+    isError: mutation.isError,
+    error: mutation.error,
+    reset: mutation.reset,
   }
 }
 
@@ -266,7 +165,7 @@ export function useDeleteProduct() {
   const queryClient = useQueryClient()
 
   const mutation = useMutation({
-    mutationFn: (id: string) => mockDeleteProduct(id),
+    mutationFn: (id: string) => apiClient.deleteProduct(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] })
     },
@@ -274,8 +173,11 @@ export function useDeleteProduct() {
 
   return {
     deleteProduct: mutation.mutate,
+    deleteProductAsync: mutation.mutateAsync,
     isLoading: mutation.isPending,
+    isSuccess: mutation.isSuccess,
     isError: mutation.isError,
     error: mutation.error,
+    reset: mutation.reset,
   }
 }

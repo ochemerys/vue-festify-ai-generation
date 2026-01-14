@@ -1,65 +1,5 @@
-import { useMutation, useQueryClient } from '@tanstack/vue-query'
-
-// Mock users
-const MOCK_USERS = [
-  {
-    id: '1',
-    email: 'admin@example.com',
-    firstName: 'Admin',
-    lastName: 'User',
-    role: 'ADMIN',
-  },
-  {
-    id: '2',
-    email: 'manager@example.com',
-    firstName: 'Manager',
-    lastName: 'User',
-    role: 'MANAGER',
-  },
-  {
-    id: '3',
-    email: 'staff@example.com',
-    firstName: 'Staff',
-    lastName: 'User',
-    role: 'STAFF',
-  },
-]
-
-/**
- * Mock login function
- * Will be replaced with real API call: apiClient.login()
- */
-async function mockLogin(email: string, password: string) {
-  await new Promise(resolve => setTimeout(resolve, 500))
-
-  const user = MOCK_USERS.find(u => u.email === email)
-  if (!user) {
-    throw new Error('User not found')
-  }
-
-  if (password.length < 8) {
-    throw new Error('Invalid password')
-  }
-
-  return {
-    success: true,
-    data: {
-      accessToken: `mock-token-${user.id}-${Date.now()}`,
-      tokenType: 'Bearer',
-      expiresIn: 86400,
-      user,
-    },
-  }
-}
-
-/**
- * Mock logout function
- * Will be replaced with real API call: apiClient.logout()
- */
-async function mockLogout() {
-  await new Promise(resolve => setTimeout(resolve, 300))
-  return { success: true }
-}
+import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { apiClient } from '../services/api'
 
 /**
  * Login mutation
@@ -69,18 +9,27 @@ export function useLogin() {
 
   const mutation = useMutation({
     mutationFn: ({ email, password }: { email: string; password: string }) =>
-      mockLogin(email, password),
-    onSuccess: () => {
+      apiClient.login(email, password),
+    onSuccess: (response) => {
       // Clear all queries on login to fetch fresh data
       queryClient.clear()
+      
+      // Store user data if needed
+      if (response.success && response.data) {
+        // You can store user data in a store or local state here
+        console.log('Login successful:', response.data.user)
+      }
     },
   })
 
   return {
     login: mutation.mutate,
+    loginAsync: mutation.mutateAsync,
     isLoading: mutation.isPending,
+    isSuccess: mutation.isSuccess,
     isError: mutation.isError,
     error: mutation.error,
+    reset: mutation.reset,
   }
 }
 
@@ -91,15 +40,75 @@ export function useLogout() {
   const queryClient = useQueryClient()
 
   const mutation = useMutation({
-    mutationFn: () => mockLogout(),
+    mutationFn: () => apiClient.logout(),
     onSuccess: () => {
       // Clear all queries on logout
+      queryClient.clear()
+    },
+    onError: () => {
+      // Even if logout fails, clear local data
       queryClient.clear()
     },
   })
 
   return {
     logout: mutation.mutate,
+    logoutAsync: mutation.mutateAsync,
     isLoading: mutation.isPending,
+    isSuccess: mutation.isSuccess,
+    isError: mutation.isError,
+    error: mutation.error,
+  }
+}
+
+/**
+ * Refresh token mutation
+ */
+export function useRefreshToken() {
+  const mutation = useMutation({
+    mutationFn: () => apiClient.refreshAccessToken(),
+  })
+
+  return {
+    refreshToken: mutation.mutate,
+    refreshTokenAsync: mutation.mutateAsync,
+    isLoading: mutation.isPending,
+    isSuccess: mutation.isSuccess,
+    isError: mutation.isError,
+    error: mutation.error,
+  }
+}
+
+/**
+ * Get user permissions
+ */
+export function usePermissions() {
+  const query = useQuery({
+    queryKey: ['permissions'],
+    queryFn: () => apiClient.getPermissions(),
+    staleTime: 1000 * 60 * 10, // 10 minutes
+    retry: false, // Don't retry if unauthorized
+  })
+
+  return {
+    permissions: query.data.value?.data,
+    isLoading: query.isPending,
+    isError: query.isError,
+    error: query.error,
+    refetch: query.refetch,
+  }
+}
+
+/**
+ * Check if user is authenticated
+ */
+export function useIsAuthenticated() {
+  const token = apiClient.getToken()
+  const isExpired = apiClient.isTokenExpired()
+  
+  return {
+    isAuthenticated: !!token && !isExpired,
+    token,
+    isExpired,
   }
 }
