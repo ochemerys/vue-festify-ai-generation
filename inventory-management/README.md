@@ -138,10 +138,36 @@ pnpm start
 
 ### Database Scripts
 
-- `pnpm -F @inventory/db migration:run` - Run migrations
-- `pnpm -F @inventory/db migration:create` - Create new migration
-- `pnpm -F @inventory/db migration:revert` - Revert last migration
-- `pnpm -F @inventory/db db:seed` - Seed database with sample data
+- `pnpm migration:run` - Run pending migrations
+- `pnpm migration:create` - Create new migration
+- `pnpm migration:revert` - Revert last migration
+- `pnpm db:seed` - Seed database with sample data
+
+#### Database Development Workflow
+
+When working with the database, follow this workflow:
+
+```bash
+# 1. Make changes to entity files in packages/db/src/entities/
+
+# 2. Create a new migration
+pnpm migration:create
+
+# 3. Edit the generated migration file in packages/db/src/migrations/
+#    - Add your schema changes in the up() method
+#    - Add rollback logic in the down() method
+
+# 4. Run the migration to apply changes
+pnpm migration:run
+
+# 5. (Optional) Seed the database with sample data
+pnpm db:seed
+
+# 6. If you need to rollback
+pnpm migration:revert
+```
+
+**Note**: TypeORM uses a migration-based approach. Unlike Prisma's `db:push`, you must create and run migrations to apply schema changes. This provides better control and tracking of database changes, especially in production environments.
 
 ### Package Scripts
 
