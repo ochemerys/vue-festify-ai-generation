@@ -1,5 +1,5 @@
 import "reflect-metadata"
-import { AppDataSource } from "./data-source.js"
+import { AppDataSource, getAppDataSource } from "./data-source.js"
 
 // Entities
 export { User } from "./entities/user.entity.js"
@@ -15,4 +15,4 @@ export { InventoryTransaction, TransactionType } from "./entities/inventory-tran
 export { StockAlert } from "./entities/stock-alert.entity.js";
 
 // Data source
-export { AppDataSource };
+export { AppDataSource, getAppDataSource };

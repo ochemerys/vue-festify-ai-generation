@@ -40,7 +40,8 @@ interface PaginatedProductsResponse {
 
 export async function productRoutes(app: FastifyInstance) {
   // Import entities inside the function to ensure reflect-metadata is loaded first
-  const { AppDataSource, Product, InventoryLevel } = await import('@inventory/db')
+  const { getAppDataSource, Product, InventoryLevel } = await import('@inventory/db')
+  const AppDataSource = getAppDataSource()
 
   // GET /api/products - List all products with optional filters
   app.get('/api/products', {
@@ -351,12 +352,13 @@ export async function productRoutes(app: FastifyInstance) {
         category: productData.category,
         supplier: productData.supplier,
         price: productData.price,
+        cost: productData.cost,
         reorderLevel: productData.reorderLevel,
         ...(productData.description !== undefined && { description: productData.description }),
-        ...(productData.cost !== undefined && { cost: productData.cost }),
       }
       const product = productRepository.create(data)
       const savedProduct = await productRepository.save(product)
+      console.log('[Products] Created product:', savedProduct.id, savedProduct.sku, savedProduct.name)
 
       // Create initial inventory level
       const inventoryRepository = AppDataSource.getRepository(InventoryLevel)
@@ -367,9 +369,16 @@ export async function productRoutes(app: FastifyInstance) {
         availableQuantity: 0,
       })
       await inventoryRepository.save(inventoryLevel)
+      console.log('[Products] Created inventory level for product:', product.id)
+
+      // Return product with quantity field
+      const productWithQuantity = {
+        ...savedProduct,
+        quantity: 0, // Always 0 for new products
+      }
 
       reply.status(201)
-      return { success: true, data: product }
+      return { success: true, data: productWithQuantity }
     } catch (error) {
       if (error instanceof z.ZodError) {
         reply.status(400)

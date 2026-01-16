@@ -1,9 +1,13 @@
 import 'reflect-metadata'
+import * as dotenv from 'dotenv'
+import { fileURLToPath } from 'url'
+import { dirname, resolve } from 'path'
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
 import open from 'open'
+import { getAppDataSource } from '@inventory/db'
 import { authRoutes } from './routes/auth.js'
 import { productRoutes } from './routes/products.js'
 import { inventoryRoutes } from './routes/inventory.js'
@@ -11,9 +15,21 @@ import { orderRoutes } from './routes/orders.js'
 import { purchaseOrderRoutes } from './routes/purchase-orders.js'
 import { reportRoutes } from './routes/reports.js'
 
+// Load environment variables from .env file
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+const envPath = resolve(__dirname, '../../.env')
+dotenv.config({ path: envPath })
+
 const app = Fastify({
   logger: true,
 })
+
+// Initialize database connection
+const AppDataSource = getAppDataSource()
+if (!AppDataSource.isInitialized) {
+  await AppDataSource.initialize()
+}
 
 // Register CORS plugin
 app.register(cors, {

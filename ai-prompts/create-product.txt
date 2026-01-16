@@ -1,0 +1,9 @@
+- implemnt missing contracts based on create-product-contracts-varification.md
+- create missing endpoints in backend based on product-managemet.feature 
+  and create-product-contracts-varification.md
+- create unit tests for "create new product" functionlity based on product-managemet.feature 
+  and create-product-functionality.design (should fail at this stage)
+- implemnt "create new product" functionlity on frontend based on create-product-functionality.design
+  (unit tests should pass at this stage)
+- integrate created forntend functionalith with backend api
+

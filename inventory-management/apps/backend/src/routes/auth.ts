@@ -30,7 +30,8 @@ const UpdateUserRequestSchema = z.object({
 
 export async function authRoutes(app: FastifyInstance) {
   // Import entities inside the function to ensure reflect-metadata is loaded first
-  const { AppDataSource, User } = await import('@inventory/db')
+  const { getAppDataSource, User } = await import('@inventory/db')
+  const AppDataSource = getAppDataSource()
   // POST /auth/login - User login
   app.post('/auth/login', {
     schema: {

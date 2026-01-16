@@ -10,28 +10,44 @@ import { z } from 'zod'
 
 export const ProductSchema = z.object({
   id: z.string().cuid(),
-  sku: z.string().min(1).max(50),
-  name: z.string().min(1).max(255),
+  sku: z.string()
+    .min(1)
+    .max(50)
+    .regex(/^[A-Z0-9-]+$/, 'SKU must contain only uppercase letters, numbers, and hyphens'),
+  name: z.string().min(3).max(255),
   description: z.string().max(1000).nullable(),
   category: z.string().min(1).max(100),
   price: z.number().positive(),
   cost: z.number().positive(),
   reorderLevel: z.number().int().nonnegative().default(10),
   supplier: z.string().min(1).max(255),
+  
+  // Add missing fields for complete product representation
+  quantity: z.number().int().nonnegative().default(0),
+  imageUrl: z.string().url().nullable().optional(),
+  tags: z.array(z.string()).default([]),
+  
   isActive: z.boolean().default(true),
   createdAt: z.date(),
   updatedAt: z.date(),
 })
 
 export const CreateProductRequestSchema = z.object({
-  sku: z.string().min(1).max(50),
-  name: z.string().min(1).max(255),
+  sku: z.string()
+    .min(1)
+    .max(50)
+    .regex(/^[A-Z0-9-]+$/, 'SKU must contain only uppercase letters, numbers, and hyphens'),
+  name: z.string().min(3).max(255),
   description: z.string().max(1000).optional(),
   category: z.string().min(1).max(100),
   price: z.number().positive(),
   cost: z.number().positive(),
   reorderLevel: z.number().int().nonnegative().default(10),
   supplier: z.string().min(1).max(255),
+  
+  // Optional fields for product creation
+  imageUrl: z.string().url().optional(),
+  tags: z.array(z.string()).optional(),
 })
 
 export const UpdateProductRequestSchema = z.object({

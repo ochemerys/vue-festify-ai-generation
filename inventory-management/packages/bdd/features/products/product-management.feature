@@ -7,20 +7,83 @@ Feature: Product Management
     Given the system is initialized
     And I am logged in as an admin user
 
-  Scenario: Create a new product
+  Scenario: Create a new product with zero initial quantity
     When I create a product with the following details:
-      | Field       | Value                          |
-      | SKU         | PROD-001                       |
-      | Name        | Wireless Mouse                 |
-      | Description | Ergonomic wireless mouse       |
-      | Category    | Electronics                    |
-      | Price       | 29.99                          |
-      | Cost        | 12.50                          |
-      | Supplier    | Tech Supplies Inc              |
-      | Reorder Level | 10                           |
+      | Field         | Value                          |
+      | SKU           | PROD-001                       |
+      | Name          | Wireless Mouse                 |
+      | Description   | Ergonomic wireless mouse       |
+      | Category      | Electronics                    |
+      | Price         | 29.99                          |
+      | Cost          | 12.50                          |
+      | Supplier      | Tech Supplies Inc              |
+      | Reorder Level | 10                             |
     Then the product should be created successfully
     And the product should have SKU "PROD-001"
     And the product should be marked as active
+    And the product quantity on hand should be 0
+    And the product should be in "defined" state
+    And no inventory movement should exist for the product
+
+  Scenario: Create product validates required fields
+    When I attempt to create a product with missing required fields:
+      | Field    | Value |
+      | Name     |       |
+      | SKU      |       |
+      | Category |       |
+    Then the operation should fail
+    And I should receive validation errors for:
+      | Field    | Error                      |
+      | Name     | Product name is required   |
+      | SKU      | SKU is required            |
+      | Category | Category is required       |
+
+  Scenario: Create product validates SKU format
+    When I attempt to create a product with invalid SKU "prod@001"
+    Then the operation should fail
+    And I should receive an error message "SKU must contain only uppercase letters, numbers, and hyphens"
+
+  Scenario: Create product validates price and cost
+    When I attempt to create a product with the following details:
+      | Field | Value  |
+      | Price | -10.00 |
+      | Cost  | 0      |
+    Then the operation should fail
+    And I should receive validation errors for:
+      | Field | Error                           |
+      | Price | Price must be greater than 0    |
+      | Cost  | Cost must be greater than 0     |
+
+  Scenario: Create product with minimum required fields
+    When I create a product with only required fields:
+      | Field         | Value              |
+      | SKU           | PROD-MIN-001       |
+      | Name          | Minimal Product    |
+      | Category      | General            |
+      | Price         | 10.00              |
+      | Cost          | 5.00               |
+      | Supplier      | Default Supplier   |
+      | Reorder Level | 10                 |
+    Then the product should be created successfully
+    And the product description should be empty
+    And the product quantity on hand should be 0
+    And the product should be marked as active
+
+  Scenario: Create product and verify it appears in product list
+    Given no products exist in the system
+    When I create a product with the following details:
+      | Field    | Value           |
+      | SKU      | PROD-LIST-001   |
+      | Name     | Test Product    |
+      | Category | Electronics     |
+      | Price    | 25.00           |
+      | Cost     | 12.00           |
+      | Supplier | Test Supplier   |
+    Then the product should be created successfully
+    When I retrieve all active products
+    Then I should get 1 product
+    And the products should include "Test Product"
+    And the product "Test Product" should have quantity 0
 
   Scenario: Update product details
     Given a product exists with SKU "PROD-001"

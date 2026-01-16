@@ -69,6 +69,9 @@ importers:
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
+      dotenv:
+        specifier: ^16.3.1
+        version: 16.6.1
       fastify:
         specifier: ^5.6.2
         version: 5.6.2
@@ -225,6 +228,9 @@ importers:
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
+      dotenv:
+        specifier: ^16.3.1
+        version: 16.6.1
       pg:
         specifier: ^8.11.3
         version: 8.16.3
@@ -241,9 +247,6 @@ importers:
       '@types/pg':
         specifier: ^8.10.9
         version: 8.16.0
-      dotenv:
-        specifier: ^16.3.1
-        version: 16.6.1
       dotenv-cli:
         specifier: ^7.3.0
         version: 7.4.4

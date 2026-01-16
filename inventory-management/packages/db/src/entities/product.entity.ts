@@ -28,10 +28,10 @@ export class Product {
   @Column('decimal', { precision: 10, scale: 2 })
   price!: number;
 
-  @Column('decimal', { precision: 10, scale: 2, nullable: true })
-  cost?: number;
+  @Column('decimal', { precision: 10, scale: 2 })
+  cost!: number;
 
-  @Column('int', { default: 0 })
+  @Column('int', { default: 10 })
   reorderLevel!: number;
 
   @Column('boolean', { default: true })
