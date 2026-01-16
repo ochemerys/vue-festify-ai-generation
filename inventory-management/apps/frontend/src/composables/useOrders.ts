@@ -59,7 +59,7 @@ export function useCreateOrder() {
 
   const mutation = useMutation({
     mutationFn: (data: Record<string, unknown>) => apiClient.createOrder(data),
-    onSuccess: () => {
+    onSuccess: (_response) => {
       // Invalidate orders list
       queryClient.invalidateQueries({ queryKey: ['orders'] })
       // Also invalidate inventory as orders affect stock
@@ -87,7 +87,7 @@ export function useUpdateOrder() {
   const mutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
       apiClient.updateOrder(id, data),
-    onSuccess: (response, { id }) => {
+    onSuccess: (_response, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['orders'] })
       queryClient.invalidateQueries({ queryKey: ['order', id] })
       // Invalidate inventory if order status changed
@@ -188,7 +188,7 @@ export function useUpdatePurchaseOrder() {
   const mutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
       apiClient.updatePurchaseOrder(id, data),
-    onSuccess: (response, { id }) => {
+    onSuccess: (_response, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['purchase-orders'] })
       queryClient.invalidateQueries({ queryKey: ['purchase-order', id] })
       // Invalidate inventory if PO was received

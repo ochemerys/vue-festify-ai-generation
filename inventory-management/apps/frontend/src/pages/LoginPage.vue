@@ -47,11 +47,8 @@ const handleSubmit = async () => {
   if (!validateEmail() || !validatePassword()) return
   loading.value = true
   try {
-    // Simulate API delay
-    await new Promise((r) => setTimeout(r, 800))
-
     // Attempt login with auth store
-    const result = authStore.login(email.value, password.value)
+    const result = await authStore.login(email.value, password.value)
 
     if (!result.success) {
       error.value = result.error || 'Login failed'

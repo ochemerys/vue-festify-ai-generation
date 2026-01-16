@@ -89,7 +89,7 @@ export function useCreateProduct() {
 
   const mutation = useMutation({
     mutationFn: (data: CreateProductRequest) => apiClient.createProduct(data),
-    onSuccess: () => {
+    onSuccess: (_response) => {
       // Invalidate products list to refetch
       queryClient.invalidateQueries({ queryKey: ['products'] })
     },
@@ -115,7 +115,7 @@ export function useUpdateProduct() {
   const mutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateProductRequest }) =>
       apiClient.updateProduct(id, data),
-    onSuccess: (response, { id }) => {
+    onSuccess: (_response, { id }) => {
       // Invalidate both list and single product queries
       queryClient.invalidateQueries({ queryKey: ['products'] })
       queryClient.invalidateQueries({ queryKey: ['product', id] })
@@ -141,7 +141,7 @@ export function useDeactivateProduct() {
 
   const mutation = useMutation({
     mutationFn: (id: string) => apiClient.deactivateProduct(id),
-    onSuccess: (response, id) => {
+    onSuccess: (_response, id) => {
       queryClient.invalidateQueries({ queryKey: ['products'] })
       queryClient.invalidateQueries({ queryKey: ['product', id] })
     },

@@ -28,6 +28,35 @@ export default [
       '@typescript-eslint/no-explicit-any': 'warn',
       'vue/multi-word-component-names': 'off',
       'vue/no-unused-vars': 'error',
+      'vue/max-attributes-per-line': ['warn', {
+        singleline: { max: 3 },
+        multiline: { max: 1 },
+      }],
+      'vue/attributes-order': ['warn', {
+        order: [
+          'DEFINITION',
+          'LIST_RENDERING',
+          'CONDITIONALS',
+          'RENDER_MODIFIERS',
+          'GLOBAL',
+          ['UNIQUE', 'SLOT'],
+          'TWO_WAY_BINDING',
+          'OTHER_DIRECTIVES',
+          'OTHER_ATTR',
+          'EVENTS',
+          'CONTENT',
+        ],
+        alphabetical: false,
+      }],
+      'vue/html-self-closing': ['warn', {
+        html: {
+          void: 'always',
+          normal: 'never',
+          component: 'always',
+        },
+        svg: 'always',
+        math: 'always',
+      }],
     },
   },
   {

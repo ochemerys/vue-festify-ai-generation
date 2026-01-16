@@ -1,10 +1,24 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useAuthStore } from './stores/authStore'
+import { apiClient } from './services/api'
+
+// Mock the API client
+vi.mock('./services/api', () => ({
+  apiClient: {
+    login: vi.fn(),
+    logout: vi.fn(),
+    refreshAccessToken: vi.fn(),
+    isTokenExpired: vi.fn(),
+    setToken: vi.fn(),
+    makeRequest: vi.fn(),
+  },
+}))
 
 describe('router guard logic', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    vi.clearAllMocks()
   })
 
   it('allows access to public pages without authentication', () => {
@@ -25,16 +39,52 @@ describe('router guard logic', () => {
     expect(authStore.isAuthenticated).toBe(false)
   })
 
-  it('allows authenticated users to access protected routes', () => {
+  it('allows authenticated users to access protected routes', async () => {
     const authStore = useAuthStore()
-    authStore.login('admin@inventory.local', 'password123')
+    const mockUser = {
+      id: '1',
+      email: 'admin@inventory.local',
+      firstName: 'System',
+      lastName: 'Admin',
+      role: 'ADMIN',
+    }
+
+    vi.mocked(apiClient.login).mockResolvedValue({
+      success: true,
+      data: {
+        accessToken: 'test-token-123',
+        user: mockUser,
+        expiresIn: 3600,
+        tokenType: 'Bearer',
+      },
+    } as any)
+
+    await authStore.login('admin@inventory.local', 'password123')
     expect(authStore.isAuthenticated).toBe(true)
     expect(authStore.isUserAuthorized()).toBe(true)
   })
 
-  it('blocks inactive users from accessing protected routes', () => {
+  it('blocks inactive users from accessing protected routes', async () => {
     const authStore = useAuthStore()
-    authStore.login('admin@inventory.local', 'password123')
+    const mockUser = {
+      id: '1',
+      email: 'admin@inventory.local',
+      firstName: 'System',
+      lastName: 'Admin',
+      role: 'ADMIN',
+    }
+
+    vi.mocked(apiClient.login).mockResolvedValue({
+      success: true,
+      data: {
+        accessToken: 'test-token-123',
+        user: mockUser,
+        expiresIn: 3600,
+        tokenType: 'Bearer',
+      },
+    } as any)
+
+    await authStore.login('admin@inventory.local', 'password123')
     expect(authStore.isAuthenticated).toBe(true)
     // Manually set user as inactive
     if (authStore.currentUser) {

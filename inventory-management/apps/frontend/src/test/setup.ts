@@ -47,18 +47,26 @@ vi.mock('lucide-vue-next', () => ({
 }))
 
 // Mock Vue Router
-vi.mock('vue-router', () => ({
-  createRouter: vi.fn(() => ({
-    install: vi.fn()
-  })),
-  createWebHistory: vi.fn(),
-  useRoute: vi.fn(() => ({
-    path: '/'
-  })),
-  useRouter: vi.fn(() => ({
-    push: vi.fn()
-  }))
-}))
+vi.mock('vue-router', async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    createRouter: vi.fn((config) => ({
+      ...config,
+      install: vi.fn(),
+      push: vi.fn(),
+      isReady: vi.fn(() => Promise.resolve())
+    })),
+    createMemoryHistory: vi.fn(() => ({})),
+    createWebHistory: vi.fn(() => ({})),
+    useRoute: vi.fn(() => ({
+      path: '/'
+    })),
+    useRouter: vi.fn(() => ({
+      push: vi.fn()
+    }))
+  }
+})
 
 // Mock Pinia stores
 vi.mock('../../stores/authStore', () => ({

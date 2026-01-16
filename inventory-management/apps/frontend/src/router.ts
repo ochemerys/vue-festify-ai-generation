@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import DashboardPage from './pages/DashboardPage.vue'
 import ProductsListPage from './pages/ProductsListPage.vue'
+import ProductFormPage from './pages/ProductFormPage.vue'
 import InventoryListPage from './pages/InventoryListPage.vue'
 import OrderListPage from './pages/OrderListPage.vue'
 import PurchaseOrderListPage from './pages/PurchaseOrderListPage.vue'
@@ -23,6 +24,16 @@ const routes = [
   {
     path: '/products',
     name: 'Products',
+    component: ProductsListPage
+  },
+  {
+    path: '/products/create',
+    name: 'ProductCreate',
+    component: ProductFormPage
+  },
+  {
+    path: '/products',
+    name: 'ProductsList',
     component: ProductsListPage
   },
   {
@@ -93,7 +104,7 @@ const router = createRouter({
 })
 
 // Route guard to protect pages
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
   const authStore = useAuthStore()
   const isAuthenticated = authStore.isAuthenticated
   const isLoginPage = to.name === 'Login'

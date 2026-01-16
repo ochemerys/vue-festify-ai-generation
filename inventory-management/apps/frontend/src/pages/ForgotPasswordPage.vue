@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { Mail, ArrowLeft, Send } from 'lucide-vue-next'
 import { useAuthStore } from '../stores/authStore'
 
-const router = useRouter()
 const authStore = useAuthStore()
 
 const email = ref('')
@@ -33,8 +31,7 @@ const handleSubmit = async () => {
   if (!validateEmail()) return
   loading.value = true
   try {
-    await new Promise((r) => setTimeout(r, 600))
-    const res = authStore.requestPasswordReset(email.value)
+    const res = await authStore.requestPasswordReset(email.value)
     if (!res.success) {
       message.value = res.message || 'If the email exists, a reset link will be sent'
     } else {

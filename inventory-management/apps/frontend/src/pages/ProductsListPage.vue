@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { Search, Plus, Download, Filter, Package } from 'lucide-vue-next'
 import ProductTable from '../components/products/ProductTable.vue'
 import ProductFilters from '../components/products/ProductFilters.vue'
 import Pagination from '../components/shared/Pagination.vue'
+import { apiClient } from '@/services/api'
+
+const router = useRouter()
 
 /**
  * ProductsListPage.vue - Main products catalog page
@@ -198,7 +202,7 @@ const mockProducts: Product[] = [
 
 // Computed properties
 const filteredProducts = computed(() => {
-  let result = [...mockProducts]
+  let result = [...products.value]
 
   // Apply search filter
   if (searchQuery.value.trim()) {
@@ -301,23 +305,42 @@ const fetchProducts = async () => {
     isLoading.value = true
     error.value = null
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 800))
+    // Call the actual API
+    const response = await apiClient.getProducts({
+      page: page.value,
+      pageSize: pageSize.value,
+      category: filters.value.category,
+      supplier: filters.value.supplier,
+      minPrice: filters.value.priceMin,
+      maxPrice: filters.value.priceMax,
+      search: searchQuery.value,
+    })
 
-    // In real implementation, this would call:
-    // const response = await productApi.getProducts({
-    //   page: page.value,
-    //   pageSize: pageSize.value,
-    //   filters: filters.value,
-    //   sort: sort.value,
-    //   search: searchQuery.value
-    // })
+    if (response.success && response.data) {
+      // Convert API response to Product format
+      const apiProducts = response.data.map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        sku: p.sku,
+        category: p.category,
+        supplier: p.supplier,
+        price: parseFloat(p.price),
+        cost: parseFloat(p.cost || 0),
+        quantity: 0, // API doesn't return quantity in products list
+        reorderLevel: p.reorderLevel,
+        status: p.isActive ? 'active' : 'inactive',
+        description: p.description,
+        createdAt: new Date(p.createdAt),
+        updatedAt: new Date(p.updatedAt),
+      }))
 
-    total.value = mockProducts.length
-    products.value = mockProducts
+      total.value = response.total
+      products.value = apiProducts
+    }
 
     isLoading.value = false
   } catch (err) {
+    console.error('[ProductsList] Error fetching products:', err)
     error.value = err instanceof Error ? err.message : 'Failed to load products'
     isLoading.value = false
   }
@@ -390,8 +413,7 @@ const handleBulkDelete = () => {
 }
 
 const handleCreateProduct = () => {
-  // In real implementation, navigate to create product page
-  console.log('Navigate to create product page')
+  router.push({ name: 'ProductCreate' })
 }
 
 const handleEditProduct = (productId: string) => {

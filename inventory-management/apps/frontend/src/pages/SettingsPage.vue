@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, onBeforeUnmount } from 'vue'
-import { useRouter, onBeforeRouteLeave } from 'vue-router'
+import { onBeforeRouteLeave } from 'vue-router'
 import { useSettingsStore } from '../stores/settingsStore'
 import SettingsTabs from '../components/settings/SettingsTabs.vue'
 import UserPreferencesTab from '../components/settings/tabs/UserPreferencesTab.vue'
@@ -17,7 +17,6 @@ import AccountSettingsTab from '../components/settings/tabs/AccountSettingsTab.v
  * - Success/Error notifications
  */
 
-const router = useRouter()
 const settingsStore = useSettingsStore()
 
 const activeTab = ref('user-preferences')
@@ -143,7 +142,7 @@ const cancelUnsavedChanges = () => {
 }
 
 // Warn before leaving page with unsaved changes
-onBeforeRouteLeave((to, from, next) => {
+onBeforeRouteLeave((_to, _from, next) => {
   if (hasUnsavedChanges.value) {
     const answer = window.confirm('You have unsaved changes. Do you want to leave without saving?')
     if (answer) {

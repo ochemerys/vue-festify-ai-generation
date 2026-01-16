@@ -35,8 +35,7 @@ const handleSubmit = async () => {
   if (!validate()) return
   loading.value = true
   try {
-    await new Promise((r) => setTimeout(r, 800))
-    const res = authStore.signup({ email: email.value, password: password.value, firstName: firstName.value, lastName: lastName.value })
+    const res = await authStore.signup({ email: email.value, password: password.value, firstName: firstName.value, lastName: lastName.value })
     if (!res.success) {
       error.value = res.error || 'Sign up failed'
       return

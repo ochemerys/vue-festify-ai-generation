@@ -186,7 +186,6 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const isDropdownOpen = ref(false)
-let dropdownRef: HTMLElement | null = null
 
 /**
  * Toggle dropdown menu

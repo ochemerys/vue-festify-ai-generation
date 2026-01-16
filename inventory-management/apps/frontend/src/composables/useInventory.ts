@@ -65,7 +65,7 @@ export function useAdjustInventory() {
       reason: string
       reference?: string
     }) => apiClient.adjustInventory(data.productId, data),
-    onSuccess: (response, variables) => {
+    onSuccess: (_response, variables) => {
       // Invalidate inventory queries
       queryClient.invalidateQueries({ queryKey: ['inventory'] })
       queryClient.invalidateQueries({ 

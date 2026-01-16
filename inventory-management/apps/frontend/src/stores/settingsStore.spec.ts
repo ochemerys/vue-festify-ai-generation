@@ -2,6 +2,19 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useSettingsStore } from './settingsStore'
 import { useAuthStore } from './authStore'
+import { apiClient } from '../services/api'
+
+// Mock the API client
+vi.mock('../services/api', () => ({
+  apiClient: {
+    login: vi.fn(),
+    logout: vi.fn(),
+    refreshAccessToken: vi.fn(),
+    isTokenExpired: vi.fn(),
+    setToken: vi.fn(),
+    makeRequest: vi.fn(),
+  },
+}))
 
 describe('settingsStore', () => {
   beforeEach(() => {
@@ -184,7 +197,25 @@ describe('settingsStore', () => {
   describe('loadAccountSettings', () => {
     it('loads account settings from current user', async () => {
       const authStore = useAuthStore()
-      authStore.login('admin@inventory.local', 'password123')
+      const mockUser = {
+        id: '1',
+        email: 'admin@inventory.local',
+        firstName: 'System',
+        lastName: 'Admin',
+        role: 'ADMIN',
+      }
+
+      vi.mocked(apiClient.login).mockResolvedValue({
+        success: true,
+        data: {
+          accessToken: 'test-token-123',
+          user: mockUser,
+          expiresIn: 3600,
+          tokenType: 'Bearer',
+        },
+      } as any)
+
+      await authStore.login('admin@inventory.local', 'password123')
 
       const store = useSettingsStore()
       const result = await store.loadAccountSettings()
@@ -207,7 +238,25 @@ describe('settingsStore', () => {
   describe('saveAccountSettings', () => {
     it('saves account settings successfully', async () => {
       const authStore = useAuthStore()
-      authStore.login('admin@inventory.local', 'password123')
+      const mockUser = {
+        id: '1',
+        email: 'admin@inventory.local',
+        firstName: 'System',
+        lastName: 'Admin',
+        role: 'ADMIN',
+      }
+
+      vi.mocked(apiClient.login).mockResolvedValue({
+        success: true,
+        data: {
+          accessToken: 'test-token-123',
+          user: mockUser,
+          expiresIn: 3600,
+          tokenType: 'Bearer',
+        },
+      } as any)
+
+      await authStore.login('admin@inventory.local', 'password123')
 
       const store = useSettingsStore()
       await store.loadAccountSettings()
@@ -231,7 +280,25 @@ describe('settingsStore', () => {
 
     it('updates auth store with new profile data', async () => {
       const authStore = useAuthStore()
-      authStore.login('admin@inventory.local', 'password123')
+      const mockUser = {
+        id: '1',
+        email: 'admin@inventory.local',
+        firstName: 'System',
+        lastName: 'Admin',
+        role: 'ADMIN',
+      }
+
+      vi.mocked(apiClient.login).mockResolvedValue({
+        success: true,
+        data: {
+          accessToken: 'test-token-123',
+          user: mockUser,
+          expiresIn: 3600,
+          tokenType: 'Bearer',
+        },
+      } as any)
+
+      await authStore.login('admin@inventory.local', 'password123')
 
       const store = useSettingsStore()
       await store.loadAccountSettings()

@@ -58,8 +58,8 @@ const userInitials = computed(() => {
   if (!name) return 'U'
   const parts = name.split(' ')
   if (parts.length >= 2) {
-    const first = parts[0].charAt(0) || ''
-    const second = parts[1].charAt(0) || ''
+    const first = parts[0]?.charAt(0) || ''
+    const second = parts[1]?.charAt(0) || ''
     return (first + second).toUpperCase()
   }
   return name.charAt(0).toUpperCase()

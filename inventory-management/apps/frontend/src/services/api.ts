@@ -3,7 +3,7 @@
  * Handles all HTTP communication with the backend
  */
 
-import type { ApiResponse, PaginatedResponse, AuthToken } from '@inventory/contracts'
+import type { ApiResponse, PaginatedResponse } from '@inventory/contracts'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 

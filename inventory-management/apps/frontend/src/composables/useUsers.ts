@@ -84,7 +84,7 @@ export function useUpdateUser() {
   const mutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
       apiClient.updateUser(id, data),
-    onSuccess: (response, { id }) => {
+    onSuccess: (_response, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       queryClient.invalidateQueries({ queryKey: ['user', id] })
     },
@@ -109,7 +109,7 @@ export function useDeactivateUser() {
 
   const mutation = useMutation({
     mutationFn: (id: string) => apiClient.deactivateUser(id),
-    onSuccess: (response, id) => {
+    onSuccess: (_response, id) => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       queryClient.invalidateQueries({ queryKey: ['user', id] })
     },
@@ -134,7 +134,7 @@ export function useReactivateUser() {
 
   const mutation = useMutation({
     mutationFn: (id: string) => apiClient.reactivateUser(id),
-    onSuccess: (response, id) => {
+    onSuccess: (_response, id) => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       queryClient.invalidateQueries({ queryKey: ['user', id] })
     },
