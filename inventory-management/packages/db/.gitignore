@@ -22,6 +22,5 @@ build/
 .DS_Store
 Thumbs.db
 
-# Prisma
-prisma/dev.db
-prisma/dev.db-journal
+# TypeORM
+migrations/
